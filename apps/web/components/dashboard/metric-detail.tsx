@@ -35,7 +35,7 @@ export function MetricDetail({ ticker, metric, periods }: { ticker: string; metr
 
   return (
     <div className="space-y-6">
-      <div className="border-line bg-panel rounded-xl border p-5">
+      <div className="border-line bg-panel rounded-2xl border p-5">
         <p className="text-muted text-xs tracking-wide uppercase">
           {data.ticker} · {row.label}
         </p>
@@ -54,7 +54,7 @@ export function MetricDetail({ ticker, metric, periods }: { ticker: string; metr
                 <XAxis dataKey="quarter" {...axis} />
                 <YAxis tickFormatter={format} domain={['auto', 'auto']} width={60} {...axis} />
                 <Tooltip {...tooltip} />
-                <Line dataKey="value" stroke="var(--color-accent)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--color-accent)' }} />
+                <Line dataKey="value" stroke="var(--color-accent)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--color-accent)' }} isAnimationActive={false} />
               </LineChart>
             ) : (
               <BarChart data={points}>
@@ -71,7 +71,7 @@ export function MetricDetail({ ticker, metric, periods }: { ticker: string; metr
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {data.quarters.map((q, i) => (
-          <div key={q.periodEnd} className="border-line bg-panel rounded-xl border p-4">
+          <div key={q.periodEnd} className="border-line bg-panel rounded-2xl border p-4">
             <p className="text-sm font-medium">{q.quarter}</p>
             <p className="text-muted text-xs">ended {q.periodEnd}</p>
             <p className="mt-2 text-lg font-semibold">

@@ -10,7 +10,7 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
-import type { BlockStatus, FilingStatus, ToolName, ViewSpec } from '@desk/shared';
+import type { BlockStatus, FilingStatus, StepDisplay, ToolName, ViewSpec } from '@desk/shared';
 
 const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
 
@@ -183,6 +183,8 @@ export interface ToolTraceEntry {
   args: unknown;
   summary: string;
   ok: boolean;
+  /** UI-only detail for the step (never sent to the model). */
+  display?: StepDisplay;
 }
 
 export const messages = pgTable(

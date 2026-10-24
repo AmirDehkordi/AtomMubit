@@ -1,4 +1,4 @@
-import type { MetricKey, StreamEvent, ViewSpec } from '@desk/shared';
+import type { MetricKey, StepDisplay, StreamEvent, ViewSpec } from '@desk/shared';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -17,7 +17,7 @@ export interface StoredMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolTrace: { tool: string; summary: string; ok: boolean }[];
+  toolTrace: { tool: string; summary: string; ok: boolean; display?: StepDisplay }[];
   choice: { id: string; question: string; options: string[] } | null;
 }
 
@@ -27,6 +27,8 @@ export interface ProjectData {
   messages: StoredMessage[];
   filings: DeskFiling[];
   view: ViewSpec | null;
+  /** Every view shown in this desk, oldest first: they become the dashboard tabs. */
+  views: ViewSpec[];
 }
 
 export interface Cell {

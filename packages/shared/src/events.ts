@@ -3,6 +3,14 @@ import { BlockStatus } from './blocks';
 import { FilingStatus } from './filings';
 import { ViewSpec } from './views';
 
+export const StepDisplay = z.object({
+  kind: z.literal('filings'),
+  filings: z.array(
+    z.object({ accession: z.string(), form: z.string(), quarter: z.string(), periodEnd: z.string(), filedAt: z.string() }),
+  ),
+});
+export type StepDisplay = z.infer<typeof StepDisplay>;
+
 // Server-sent events. Chat turns stream step/text/choice/view/done; the
 // background stream carries extraction progress and block status changes.
 
@@ -14,6 +22,8 @@ export const StreamEvent = z.discriminatedUnion('type', [
     label: z.string(),
     state: z.enum(['running', 'done', 'failed']),
     summary: z.string().nullable(),
+    /** Something to show under the step, e.g. the filings find_filings found. Never sent to the model. */
+    display: StepDisplay.optional(),
   }),
   z.object({ type: z.literal('text'), delta: z.string() }),
   z.object({

@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { formatValue } from '@desk/shared';
 import { api, type Cell, type QuarterOverview as Overview } from '@/lib/api';
+import { AnimatedNumber } from './animated-number';
 import { CellValue, Change } from './cell-value';
+import { motion } from 'motion/react';
 
 const KPIS = ['revenue', 'net_income', 'gross_margin', 'operating_margin'];
 
@@ -22,28 +24,35 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {KPIS.map((key) => {
+        {KPIS.map((key, i) => {
           const r = row(key);
           const now = r.cells[last]!;
           const before = r.cells[last - 1];
           return (
-            <div key={key} className="border-line bg-panel rounded-xl border p-4">
-              <p className="text-muted text-xs tracking-wide uppercase">{r.label}</p>
-              <p className="mt-2 text-2xl font-semibold">
-                <CellValue cell={now} unit={r.unit} />
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              className="border-line relative overflow-hidden rounded-2xl border bg-gradient-to-b from-[var(--color-raised)] to-[var(--color-panel)] p-5"
+            >
+              <span className="via-accent/40 absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent" />
+              <p className="text-muted text-[11px] font-medium tracking-wider uppercase">{r.label}</p>
+              <p className="mt-2.5 text-[28px] leading-none font-semibold tracking-tight">
+                {now.value === null ? '—' : <AnimatedNumber value={now.value} format={(v) => formatValue(v, r.unit)} />}
               </p>
-              <p className="mt-1 text-xs">
+              <p className="mt-2.5 text-xs">
                 <Change value={delta(now, before, r.kind === 'margin')} points={r.kind === 'margin'} />
-                <span className="text-muted"> vs {data.quarters[last - 1]?.quarter ?? 'prior'}</span>
+                <span className="text-subtle"> vs {data.quarters[last - 1]?.quarter ?? 'prior'}</span>
               </p>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
       <Chart data={data} />
 
-      <div className="border-line bg-panel overflow-x-auto rounded-xl border">
+      <div className="border-line bg-panel overflow-x-auto rounded-2xl border">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-line text-muted border-b text-xs">
@@ -59,7 +68,7 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
           </thead>
           <tbody>
             {data.rows.map((r) => (
-              <tr key={r.key} className="border-line/60 border-b last:border-0">
+              <tr key={r.key} className="border-line/60 hover:bg-raised/60 border-b transition-colors last:border-0">
                 <td className="px-4 py-2.5">{r.label}</td>
                 {r.cells.map((c, i) => (
                   <td key={i} className="px-4 py-2.5 text-right">
@@ -91,7 +100,7 @@ function Chart({ data }: { data: Overview }) {
     'Net income': net.cells[i]?.value ?? 0,
   }));
   return (
-    <div className="border-line bg-panel h-64 rounded-xl border p-4">
+    <div className="border-line bg-panel h-72 rounded-2xl border p-5">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={points} barGap={4}>
           <CartesianGrid vertical={false} stroke="var(--color-line)" />
@@ -109,8 +118,8 @@ function Chart({ data }: { data: Overview }) {
             formatter={(v) => formatValue(Number(v), 'USD')}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="Revenue" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Net income" fill="var(--color-up)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Revenue" fill="var(--color-accent)" radius={[6, 6, 0, 0]} animationDuration={900} />
+          <Bar dataKey="Net income" fill="var(--color-up)" radius={[6, 6, 0, 0]} animationDuration={900} animationBegin={150} />
         </BarChart>
       </ResponsiveContainer>
     </div>

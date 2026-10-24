@@ -15,7 +15,7 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
   const max = Math.max(...data.rows.map((r) => Math.abs(r.value.value ?? 0)), 1);
 
   return (
-    <div className="border-line bg-panel rounded-xl border p-5">
+    <div className="border-line bg-panel rounded-2xl border p-5">
       <h2 className="mb-1 text-lg font-semibold">{data.label}</h2>
       <p className="text-muted mb-5 text-sm">Each company on its latest reported quarter, against the same quarter a year earlier.</p>
       <div className="space-y-4">

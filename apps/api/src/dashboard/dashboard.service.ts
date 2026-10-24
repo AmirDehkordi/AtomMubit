@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import {
   MARGINS,
   MARGIN_KEYS,
@@ -87,6 +87,12 @@ export class DashboardService {
   /** Saves the view the agent chose. The chat stream tells the open page. */
   async show(projectId: string, spec: ViewSpec): Promise<void> {
     await this.dbs.db.insert(views).values({ id: randomUUID(), projectId, spec });
+  }
+
+  /** Every view the agent showed in this project, oldest first. */
+  async history(projectId: string): Promise<ViewSpec[]> {
+    const rows = await this.dbs.db.select().from(views).where(eq(views.projectId, projectId)).orderBy(asc(views.createdAt));
+    return rows.map((r) => r.spec);
   }
 
   async current(projectId: string): Promise<ViewSpec | null> {

@@ -59,6 +59,7 @@ export class ProjectsService {
       messages: history,
       filings: await this.filings(projectId),
       view: await this.dashboard.current(projectId),
+      views: await this.dashboard.history(projectId),
     };
   }
 

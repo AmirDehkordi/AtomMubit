@@ -6,6 +6,7 @@ import {
   formatChange,
   formatValue,
   type ExtractionApi,
+  type StepDisplay,
   type ToolArgs,
   type ToolName,
   type ViewSpec,
@@ -37,6 +38,8 @@ export interface ToolResult {
   choice?: { id: string; question: string; options: string[] };
   /** show_on_dashboard: the view to show. */
   view?: ViewSpec;
+  /** UI-only detail shown under the step. */
+  display?: StepDisplay;
 }
 
 /** Short labels for the chat's step list while a tool runs. */
@@ -120,12 +123,16 @@ export class ToolsService {
       filedAt: f.filedAt,
     }));
     const quarters = [...found.filings].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd)).map((f) => f.quarter);
-    return ok(
+    const display: StepDisplay = {
+      kind: 'filings',
+      filings: [...list].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd)),
+    };
+    return withDisplay(display, ok(
       { company: { ticker: found.company.ticker, name: found.company.name }, filings: list, warnings: found.warnings },
       list.length
         ? `Found ${list.length} filing${list.length === 1 ? '' : 's'} for ${found.company.ticker}: ${range(quarters)}`
         : `No matching filings for ${found.company.ticker}`,
-    );
+    ));
   }
 
   private askUser(args: ToolArgs<'ask_user'>): ToolResult {
@@ -299,6 +306,10 @@ export class ToolsService {
     await this.dashboard.show(ctx.projectId, args.spec);
     return { ...ok({ shown: args.spec.view }, `Showing ${args.spec.view.replace(/_/g, ' ')}`), view: args.spec };
   }
+}
+
+function withDisplay(display: StepDisplay, result: ToolResult): ToolResult {
+  return { ...result, display };
 }
 
 function ok(payload: unknown, summary: string): ToolResult {
