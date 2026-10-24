@@ -11,7 +11,8 @@
     "test": "vitest run",
     "fake-llm": "node scripts/fake-llm.mjs",
     "replay": "node scripts/replay-questions.mjs",
-    "dump-filings": "node scripts/dump-filings.mjs"
+    "dump-filings": "node scripts/dump-filings.mjs",
+    "benchmark": "node scripts/benchmark.mjs"
   },
   "dependencies": {
     "@desk/shared": "workspace:*",

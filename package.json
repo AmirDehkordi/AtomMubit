@@ -13,5 +13,8 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "reset": "rm -rf apps/api/data/pglite && echo 'Local database cleared (task locks kept).'"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.43.1"
   }
 }
