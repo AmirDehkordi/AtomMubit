@@ -26,7 +26,7 @@ export class HealthController {
           const rows=await this.dbs.db.select().from(extractionEvents).where(and(eq(extractionEvents.projectId,projectId),eq(extractionEvents.teamId,teamId()),gt(extractionEvents.id,cursor))).orderBy(extractionEvents.id).limit(100);
           for(const row of rows) {
             if(closed)break;
-            const data=row.type==='extraction_completed'&&row.data.accession ? {type:'extraction',accession:row.data.accession,status:'ready',sectionsDone:0,sectionsTotal:0,fixed:0,review:row.data.state==='needs_review'?1:0} : {...row,eventType:row.type,type:'extraction_progress'};
+            const data=row.type==='block' ? {...row.data,type:'block'} : row.type==='extraction_completed'&&row.data.accession ? {type:'extraction',accession:row.data.accession,status:'ready',sectionsDone:0,sectionsTotal:0,fixed:0,review:row.data.state==='needs_review'?1:0} : {...row,eventType:row.type,type:'extraction_progress'};
             subscriber.next({id:String(row.id),data}); cursor=row.id;
           }
         } catch(error){subscriber.error(error);} finally{busy=false;}

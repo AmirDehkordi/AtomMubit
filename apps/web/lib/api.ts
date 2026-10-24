@@ -1,4 +1,4 @@
-import type { MetricKey, StreamEvent, ViewSpec } from '@desk/shared';
+import type { MetricKey, StepDisplay, StreamEvent, ViewSpec } from '@desk/shared';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -17,7 +17,7 @@ export interface StoredMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolTrace: { tool: string; summary: string; ok: boolean }[];
+  toolTrace: { tool: string; summary: string; ok: boolean; display?: StepDisplay }[];
   choice: { id: string; question: string; options: string[] } | null;
 }
 
@@ -27,6 +27,8 @@ export interface ProjectData {
   messages: StoredMessage[];
   filings: DeskFiling[];
   view: ViewSpec | null;
+  /** Every view shown in this desk, oldest first: they become the dashboard tabs. */
+  views: ViewSpec[];
 }
 
 export interface Cell {
@@ -52,6 +54,95 @@ export interface Comparison {
   rows: { ticker: string; name: string; periodEnd: string; quarter: string; value: Cell; yearAgo: Cell; yoy: number | null }[];
 }
 
+export const ADAPTER_STATES = ['collecting', 'reviewing', 'training', 'testing', 'silent_test', 'rollout', 'live', 'prompt_only'] as const;
+export type AdapterState = (typeof ADAPTER_STATES)[number];
+
+export interface ConsoleStatus {
+  task: string;
+  kept: number | null;
+  adapterVersion: string | null;
+  adapterState: AdapterState | null;
+  quality: number | null;
+  note: string | null;
+  updatedAt: string;
+}
+
+export interface MubitStatus {
+  reviewLimit: number;
+  firstTrainingAt: number;
+  resetAt: string;
+  tasks: {
+    task: string;
+    label: string;
+    calls: number;
+    callsToday: number;
+    sessions: number;
+    failed: number;
+    avgLatencyMs: number | null;
+    lastCallAt: string | null;
+    console: ConsoleStatus | null;
+  }[];
+  recent: { task: string; requestId: string | null; latencyMs: number; ok: boolean; createdAt: string }[];
+}
+
+export const MUBIT_CONSOLE_URL = process.env.NEXT_PUBLIC_MUBIT_CONSOLE_URL ?? 'https://app.mubit.ai/';
+
+export interface ReaderBlock {
+  id: string;
+  sectionId: string;
+  accession: string;
+  type: string;
+  key: string | null;
+  label: string;
+  periodEnd: string | null;
+  months: number | null;
+  value: number | null;
+  unit: string | null;
+  scale: string | null;
+  text: string | null;
+  quote: string;
+  spanStart: number | null;
+  spanEnd: number | null;
+  status: 'verified' | 'fixed' | 'review' | 'unchecked';
+  checks: { verifier: string; passed: boolean; detail: string }[];
+  corrections: { id: string; note: string; status: 'proposed' | 'applied'; ruleCode: string; ruleText: string }[];
+}
+
+export interface Rule {
+  id: string;
+  code: string;
+  text: string;
+  source: 'seed' | 'verifier' | 'user';
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ProposedCorrection {
+  correction: { id: string; blockId: string; status: 'proposed' };
+  rule: Rule;
+  affected: { id: string; accession: string; item: string; title: string }[];
+}
+
+async function post<T>(path: string, body: unknown = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  return res.json() as Promise<T>;
+}
+
+export interface FilingOutline {
+  filing: { accession: string; ticker: string; form: string; periodEnd: string; quarter: string; url: string; status: string };
+  sections: { id: string; item: string; title: string; kind: string; ordinal: number; charCount: number; blocks: number; review: number }[];
+}
+
+export interface SectionWithBlocks {
+  section: { id: string; accession: string; item: string; title: string; kind: string; text: string };
+  blocks: ReaderBlock[];
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`);
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
@@ -64,6 +155,26 @@ export const api = {
     if (!res.ok) throw new Error(`Could not start a desk (${res.status})`);
     return res.json();
   },
+  outline: (accession: string, projectId?: string) =>
+    get<FilingOutline>(`/filings/${encodeURIComponent(accession)}/sections${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
+  section: (id: string, projectId?: string) =>
+    get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
+  blocks: (ids: string[]) => get<ReaderBlock[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
+  rules: () => get<Rule[]>('/rules'),
+  proposeCorrection: (input: { blockId: string; projectId: string | null; note: string; ruleCode: string | null; ruleText: string | null }) =>
+    post<ProposedCorrection>('/corrections', input),
+  applyCorrection: (id: string) => post<{ sectionIds: string[] }>(`/corrections/${id}/apply`),
+  dismissCorrection: (id: string) => post<{ ok: true }>(`/corrections/${id}/dismiss`),
+  mubitStatus: () => get<MubitStatus>('/mubit/status'),
+  saveConsoleStatus: async (status: Omit<ConsoleStatus, 'updatedAt'>) => {
+    const res = await fetch(`${API_URL}/mubit/console-status`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(status),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    return res.json() as Promise<ConsoleStatus>;
+  },
   project: (id: string) => get<ProjectData>(`/projects/${id}`),
   overview: (ticker: string, periods: string[]) =>
     get<QuarterOverview>(`/views/quarter-overview?ticker=${encodeURIComponent(ticker)}&periods=${periods.join(',')}`),
@@ -74,11 +185,17 @@ export const api = {
 };
 
 /** Sends one chat message and calls `onEvent` for each server-sent event until the turn ends. */
-export async function streamChat(conversationId: string, text: string, onEvent: (e: StreamEvent) => void): Promise<void> {
+export async function streamChat(
+  conversationId: string,
+  text: string,
+  onEvent: (e: StreamEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
   const res = await fetch(`${API_URL}/chat/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ text }),
+    signal,
   });
   if (!res.ok || !res.body) throw new Error(`Chat failed (${res.status})`);
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();

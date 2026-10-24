@@ -7,12 +7,13 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   bigserial,
 } from 'drizzle-orm/pg-core';
-import type { BlockStatus, FilingStatus, ToolName, ViewSpec } from '@desk/shared';
+import type { BlockStatus, FilingStatus, StepDisplay, ToolName, ViewSpec } from '@desk/shared';
 
 const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
 
@@ -186,6 +187,8 @@ export interface ToolTraceEntry {
   args: unknown;
   summary: string;
   ok: boolean;
+  /** UI-only detail for the step (never sent to the model). */
+  display?: StepDisplay;
 }
 
 export const messages = pgTable(
@@ -221,6 +224,69 @@ export const views = pgTable(
   (t) => [index('views_project_idx').on(t.projectId)],
 );
 
+export const ADAPTER_STATES = ['collecting', 'reviewing', 'training', 'testing', 'silent_test', 'rollout', 'live', 'prompt_only'] as const;
+export type AdapterState = (typeof ADAPTER_STATES)[number];
+
+/**
+ * What Mubit's console shows for a task (kept examples, adapter version and
+ * state). Mubit has no API for this, so the team copies it in from the console.
+ */
+export const mubitStatus = pgTable('mubit_status', {
+  task: text('task').primaryKey(),
+  kept: integer('kept'),
+  adapterVersion: text('adapter_version'),
+  adapterState: text('adapter_state').$type<AdapterState>(),
+  /** Share of held-out test cases matching the provider, 0–1. */
+  quality: doublePrecision('quality'),
+  note: text('note'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A person's correction of an extracted block. It proposes a desk rule; once
+ * confirmed, the rule becomes active and the affected sections are re-read
+ * with it (those re-read calls are the corrected examples Mubit learns from).
+ */
+export const corrections = pgTable(
+  'corrections',
+  {
+    id: text('id').primaryKey(),
+    blockId: text('block_id')
+      .notNull()
+      .references(() => blocks.id),
+    accession: text('accession').notNull(),
+    sectionId: text('section_id').notNull(),
+    projectId: text('project_id'),
+    note: text('note').notNull(),
+    ruleId: text('rule_id')
+      .notNull()
+      .references(() => rules.id),
+    status: text('status').$type<'proposed' | 'applied' | 'dismissed'>().notNull().default('proposed'),
+    /** Sections re-read when the correction was applied. */
+    rereadSections: jsonb('reread_sections').$type<string[]>().notNull().default([]),
+    createdAt: createdAt(),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+  },
+  (t) => [index('corrections_block_idx').on(t.blockId)],
+);
+
+/** Which filings are on which desk. A filing can be on many desks. */
+export const projectFilings = pgTable(
+  'project_filings',
+  {
+    id: text('id').notNull().unique().default(sql`gen_random_uuid()::text`),
+    teamId: text('team_id').notNull().default('internal'),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    accession: text('accession')
+      .notNull()
+      .references(() => filings.accession),
+    addedAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.accession] }), index('project_filings_accession_idx').on(t.accession)],
+);
+
 /** Durable extraction v2 state. Legacy citations remain immutable. */
 export const sourceDocuments = pgTable('source_documents', {
   id: text('id').primaryKey(), teamId: text('team_id').notNull(),
@@ -236,11 +302,6 @@ export const projectDocuments = pgTable('project_documents', {
   projectId: text('project_id').notNull().references(() => projects.id),
   documentId: text('document_id').notNull().references(() => sourceDocuments.id),
 }, t => [uniqueIndex('project_documents_membership').on(t.projectId, t.documentId)]);
-export const projectFilings = pgTable('project_filings', {
-  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
-  projectId: text('project_id').notNull().references(() => projects.id),
-  accession: text('accession').notNull().references(() => filings.accession),
-}, t => [uniqueIndex('project_filings_membership').on(t.projectId, t.accession)]);
 
 export const extractionRequests = pgTable('extraction_requests', {
   id: text('id').primaryKey(), teamId: text('team_id').notNull(),

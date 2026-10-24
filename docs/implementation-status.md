@@ -37,7 +37,8 @@ production deployment or a measured extraction-quality result.
 
 | Check | Result |
 | --- | --- |
-| API Vitest suite, including migrated PGlite queue/feedback/processor tests | 86 passed, 9 test files |
+| API Vitest suite, including migrated PGlite queue/feedback/processor tests | 96 passed, 11 test files |
+| Main database upgrade and clean database migration tests | 2 passed |
 | Shared/API/web TypeScript checks | Passed |
 | API production compilation | Passed |
 | Next.js optimized production build | Passed |
@@ -75,5 +76,6 @@ was disabled. Existing approved build dependencies remain explicit.
 
 The application is configured for one trusted internal team on localhost.
 Public deployment and multi-team onboarding require authentication and further
-operational hardening. OCR remains out of scope. No PR, commit, deployment,
-SEC download, or paid model call was performed during this implementation.
+operational hardening. OCR remains out of scope. No deployment, SEC download, or paid model call was performed during this
+implementation. The pull request includes the latest main branch and preserves
+its existing database migrations; extraction is added in migration 0005.

@@ -1,10 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { and, desc, eq, gt, inArray, or, sql } from 'drizzle-orm';
-import { DEFAULT_EXTRACTION_FIELDS, type ExtractionJob } from '@desk/shared';
+import { DEFAULT_EXTRACTION_FIELDS, type ExtractionJob, type RereadRequest } from '@desk/shared';
 import { config } from '../core/config';
-import { DbService } from '../db/db.service';
-import { extractionEvents, extractionFeedback, extractionRequests, extractionRuns, monitoringWatchlist, policyVersions, projectDocuments, projectFilings, projects, requestRuns, sourceDocuments, workJobs } from '../db/schema';
+import { DbService, type Db } from '../db/db.service';
+import { blocks, extractionEvents, extractionFeedback, extractionRequests, extractionRuns, monitoringWatchlist, policyVersions, projectDocuments, projectFilings, projects, requestRuns, rules as deskRules, sections, serviceLocks, sourceDocuments, workJobs } from '../db/schema';
 import { enqueue, type Transaction } from '../jobs/jobs.service';
 import { STARTER_RULES, EXTRACTION_TASK_VERSION } from './policy';
 import { prepareUpload } from './upload';
@@ -12,7 +12,7 @@ import { prepareUpload } from './upload';
 export const teamId = () => process.env.TEAM_ID?.trim() || 'internal';
 export const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
-export type Specification = { fields: string[]; rules: string[]; workflowVersion: string; schemaVersion: string; model: string; taskFingerprint: string };
+export type Specification = { fields: string[]; rules: string[]; workflowVersion: string; schemaVersion: string; model: string; taskFingerprint: string; correctionId?: string };
 export async function event(tx: Transaction, projectId: string, type: string, data: Record<string, unknown>, runId: string | null = null) {
   await tx.insert(extractionEvents).values({ teamId: teamId(), projectId, type, data, runId });
 }
@@ -25,18 +25,19 @@ export class ExtractionService {
     if (!p) throw new NotFoundException('Project not found');
     return p;
   }
-  async rules(ticker?: string | null, version?: number) {
-    const rows = await this.dbs.db.select().from(policyVersions).where(and(eq(policyVersions.teamId, teamId()), eq(policyVersions.active, true),
+  async rules(ticker?: string | null, version?: number, database: Pick<Db, 'select'> = this.dbs.db) {
+    const rows = await database.select().from(policyVersions).where(and(eq(policyVersions.teamId, teamId()), eq(policyVersions.active, true),
       or(sql`${policyVersions.ticker} is null`, eq(policyVersions.ticker, ticker ?? '')),
       version === undefined ? undefined : sql`${policyVersions.version} <= ${version}`)).orderBy(policyVersions.version);
-    return { version: rows.reduce((n, r) => Math.max(n, r.version), 0), rules: [...STARTER_RULES, ...rows.filter(r=>r.target !== 'planner').map(r => r.lesson)] };
+    const activeDeskRules = await database.select().from(deskRules).where(eq(deskRules.active, true)).orderBy(deskRules.code);
+    return { version: rows.reduce((n, r) => Math.max(n, r.version), 0), rules: [...new Set([...STARTER_RULES, ...activeDeskRules.map(r => `${r.code}: ${r.text}`), ...rows.filter(r=>r.target !== 'planner').map(r => r.lesson)])] };
   }
   async plannerRules() {
     const policies = await this.dbs.db.select().from(policyVersions).where(and(eq(policyVersions.teamId,teamId()),eq(policyVersions.active,true),sql`${policyVersions.target} in ('planner','both')`));
     return {starterRules:STARTER_RULES, scopedRules:policies.map(p=>({ticker:p.ticker, target:p.target, lesson:p.lesson, version:p.version}))};
   }
-  async specification(ticker?: string | null, fields: string[] = [...DEFAULT_EXTRACTION_FIELDS]) {
-    const bundle = await this.rules(ticker);
+  async specification(ticker?: string | null, fields: string[] = [...DEFAULT_EXTRACTION_FIELDS], database: Pick<Db, 'select'> = this.dbs.db) {
+    const bundle = await this.rules(ticker, undefined, database);
     return { version: bundle.version, spec: { fields: [...new Set(fields)].sort(), rules: bundle.rules, workflowVersion: 'section-v2', taskFingerprint: EXTRACTION_TASK_VERSION, schemaVersion: '2', model: config.extractorModel } satisfies Specification };
   }
   async submitRequest(input: {projectId: string; request: string; parentRequestId?: string; documentIds?: string[]}, idempotencyKey?: string) {
@@ -113,6 +114,46 @@ export class ExtractionService {
       await event(tx, projectId, 'ingestion_queued', { accession, requestId });
     });
     return { accession, state: 'queued' };
+  }
+  async rereadSections(request: RereadRequest): Promise<void> {
+    await this.assertProject(request.projectId);
+    if (!request.sectionIds.length) throw new BadRequestException('A correction needs affected sections');
+    const affected = await this.dbs.db.select({ id: sections.id, accession: sections.accession }).from(sections)
+      .innerJoin(projectFilings, eq(projectFilings.accession, sections.accession))
+      .where(and(inArray(sections.id, request.sectionIds), eq(projectFilings.projectId, request.projectId)));
+    if (new Set(affected.map(s => s.id)).size !== new Set(request.sectionIds).size) throw new NotFoundException('Correction sections are not in this project');
+    const [rule] = await this.dbs.db.select().from(deskRules).where(and(eq(deskRules.code, request.ruleCode), eq(deskRules.active, true)));
+    if (!rule) throw new BadRequestException('Correction rule must be active');
+    const accessions = [...new Set(affected.map(s => s.accession))];
+    const previous = await this.dbs.db.select({ run: extractionRuns, document: sourceDocuments }).from(extractionRuns)
+      .innerJoin(sourceDocuments, eq(sourceDocuments.id, extractionRuns.documentId))
+      .where(and(eq(extractionRuns.projectId, request.projectId), eq(extractionRuns.teamId, teamId()), inArray(sourceDocuments.accession, accessions)))
+      .orderBy(desc(extractionRuns.createdAt));
+    if (accessions.some(accession => !previous.some(r => r.document.accession === accession))) throw new BadRequestException('Correction source documents must be ingested before re-reading');
+    // Re-read each document/field selection once. The correction ID forces a fresh run
+    // even for an existing active rule, while retries reuse its durable identity.
+    await this.dbs.db.transaction(async tx => {
+      const lockId = `policy:${teamId()}`;
+      await tx.insert(serviceLocks).values({id: lockId}).onConflictDoNothing();
+      await tx.select().from(serviceLocks).where(eq(serviceLocks.id, lockId)).for('update');
+      const policyId = digest([teamId(), 'desk-correction', request.correctionId]);
+      const policies = await tx.select().from(policyVersions).where(eq(policyVersions.teamId, teamId())).orderBy(desc(policyVersions.version));
+      if (!policies.some(p => p.id === policyId)) {
+        await tx.insert(policyVersions).values({id: policyId, teamId: teamId(), version: (policies[0]?.version ?? 0) + 1, lesson: `${rule.code}: ${rule.text}`, target: 'extractor'});
+      }
+      const queued = new Set<string>();
+      for (const {run, document} of previous) {
+        const fields = (run.specification as Specification).fields;
+        const key = digest([document.id, [...fields].sort()]);
+        if (queued.has(key)) continue;
+        queued.add(key);
+        const bundle = await this.specification(document.ticker, fields, tx);
+        await this.queueDocument(tx, request.projectId, document.id, {version: bundle.version, spec: {...bundle.spec, correctionId: request.correctionId}});
+      }
+      const affectedBlocks = await tx.select({id: blocks.id}).from(blocks).where(inArray(blocks.sectionId, request.sectionIds));
+      for (const block of affectedBlocks) await event(tx, request.projectId, 'block', {id: block.id, status: 'unchecked'});
+      await event(tx, request.projectId, 'correction_queued', {correctionId: request.correctionId, ruleCode: rule.code, sectionIds: request.sectionIds});
+    });
   }
   async registerFiling(job: ExtractionJob, requestId?: string, fields?: string[]) {
     const bundle = await this.specification(job.company.ticker, fields);

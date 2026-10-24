@@ -104,11 +104,10 @@ CREATE TABLE "project_documents" (
 	"document_id" text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "project_filings" (
+CREATE TABLE "request_runs" (
 	"id" text PRIMARY KEY NOT NULL,
-	"team_id" text NOT NULL,
-	"project_id" text NOT NULL,
-	"accession" text NOT NULL
+	"request_id" text NOT NULL,
+	"run_id" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "service_locks" (
@@ -146,19 +145,24 @@ CREATE TABLE "work_jobs" (
 	CONSTRAINT "work_jobs_key_unique" UNIQUE("key")
 );
 --> statement-breakpoint
+ALTER TABLE "project_filings" ADD COLUMN "id" text DEFAULT gen_random_uuid()::text NOT NULL;--> statement-breakpoint
+ALTER TABLE "project_filings" ADD COLUMN "team_id" text DEFAULT 'internal' NOT NULL;--> statement-breakpoint
 ALTER TABLE "projects" ADD COLUMN "team_id" text DEFAULT 'internal' NOT NULL;--> statement-breakpoint
+-- Keep existing filing memberships attached to their project tenant.
+UPDATE "project_filings" SET "team_id" = "projects"."team_id" FROM "projects" WHERE "projects"."id" = "project_filings"."project_id";--> statement-breakpoint
 ALTER TABLE "extraction_feedback" ADD CONSTRAINT "extraction_feedback_run_id_extraction_runs_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."extraction_runs"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "extraction_requests" ADD CONSTRAINT "extraction_requests_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "extraction_runs" ADD CONSTRAINT "extraction_runs_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "extraction_runs" ADD CONSTRAINT "extraction_runs_document_id_source_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."source_documents"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "project_documents" ADD CONSTRAINT "project_documents_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "project_documents" ADD CONSTRAINT "project_documents_document_id_source_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."source_documents"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "project_filings" ADD CONSTRAINT "project_filings_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "project_filings" ADD CONSTRAINT "project_filings_accession_filings_accession_fk" FOREIGN KEY ("accession") REFERENCES "public"."filings"("accession") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request_runs" ADD CONSTRAINT "request_runs_request_id_extraction_requests_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."extraction_requests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "request_runs" ADD CONSTRAINT "request_runs_run_id_extraction_runs_id_fk" FOREIGN KEY ("run_id") REFERENCES "public"."extraction_runs"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "extraction_events_project" ON "extraction_events" USING btree ("project_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "monitoring_watchlist_member" ON "monitoring_watchlist" USING btree ("team_id","project_id","ticker");--> statement-breakpoint
 CREATE UNIQUE INDEX "policy_versions_sequence" ON "policy_versions" USING btree ("team_id","version");--> statement-breakpoint
 CREATE UNIQUE INDEX "project_documents_membership" ON "project_documents" USING btree ("project_id","document_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "project_filings_membership" ON "project_filings" USING btree ("project_id","accession");--> statement-breakpoint
-CREATE UNIQUE INDEX "source_documents_identity" ON "source_documents" USING btree ("team_id","checksum","name");--> statement-breakpoint
-CREATE INDEX "work_jobs_available" ON "work_jobs" USING btree ("state","available_at");
+CREATE UNIQUE INDEX "request_runs_membership" ON "request_runs" USING btree ("request_id","run_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "source_documents_identity" ON "source_documents" USING btree ("team_id","checksum","name","ticker");--> statement-breakpoint
+CREATE INDEX "work_jobs_available" ON "work_jobs" USING btree ("state","available_at");--> statement-breakpoint
+ALTER TABLE "project_filings" ADD CONSTRAINT "project_filings_id_unique" UNIQUE("id");

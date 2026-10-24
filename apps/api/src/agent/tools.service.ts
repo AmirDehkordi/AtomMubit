@@ -6,6 +6,7 @@ import {
   formatChange,
   formatValue,
   type ExtractionApi,
+  type StepDisplay,
   type ToolArgs,
   type ToolName,
   type ViewSpec,
@@ -13,7 +14,7 @@ import {
 import { EXTRACTION_API } from '../core/extraction.token';
 import { DashboardService, change } from '../dashboard/dashboard.service';
 import { DbService } from '../db/db.service';
-import { blocks, companies, filings, projects } from '../db/schema';
+import { blocks, companies, filings, projectFilings, projects } from '../db/schema';
 import { ExtractionService } from '../extraction/extraction.service';
 import { EdgarService } from '../edgar/edgar.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
@@ -37,6 +38,8 @@ export interface ToolResult {
   choice?: { id: string; question: string; options: string[] };
   /** show_on_dashboard: the view to show. */
   view?: ViewSpec;
+  /** UI-only detail shown under the step. */
+  display?: StepDisplay;
 }
 
 /** Short labels for the chat's step list while a tool runs. */
@@ -119,12 +122,16 @@ export class ToolsService {
       filedAt: f.filedAt,
     }));
     const quarters = [...found.filings].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd)).map((f) => f.quarter);
-    return ok(
+    const display: StepDisplay = {
+      kind: 'filings',
+      filings: [...list].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd)),
+    };
+    return withDisplay(display, ok(
       { company: { ticker: found.company.ticker, name: found.company.name }, filings: list, warnings: found.warnings },
       list.length
         ? `Found ${list.length} filing${list.length === 1 ? '' : 's'} for ${found.company.ticker}: ${range(quarters)}`
         : `No matching filings for ${found.company.ticker}`,
-    );
+    ));
   }
 
   private askUser(args: ToolArgs<'ask_user'>): ToolResult {
@@ -145,9 +152,13 @@ export class ToolsService {
     if (!rows.length) return fail('None of those accession numbers were found. Call find_filings first.');
 
     await this.dbs.db
+      .insert(projectFilings)
+      .values(rows.map((r) => ({ projectId: ctx.projectId, accession: r.accession, teamId: process.env.TEAM_ID?.trim() || 'internal' })))
+      .onConflictDoNothing();
+    await this.dbs.db
       .update(filings)
       .set({ status: ctx.replay ? 'found' : 'queued' })
-      .where(inArray(filings.accession, rows.map((r) => r.accession)));
+      .where(and(inArray(filings.accession, rows.map((r) => r.accession)), eq(filings.status, 'found')));
 
     const tickers = [...new Set(rows.map((r) => r.ticker))];
     const quarters = rows
@@ -220,7 +231,7 @@ export class ToolsService {
   }
 
   private async searchBlocks(args: ToolArgs<'search_blocks'>, ctx: ToolContext): Promise<ToolResult> {
-    const inProject = sql`(${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId}) or ${blocks.accession} in (select accession from filings where project_id = ${ctx.projectId}))`;
+    const inProject = sql`(${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId}))`;
     const current = sql`(exists (select 1 from extraction_runs er where ${blocks.sectionId} like er.id || ':%' and er.project_id = ${ctx.projectId} and er.accepted = true) or not exists (select 1 from extraction_runs er where ${blocks.sectionId} like er.id || ':%'))`;
     const conditions = [inProject, current, sql`${blocks.tsv} @@ plainto_tsquery('english', ${args.query})`];
     if (args.ticker) conditions.push(eq(companies.ticker, args.ticker.toUpperCase()));
@@ -293,6 +304,10 @@ export class ToolsService {
     await this.dashboard.show(ctx.projectId, args.spec);
     return { ...ok({ shown: args.spec.view }, `Showing ${args.spec.view.replace(/_/g, ' ')}`), view: args.spec };
   }
+}
+
+function withDisplay(display: StepDisplay, result: ToolResult): ToolResult {
+  return { ...result, display };
 }
 
 function ok(payload: unknown, summary: string): ToolResult {

@@ -13,7 +13,7 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "reset": "rm -rf apps/api/data/pglite && echo 'Local database cleared (task locks kept).'",
-    "test": "pnpm build:shared && pnpm --filter @desk/api test && node benchmarks/run.test.mjs",
+    "test": "pnpm build:shared && pnpm --filter @desk/api test && node --test apps/api/drizzle/check-migrations.mjs && node benchmarks/run.test.mjs",
     "benchmark:smoke": "node benchmarks/run.mjs"
   }
 }

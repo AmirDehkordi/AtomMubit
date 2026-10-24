@@ -43,8 +43,20 @@ export interface ExtractionSummary {
   review: number;
 }
 
+/** A person corrected a block and confirmed a rule: read these sections again with the active rules. */
+export interface RereadRequest {
+  projectId: string;
+  /** Sections to re-read, possibly across several filings of the project. */
+  sectionIds: string[];
+  /** Why: the correction and the rule it added or pointed at. */
+  correctionId: string;
+  ruleCode: string;
+}
+
 /** The service the extraction module provides to the rest of the API. */
 export interface ExtractionApi {
   /** Durably queue SEC document retrieval and extraction; completion is polled via /v1/data. */
   submitFiling(accession: string, projectId: string, requestId?: string, fields?: string[]): Promise<{accession: string; state: string}>;
+  /** Queue new immutable runs with current rules for documents containing these sections. */
+  rereadSections(request: RereadRequest): Promise<void>;
 }

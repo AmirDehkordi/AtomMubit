@@ -62,6 +62,7 @@ export async function runAgent(history: ResponseInputItem[], userText: string, d
           label: deps.stepLabel(call.name),
           state: result.ok ? 'done' : 'failed',
           summary: result.summary,
+          ...(result.display ? { display: result.display } : {}),
         });
         return { call, result };
       }),
@@ -78,7 +79,7 @@ export async function runAgent(history: ResponseInputItem[], userText: string, d
     input.push(...callItems, ...outputItems);
     turn.items.push(...callItems, ...outputItems);
     for (const { call, result } of results) {
-      turn.trace.push({ tool: call.name as ToolTraceEntry['tool'], args: safeJson(call.arguments), summary: result.summary, ok: result.ok });
+      turn.trace.push({ tool: call.name as ToolTraceEntry['tool'], args: safeJson(call.arguments), summary: result.summary, ok: result.ok, ...(result.display ? { display: result.display } : {}) });
       if (result.view) {
         turn.views.push(result.view);
         deps.emit({ type: 'view', spec: result.view });

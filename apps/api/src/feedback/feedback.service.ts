@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { extractionFeedback, extractionRuns, policyVersions, serviceLocks, sourceDocuments } from '../db/schema';
+import { extractionFeedback, extractionRuns, policyVersions, rules as deskRules, serviceLocks, sourceDocuments } from '../db/schema';
 import { JobsService, type Job } from '../jobs/jobs.service';
 import { WorkflowService, FeedbackDecision } from '../workflows/workflow.service';
 import { ExtractionService, digest, event, json, teamId, type Specification } from '../extraction/extraction.service';
@@ -88,6 +88,8 @@ export class FeedbackService {
       await tx.insert(serviceLocks).values({id:lockId}).onConflictDoNothing();
       await tx.select().from(serviceLocks).where(eq(serviceLocks.id, lockId)).for('update');
       const policies = await tx.select().from(policyVersions).where(eq(policyVersions.teamId, teamId())).orderBy(desc(policyVersions.version));
+      const activeDeskRules = await tx.select().from(deskRules).where(eq(deskRules.active, true)).orderBy(deskRules.code);
+      const deskTexts = activeDeskRules.map(r => `${r.code}: ${r.text}`);
       const relevant = policies.filter(p => p.active && (!p.ticker || p.ticker === document.ticker));
       if (apply && Math.max(0, ...relevant.map(p => p.version)) !== bundle.version) { apply = false; reason = 'Applicable policy changed during evaluation; defer this stale proposal and resubmit against the latest policy.'; }
       let version: number | null = null;
@@ -121,7 +123,7 @@ export class FeedbackService {
           queued.add(identity);
           const applicable = policies.filter(p => p.active && p.target !== 'planner' && (!p.ticker || p.ticker === entry.document.ticker)).reverse().map(p=>p.lesson);
           const spec = entry.run.specification as Specification;
-          await this.extraction.queueDocument(tx, entry.run.projectId, entry.document.id, {version, spec:{...spec, rules:[...STARTER_RULES,...applicable,...(decision.target==='planner'?[]:[decision.lesson!])]}});
+          await this.extraction.queueDocument(tx, entry.run.projectId, entry.document.id, {version, spec:{...spec, rules:[...new Set([...STARTER_RULES,...deskTexts,...applicable,...(decision.target==='planner'?[]:[decision.lesson!])])]}});
         }
       }
       const state = apply ? 'applied' : decision.decision === 'reject' ? 'rejected' : 'deferred';

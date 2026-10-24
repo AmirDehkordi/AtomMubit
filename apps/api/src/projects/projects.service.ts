@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { companies, conversations, filings, messages, projects } from '../db/schema';
+import { companies, conversations, filings, messages, projectFilings, projects } from '../db/schema';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { DashboardService } from '../dashboard/dashboard.service';
 
@@ -61,6 +61,7 @@ export class ProjectsService {
       messages: history,
       filings: await this.filings(projectId),
       view: await this.dashboard.current(projectId),
+      views: await this.dashboard.history(projectId),
     };
   }
 
@@ -78,9 +79,10 @@ export class ProjectsService {
         ticker: companies.ticker,
         fiscalYearEnd: companies.fiscalYearEnd,
       })
-      .from(filings)
+      .from(projectFilings)
+      .innerJoin(filings, eq(projectFilings.accession, filings.accession))
       .innerJoin(companies, eq(filings.cik, companies.cik))
-      .where(sql`(${filings.projectId} = ${projectId} or ${filings.accession} in (select accession from project_filings where project_id = ${projectId}))`)
+      .where(eq(projectFilings.projectId, projectId))
       .orderBy(asc(filings.periodEnd));
     return rows.map(({ fiscalYearEnd, ...f }) => ({
       ...f,

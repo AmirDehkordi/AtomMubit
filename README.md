@@ -78,7 +78,8 @@ The [benchmark harness](benchmarks/README.md) compares direct OpenRouter with
 Mubit → OpenRouter. Its offline fixture is synthetic. Live latency, extraction
 accuracy, and billed cost are **not measured yet**. See the
 [test plan](docs/test-and-benchmark-plan.md), [report](docs/benchmark-report.md),
-and [model selection notes](docs/openrouter.md).
+and [model selection notes](docs/openrouter.md). For interactive fake-model and
+Mubit rehearsals, see the [testing guide](docs/testing.md).
 
 ## Layout
 

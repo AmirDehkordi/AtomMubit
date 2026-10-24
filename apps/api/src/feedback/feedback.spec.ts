@@ -50,7 +50,7 @@ describe('feedback policy activation against migrated PostgreSQL', () => {
     feedback = new FeedbackService(dbs, jobs, extraction, processor, { run: workflow } as unknown as WorkflowService);
   }, 60_000);
   beforeEach(async () => {
-    await db.execute(sql`TRUNCATE projects, source_documents, extraction_runs, extraction_feedback, work_jobs, extraction_events, policy_versions, service_locks RESTART IDENTITY CASCADE`);
+    await db.execute(sql`TRUNCATE projects, source_documents, extraction_runs, extraction_feedback, work_jobs, extraction_events, policy_versions, service_locks, rules RESTART IDENTITY CASCADE`);
     workflow.mockReset(); candidate.mockReset(); snapshots.clear();
     workflow.mockResolvedValue({ output: preference, requestId: 'evaluation' });
     candidate.mockImplementation(async (input: {documentId: string}) => structuredClone(snapshots.get(input.documentId) ?? result()));
@@ -99,6 +99,15 @@ describe('feedback policy activation against migrated PostgreSQL', () => {
     expect(workflow).toHaveBeenCalledTimes(1); expect(await db.select().from(extractionFeedback)).toHaveLength(1);
     expect(await db.select().from(policyVersions)).toHaveLength(1);
     expect((await db.select().from(workJobs)).filter(j=>j.kind==='extract')).toHaveLength(2);
+  });
+  it('keeps confirmed desk rules alongside evaluated policy lessons in requeued runs', async () => {
+    await db.insert(schema.rules).values({id: 'desk-rule', code: 'R10', text: 'Use consolidated totals.', source: 'user', active: true});
+    const {row} = await process();
+    expect(row.state).toBe('applied');
+    const queued = (await db.select().from(extractionRuns)).filter(r => r.state === 'queued');
+    expect(queued).toHaveLength(1);
+    expect(queued[0]!.specification.rules).toContain('R10: Use consolidated totals.');
+    expect(queued[0]!.specification.rules).toContain(preference.lesson);
   });
   it('defers a rule that regresses a peer development document', async () => {
     await seed('peer','NVDA',result());
