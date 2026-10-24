@@ -7,3 +7,4 @@ export * from './metrics';
 export * from './json-schema';
 export * from './extraction';
 export * from './format';
+export * from './extraction-v2';

@@ -12,6 +12,8 @@
     "fake-llm": "node scripts/fake-llm.mjs",
     "replay": "node scripts/replay-questions.mjs",
     "dump-filings": "node scripts/dump-filings.mjs",
+    "worker": "node dist/worker.js",
+    "migrate": "node dist/migrate.js",
     "benchmark": "node scripts/benchmark.mjs"
   },
   "dependencies": {

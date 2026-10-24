@@ -10,6 +10,7 @@ import type { StreamEvent } from '@desk/shared';
 import { BrandMark } from '@/components/brand';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { Dashboard } from '@/components/dashboard/dashboard';
+import { ExtractionPanel } from '@/components/extraction-panel';
 import { MubitButton, toolbarButton } from '@/components/mubit/mubit-panel';
 import { API_URL, api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
@@ -47,7 +48,9 @@ export default function DeskPage() {
       const event = JSON.parse(msg.data) as StreamEvent;
       if (event.type === 'extraction') {
         useDesk.getState().filingsChanged();
+        useDesk.getState().clearRereading();
         void client.invalidateQueries({ queryKey: ['outline', event.accession] });
+        void client.invalidateQueries({ queryKey: ['section'] });
       }
       if (event.type === 'block') {
         useDesk.getState().blockEvent(event.id, event.status);
@@ -70,7 +73,7 @@ export default function DeskPage() {
           transition={{ duration: 0.5, ease }}
           className="min-w-0 flex-1"
         >
-          <Dashboard filings={filings} title={title} />
+          <Dashboard filings={filings} title={title} projectId={projectId} />
         </motion.section>
       )}
       <aside
@@ -90,6 +93,7 @@ export default function DeskPage() {
             <Plus className="size-4" />
           </Link>
         </header>
+        <ExtractionPanel projectId={projectId} />
         <div className="min-h-0 flex-1">
           <ChatPanel filings={filings} wide={!hasTabs} />
         </div>

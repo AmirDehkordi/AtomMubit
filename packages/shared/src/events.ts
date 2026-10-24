@@ -25,6 +25,7 @@ export const StreamEvent = z.discriminatedUnion('type', [
     /** Something to show under the step, e.g. the filings find_filings found. Never sent to the model. */
     display: StepDisplay.optional(),
   }),
+  z.object({type:z.literal('extraction_progress'),id:z.number().int(),projectId:z.string(),runId:z.string().nullable(),eventType:z.string(),data:z.record(z.string(),z.unknown())}),
   z.object({ type: z.literal('text'), delta: z.string() }),
   z.object({
     type: z.literal('choice'),

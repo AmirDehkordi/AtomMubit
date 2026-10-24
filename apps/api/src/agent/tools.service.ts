@@ -5,7 +5,6 @@ import {
   TOOL_ARGS,
   formatChange,
   formatValue,
-  type ExtractionApi,
   type StepDisplay,
   type ToolArgs,
   type ToolName,
@@ -15,7 +14,7 @@ import { EXTRACTION_API } from '../core/extraction.token';
 import { DashboardService, change } from '../dashboard/dashboard.service';
 import { DbService } from '../db/db.service';
 import { blocks, companies, filings, projectFilings, projects } from '../db/schema';
-import { DocumentsService } from '../edgar/documents.service';
+import { ExtractionService } from '../extraction/extraction.service';
 import { EdgarService } from '../edgar/edgar.service';
 import { FilingTextService } from '../edgar/filing-text.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
@@ -69,9 +68,8 @@ export class ToolsService {
     private readonly edgar: EdgarService,
     private readonly xbrl: XbrlService,
     private readonly dashboard: DashboardService,
-    private readonly documents: DocumentsService,
     private readonly filingText: FilingTextService,
-    @Inject(EXTRACTION_API) private readonly extraction: ExtractionApi,
+    @Inject(EXTRACTION_API) private readonly extraction: ExtractionService,
   ) {}
 
   async run(name: string, rawArgs: string, ctx: ToolContext): Promise<ToolResult> {
@@ -104,7 +102,7 @@ export class ToolsService {
       case 'search_blocks':
         return this.searchBlocks(args as ToolArgs<'search_blocks'>, ctx);
       case 'get_blocks':
-        return this.getBlocks(args as ToolArgs<'get_blocks'>);
+        return this.getBlocks(args as ToolArgs<'get_blocks'>, ctx);
       case 'compare':
         return this.compare(args as ToolArgs<'compare'>);
       case 'show_on_dashboard':
@@ -156,11 +154,11 @@ export class ToolsService {
 
     await this.dbs.db
       .insert(projectFilings)
-      .values(rows.map((r) => ({ projectId: ctx.projectId, accession: r.accession })))
+      .values(rows.map((r) => ({ projectId: ctx.projectId, accession: r.accession, teamId: process.env.TEAM_ID?.trim() || 'internal' })))
       .onConflictDoNothing();
     await this.dbs.db
       .update(filings)
-      .set({ status: ctx.replay ? 'ready' : 'queued' })
+      .set({ status: ctx.replay ? 'found' : 'queued' })
       .where(and(inArray(filings.accession, rows.map((r) => r.accession)), eq(filings.status, 'found')));
 
     const tickers = [...new Set(rows.map((r) => r.ticker))];
@@ -174,13 +172,7 @@ export class ToolsService {
 
     if (!ctx.replay) {
       for (const r of rows) {
-        // Not awaited: the desk fetches the raw HTML and reads in the background, streaming progress.
-        this.documents
-          .job(r.accession, ctx.projectId)
-          .then((job) => this.extraction.extractFiling(job))
-          .catch((err) => {
-            this.logger.warn(`Extraction of ${r.accession} failed: ${String(err)}`);
-          });
+        await this.extraction.submitFiling(r.accession, ctx.projectId);
       }
     }
     return ok(
@@ -240,8 +232,9 @@ export class ToolsService {
   }
 
   private async searchBlocks(args: ToolArgs<'search_blocks'>, ctx: ToolContext): Promise<ToolResult> {
-    const inProject = sql`${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId})`;
-    const conditions = [inProject, sql`${blocks.tsv} @@ plainto_tsquery('english', ${args.query})`];
+    const inProject = sql`(${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId}))`;
+    const current = sql`(exists (select 1 from extraction_runs er where ${blocks.sectionId} like er.id || ':%' and er.project_id = ${ctx.projectId} and er.accepted = true) or not exists (select 1 from extraction_runs er where ${blocks.sectionId} like er.id || ':%'))`;
+    const conditions = [inProject, current, sql`${blocks.tsv} @@ plainto_tsquery('english', ${args.query})`];
     if (args.ticker) conditions.push(eq(companies.ticker, args.ticker.toUpperCase()));
     if (args.periodEnd) conditions.push(eq(blocks.periodEnd, args.periodEnd));
     if (args.types.length) conditions.push(inArray(blocks.type, args.types));
@@ -301,14 +294,12 @@ export class ToolsService {
     );
   }
 
-  private async getBlocks(args: ToolArgs<'get_blocks'>): Promise<ToolResult> {
+  private async getBlocks(args: ToolArgs<'get_blocks'>, ctx: ToolContext): Promise<ToolResult> {
     const passageIds = args.ids.filter((id) => id.startsWith('p:'));
     const blockIds = args.ids.filter((id) => !id.startsWith('p:'));
     const rows = blockIds.length
-      ? await this.dbs.db
-          .select()
-          .from(blocks)
-          .where(and(inArray(blocks.id, blockIds), isNotNull(blocks.id)))
+      ? await this.dbs.db.select().from(blocks)
+          .where(and(inArray(blocks.id, blockIds), isNotNull(blocks.id), sql`(${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId}) or ${blocks.accession} in (select accession from filings where project_id = ${ctx.projectId}))`))
       : [];
     const passages = await this.filingText.passages(passageIds);
     return ok(

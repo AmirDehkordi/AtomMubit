@@ -1,5 +1,5 @@
 {
-  "name": "mutick",
+  "name": "earnings-desk",
   "private": true,
   "packageManager": "pnpm@10.12.4",
   "scripts": {
@@ -12,7 +12,9 @@
     "db:generate": "pnpm --filter @desk/api db:generate",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "reset": "rm -rf apps/api/data/pglite && echo 'Local database cleared (task locks kept).'"
+    "reset": "rm -rf apps/api/data/pglite && echo 'Local database cleared (task locks kept).'",
+    "test": "pnpm build:shared && pnpm --filter @desk/api test && node --test apps/api/drizzle/check-migrations.mjs && node benchmarks/run.test.mjs && node --test benchmarks/development-scoring.test.mjs",
+    "benchmark:smoke": "node benchmarks/run.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^24.43.1"

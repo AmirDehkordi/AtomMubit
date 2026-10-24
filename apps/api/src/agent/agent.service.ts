@@ -8,6 +8,7 @@ import { DbService } from '../db/db.service';
 import { messages, projects } from '../db/schema';
 import { MubitService } from '../mubit/mubit.service';
 import { ProjectsService } from '../projects/projects.service';
+import { ExtractionService } from '../extraction/extraction.service';
 import { AGENT_MODEL, SYSTEM_PROMPT, TOOLS, assertAgentFrozen } from './frozen';
 import { runAgent } from './run-agent';
 import { STEP_LABELS, ToolsService } from './tools.service';
@@ -24,6 +25,7 @@ export class AgentService implements OnModuleInit {
     private readonly mubit: MubitService,
     private readonly tools: ToolsService,
     private readonly projects: ProjectsService,
+    private readonly extraction: ExtractionService,
   ) {}
 
   onModuleInit(): void {
@@ -34,8 +36,10 @@ export class AgentService implements OnModuleInit {
   async chat(conversationId: string, text: string, emit: (e: StreamEvent) => void): Promise<void> {
     const conversation = await this.projects.conversation(conversationId);
     const history = await this.history(conversationId);
+    const lessons = await this.extraction.plannerRules();
+    history.unshift({role:'user',content:JSON.stringify({houseRules:lessons})});
     await this.save(conversationId, 'user', text);
-    if (!history.length) await this.titleFromQuestion(conversation.projectId, text);
+    if (history.length === 1) await this.titleFromQuestion(conversation.projectId, text);
 
     const ctx = { projectId: conversation.projectId, conversationId, replay: conversation.replay };
     // Each model call's Mubit request id, sent with 'done' so the answer can show its receipt.

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api, type DeskFiling } from '@/lib/api';
+import { cn } from '@/lib/cn';
 import { useDesk } from '@/lib/desk-store';
 
 const CITATION = /\[\[(f|b):([^\]]+)\]\]/g;
@@ -189,6 +190,7 @@ export function SourceChip({
   label,
   onClick,
   title,
+  iconClassName,
   busy = false,
   children,
 }: {
@@ -197,6 +199,7 @@ export function SourceChip({
   label: string;
   onClick: () => void;
   title?: string;
+  iconClassName?: string;
   /** Still being read: the icon turns into a spinner. */
   busy?: boolean;
   /** Extra controls shown after the label, e.g. a link to the original. */
@@ -208,7 +211,7 @@ export function SourceChip({
         <span className="bg-raised grid size-5 place-items-center rounded-md text-[10px] font-semibold tabular-nums transition-colors group-hover:bg-[color-mix(in_oklab,var(--color-text)_12%,transparent)]">
           {n}
         </span>
-        {busy ? <Loader2 className="text-accent size-3 animate-spin" /> : <Icon className="size-3" />}
+        {busy ? <Loader2 className="text-accent size-3 animate-spin" /> : <Icon className={cn('size-3', iconClassName)} />}
         {label}
       </button>
       {children}

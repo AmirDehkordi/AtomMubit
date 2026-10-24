@@ -56,6 +56,7 @@ interface DeskState {
   /** Blocks being re-read after a correction (from `block` events with status unchecked). */
   rereading: Set<string>;
   blockEvent: (id: string, status: string) => void;
+  clearRereading: () => void;
   start: (projectId: string, conversationId: string, question: string) => void;
   load: (projectId: string, conversationId: string | null, messages: StoredMessage[], views: ViewSpec[]) => void;
   send: (text: string) => Promise<void>;
@@ -119,6 +120,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       else next.delete(id);
       return { rereading: next };
     }),
+  clearRereading: () => set({ rereading: new Set() }),
 
   start: (projectId, conversationId, question) =>
     set({ projectId, conversationId, pendingQuestion: question, messages: [], tabs: [], activeTab: null }),

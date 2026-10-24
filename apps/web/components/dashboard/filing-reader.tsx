@@ -21,12 +21,14 @@ export function FilingReader({
   accession,
   sectionId,
   highlight,
+  projectId,
 }: {
   accession: string;
   sectionId: string | null;
   highlight: string[];
+  projectId: string;
 }) {
-  const outline = useQuery({ queryKey: ['outline', accession], queryFn: () => api.outline(accession) });
+  const outline = useQuery({ queryKey: ['outline', accession, projectId], queryFn: () => api.outline(accession, projectId) });
   const [chosen, setChosen] = useState<string | null>(sectionId);
   useEffect(() => setChosen(sectionId), [sectionId]);
   const current = chosen ?? outline.data?.sections[0]?.id ?? null;
@@ -71,7 +73,15 @@ export function FilingReader({
         </ul>
       </nav>
       {current ? (
-        <SectionView key={current} sectionId={current} highlight={highlight} />
+        <SectionView
+          key={current}
+          sectionId={current}
+          highlight={highlight}
+          projectId={projectId}
+          outlineSections={sections}
+          outlineUpdatedAt={outline.dataUpdatedAt}
+          onSelectSection={setChosen}
+        />
       ) : (
         <div className="text-muted grid flex-1 place-items-center p-8 text-center text-sm">
           The desk hasn&apos;t read this filing yet. Its numbers on the overview come from the SEC&apos;s XBRL data.
@@ -81,11 +91,40 @@ export function FilingReader({
   );
 }
 
-function SectionView({ sectionId, highlight }: { sectionId: string; highlight: string[] }) {
-  const { data, error, isLoading } = useQuery({ queryKey: ['section', sectionId], queryFn: () => api.section(sectionId) });
+function SectionView({
+  sectionId,
+  highlight,
+  projectId,
+  outlineSections,
+  outlineUpdatedAt,
+  onSelectSection,
+}: {
+  sectionId: string;
+  highlight: string[];
+  projectId: string;
+  outlineSections: { id: string; item: string; kind: string }[];
+  outlineUpdatedAt: number;
+  onSelectSection: (id: string) => void;
+}) {
+  const { data, error, isLoading } = useQuery({ queryKey: ['section', sectionId, projectId], queryFn: () => api.section(sectionId, projectId) });
   const [selected, setSelected] = useState<string | null>(highlight[0] ?? null);
   const textRef = useRef<HTMLDivElement>(null);
+  const seenOutlineAt = useRef<number | null>(null);
   const focus = useMemo(() => new Set(selected ? [selected, ...highlight] : highlight), [selected, highlight]);
+
+  useEffect(() => {
+    if (!outlineUpdatedAt) return;
+    if (seenOutlineAt.current === null) {
+      seenOutlineAt.current = outlineUpdatedAt;
+      return;
+    }
+    if (seenOutlineAt.current === outlineUpdatedAt) return;
+    seenOutlineAt.current = outlineUpdatedAt;
+    if (!data || outlineSections.some((section) => section.id === sectionId)) return;
+    const replacement = outlineSections.find((section) => section.item === data.section.item && section.kind === data.section.kind)
+      ?? outlineSections[0];
+    if (replacement) onSelectSection(replacement.id);
+  }, [data, onSelectSection, outlineSections, outlineUpdatedAt, sectionId]);
 
   useEffect(() => {
     const id = selected ?? highlight[0];

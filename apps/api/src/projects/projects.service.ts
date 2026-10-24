@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { companies, conversations, filings, messages, projectFilings, projects } from '../db/schema';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
@@ -17,7 +17,7 @@ export class ProjectsService {
   async create(replay = false): Promise<{ projectId: string; conversationId: string }> {
     const projectId = randomUUID();
     const conversationId = randomUUID();
-    await this.dbs.db.insert(projects).values({ id: projectId, title: 'New desk' });
+    await this.dbs.db.insert(projects).values({ id: projectId, title: 'New desk', teamId: process.env.TEAM_ID || 'internal' });
     await this.dbs.db.insert(conversations).values({ id: conversationId, projectId, replay });
     return { projectId, conversationId };
   }
@@ -25,16 +25,18 @@ export class ProjectsService {
   async conversation(id: string) {
     const [row] = await this.dbs.db.select().from(conversations).where(eq(conversations.id, id));
     if (!row) throw new NotFoundException(`No conversation ${id}`);
+    const [project] = await this.dbs.db.select().from(projects).where(and(eq(projects.id,row.projectId),eq(projects.teamId,process.env.TEAM_ID || 'internal')));
+    if(!project) throw new NotFoundException(`No conversation ${id}`);
     return row;
   }
 
   async rename(projectId: string, title: string): Promise<void> {
-    await this.dbs.db.update(projects).set({ title }).where(eq(projects.id, projectId));
+    await this.dbs.db.update(projects).set({ title }).where(and(eq(projects.id,projectId),eq(projects.teamId,process.env.TEAM_ID || 'internal')));
   }
 
   /** Everything the desk page needs to render a project. */
   async get(projectId: string) {
-    const [project] = await this.dbs.db.select().from(projects).where(eq(projects.id, projectId));
+    const [project] = await this.dbs.db.select().from(projects).where(and(eq(projects.id,projectId),eq(projects.teamId,process.env.TEAM_ID || 'internal')));
     if (!project) throw new NotFoundException(`No project ${projectId}`);
     const [conversation] = await this.dbs.db
       .select()

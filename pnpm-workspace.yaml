@@ -1,6 +1,14 @@
 packages:
   - apps/*
   - packages/*
+allowBuilds:
+  esbuild: true
+  '@nestjs/core': true
 onlyBuiltDependencies:
   - '@nestjs/core'
   - esbuild
+
+overrides:
+  baseline-browser-mapping: 2.11.30
+  electron-to-chromium: 1.5.462
+  es-toolkit: 1.52.0

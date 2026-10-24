@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, ExternalLink, FileText, GitCompare, LayoutGrid, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, BarChart3, ExternalLink, FileText, GitCompare, LayoutGrid, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DESK_METRIC_KEYS, metricInfo, type DeskMetricKey, type ViewSpec } from '@desk/shared';
 import type { DeskFiling } from '@/lib/api';
@@ -16,7 +16,7 @@ import { SourceChip } from '../chat/answer';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: string }) {
+export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]; title: string; projectId: string }) {
   const tabs = useDesk((s) => s.tabs);
   const activeTab = useDesk((s) => s.activeTab);
   const active = tabs.find((t) => t.id === activeTab) ?? tabs[0];
@@ -24,6 +24,7 @@ export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: st
   const oneCompany = filings.length > 0 && filings.every((f) => f.ticker === filings[0]!.ticker);
   const heading = oneCompany ? companyName(filings[0]!.ticker, filings[0]!.company) : ticker && title.startsWith(`${ticker} · `) ? title.slice(ticker.length + 3) : title;
   const period = oneCompany ? [filings[0]!.quarter, filings[filings.length - 1]!.quarter].filter((q, i, a) => a.indexOf(q) === i).join(' – ') : null;
+  const failed = filings.filter((f) => f.status === 'failed').length;
 
   return (
     <div className="@container relative flex h-full flex-col">
@@ -51,6 +52,14 @@ export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: st
                 <span className="inline-flex items-center gap-1.5">
                   <ShieldCheck className="text-up size-3.5" /> Checked against SEC XBRL
                 </span>
+                {failed > 0 && (
+                  <>
+                    <span className="text-subtle">·</span>
+                    <span className="text-down inline-flex items-center gap-1.5">
+                      <AlertTriangle className="size-3" /> {failed} couldn&apos;t be read
+                    </span>
+                  </>
+                )}
               </p>
             )}
           </div>
@@ -68,7 +77,7 @@ export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: st
               exit={{ opacity: 0 }}
               transition={{ duration: 0.28, ease }}
             >
-              <View view={active.spec} />
+              <View view={active.spec} projectId={projectId} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -88,10 +97,11 @@ function FilingStrip({ filings }: { filings: DeskFiling[] }) {
         <SourceChip
           key={f.accession}
           n={i + 1}
-          icon={FileText}
+          icon={f.status === 'failed' ? AlertTriangle : FileText}
+          iconClassName={f.status === 'failed' ? 'text-down' : undefined}
           label={`${several ? `${f.ticker} ` : ''}${f.form} · ${f.quarter}`}
-          title={f.status === 'ready' ? 'Open in the reader' : 'Still reading this filing'}
-          busy={f.status !== 'ready'}
+          title={f.status === 'ready' ? 'Open in the reader' : f.status === 'failed' ? "Couldn't be read" : 'Still reading this filing'}
+          busy={f.status !== 'ready' && f.status !== 'failed'}
           onClick={() => show({ view: 'filing_reader', accession: f.accession, sectionId: null, highlight: [] })}
         >
           <a
@@ -183,14 +193,14 @@ function describe(spec: ViewSpec, filings: DeskFiling[]): { icon: typeof LayoutG
   }
 }
 
-function View({ view }: { view: ViewSpec }) {
+function View({ view, projectId }: { view: ViewSpec; projectId: string }) {
   switch (view.view) {
     case 'quarter_overview':
       return <QuarterOverview ticker={view.ticker} periods={view.periods} />;
     case 'metric_detail':
       return <MetricDetail ticker={view.ticker} metric={view.metric} periods={view.periods} />;
     case 'filing_reader':
-      return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} />;
+      return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} projectId={projectId} />;
     case 'compare':
       return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} />;
     default:

@@ -68,20 +68,18 @@ export async function runAgent(history: ResponseInputItem[], userText: string, d
       }),
     );
 
+    const callItems: ResponseInputItem[] = results.map(({ call }) => ({
+      type: 'function_call', call_id: call.call_id, name: call.name, arguments: call.arguments,
+    }));
+    const outputItems: ResponseInputItem[] = results.map(({ call, result }) => ({
+      type: 'function_call_output', call_id: call.call_id, output: result.output,
+    }));
+    // Keep each model round's parallel call batch explicit for the Chat
+    // Completions compatibility transport: calls first, then matching outputs.
+    input.push(...callItems, ...outputItems);
+    turn.items.push(...callItems, ...outputItems);
     for (const { call, result } of results) {
-      const items: ResponseInputItem[] = [
-        { type: 'function_call', call_id: call.call_id, name: call.name, arguments: call.arguments },
-        { type: 'function_call_output', call_id: call.call_id, output: result.output },
-      ];
-      input.push(...items);
-      turn.items.push(...items);
-      turn.trace.push({
-        tool: call.name as ToolTraceEntry['tool'],
-        args: safeJson(call.arguments),
-        summary: result.summary,
-        ok: result.ok,
-        ...(result.display ? { display: result.display } : {}),
-      });
+      turn.trace.push({ tool: call.name as ToolTraceEntry['tool'], args: safeJson(call.arguments), summary: result.summary, ok: result.ok, ...(result.display ? { display: result.display } : {}) });
       if (result.view) {
         turn.views.push(result.view);
         deps.emit({ type: 'view', spec: result.view });
