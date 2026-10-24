@@ -9,7 +9,7 @@ import { useDesk } from '@/lib/desk-store';
 
 const CITATION = /\[\[(f|b):([^\]]+)\]\]/g;
 /** Characters revealed per animation frame while an answer "types" in. */
-const CHARS_PER_FRAME = 9;
+const CHARS_PER_FRAME = 4;
 
 /** The answer as plain text (for copying): citations removed. */
 export const plainAnswer = (text: string) => text.replace(CITATION, '').replace(/[ \t]+\n/g, '\n').trim();

@@ -2,7 +2,7 @@
 
 import { AlertTriangle, ArrowDown, Check, ChevronRight, Copy, FileText, Plus, RotateCcw, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { DeskFiling } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { useActiveView, useDesk, type ChatMessage, type Step } from '@/lib/desk-store';
@@ -10,8 +10,8 @@ import { suggestions } from '@/lib/suggestions';
 import { Answer, plainAnswer, useReveal } from './answer';
 import { Composer } from './composer';
 
-/** How close to the bottom (px) still counts as "following" the conversation. */
-const STICK_THRESHOLD = 80;
+/** How far from the bottom (px) before the jump-to-latest button shows. */
+const STICK_THRESHOLD = 120;
 const fade = { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.25 } };
 
 export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: boolean }) {
@@ -23,42 +23,48 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
   const view = useActiveView();
 
   const scroller = useRef<HTMLDivElement>(null);
-  const content = useRef<HTMLDivElement>(null);
-  const stick = useRef(true);
+  const turnRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState(0);
   const [atBottom, setAtBottom] = useState(true);
   // Answers that arrive in this visit "type" in once; restored ones render at once.
   const [revealed, setRevealed] = useState<Set<string>>(() => new Set());
 
-  const toBottom = useCallback((smooth: boolean) => {
-    const el = scroller.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
-  }, []);
+  // The latest turn (your question and the reply) gets at least a screen of room, so when
+  // you send, your question moves to the top and the reply fills the space below it
+  // without pushing anything around.
+  const lastUser = messages.map((m) => m.role).lastIndexOf('user');
+  const earlier = lastUser > 0 ? messages.slice(0, lastUser) : lastUser === 0 ? [] : messages;
+  const turn = lastUser >= 0 ? messages.slice(lastUser) : [];
+  const live = turn.length > 0 && !turn[0]!.restored;
 
-  // Follow the conversation as it grows (new steps, the answer typing in), unless the reader scrolled up.
   useEffect(() => {
-    const el = content.current;
+    const el = scroller.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => {
-      if (stick.current) toBottom(false);
-    });
+    const observer = new ResizeObserver(() => setViewport(el.clientHeight));
     observer.observe(el);
     return () => observer.disconnect();
-  }, [toBottom]);
+  }, []);
 
-  // Sending always brings the conversation back to the bottom.
+  // A new question: bring it to the top of the chat.
   const userCount = messages.filter((m) => m.role === 'user').length;
-  useEffect(() => {
-    stick.current = true;
-    setAtBottom(true);
-    toBottom(true);
-  }, [userCount, toBottom]);
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    const t = turnRef.current;
+    if (!el || !t) return;
+    if (live) el.scrollTo({ top: Math.max(0, t.offsetTop - 16), behavior: 'smooth' });
+    else el.scrollTo({ top: el.scrollHeight });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userCount]);
+
+  const toBottom = useCallback(() => {
+    const el = scroller.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, []);
 
   const onScroll = () => {
     const el = scroller.current;
     if (!el) return;
-    const near = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD;
-    stick.current = near;
-    setAtBottom(near);
+    setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD);
   };
 
   const last = messages[messages.length - 1];
@@ -76,34 +82,56 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto">
-        <div ref={content} className={cn(column, 'space-y-7 pt-6 pb-8')}>
-          {messages.map((m, i) => (
-            <Message
-              key={m.id}
-              message={m}
-              filings={filings}
-              isLast={i === messages.length - 1}
-              animate={!m.restored}
-              onRevealed={() => setRevealed((s) => new Set(s).add(m.id))}
-              onChoose={send}
-              onRetry={retry}
-            />
-          ))}
-          {next.length > 0 && !sending && (
-            <motion.div key={last?.id} {...fade} transition={{ duration: 0.3, delay: 0.15 }}>
-              <p className="text-subtle mb-2 text-[11px] font-medium tracking-wider uppercase">Ask next</p>
-              <div className="flex flex-wrap gap-2">
-                {next.map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => send(q)}
-                    className="border-line text-muted hover:text-text hover:bg-raised rounded-full border px-3 py-1.5 text-left text-[13px] transition-colors"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
+        <div className={cn(column, 'pt-6 pb-8')}>
+          <div className="space-y-7">
+            {earlier.map((m) => (
+              <Message
+                key={m.id}
+                message={m}
+                filings={filings}
+                isLast={false}
+                animate={!m.restored}
+                onRevealed={() => setRevealed((s) => new Set(s).add(m.id))}
+                onChoose={send}
+                onRetry={retry}
+              />
+            ))}
+          </div>
+          {turn.length > 0 && (
+            <div
+              ref={turnRef}
+              className={cn('space-y-7', earlier.length > 0 && 'pt-7')}
+              style={live && viewport ? { minHeight: viewport - 48 } : undefined}
+            >
+              {turn.map((m, i) => (
+                <Message
+                  key={m.id}
+                  message={m}
+                  filings={filings}
+                  isLast={i === turn.length - 1}
+                  animate={!m.restored}
+                  onRevealed={() => setRevealed((s) => new Set(s).add(m.id))}
+                  onChoose={send}
+                  onRetry={retry}
+                />
+              ))}
+              {next.length > 0 && !sending && (
+                <motion.div key={last?.id} {...fade} transition={{ duration: 0.4, delay: 0.1 }}>
+                  <p className="text-subtle mb-2 text-[11px] font-medium tracking-wider uppercase">Ask next</p>
+                  <div className="flex flex-wrap gap-2">
+                    {next.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => send(q)}
+                        className="border-line text-muted hover:text-text hover:bg-raised rounded-full border px-3 py-1.5 text-left text-[13px] transition-colors"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -115,10 +143,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.15 }}
-            onClick={() => {
-              stick.current = true;
-              toBottom(true);
-            }}
+            onClick={toBottom}
             className="border-line bg-raised text-muted hover:text-text absolute bottom-[120px] left-1/2 z-10 grid size-8 -translate-x-1/2 place-items-center rounded-full border shadow-lg"
             aria-label="Jump to the latest message"
           >
@@ -171,7 +196,14 @@ function Message({
     <motion.div {...(animate ? fade : {})} className="group space-y-3">
       {(message.steps.length > 0 || thinking) && <Activity steps={message.steps} pending={message.pending} startedAt={message.startedAt} />}
 
-      {text && <Answer text={text} filings={filings} />}
+      {text && (
+        <div
+          className="transition-[mask-image] duration-300"
+          style={typing ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 2.2em), rgba(0,0,0,0.15))' } : undefined}
+        >
+          <Answer text={text} filings={filings} />
+        </div>
+      )}
 
       {message.choice && !typing && (
         <motion.div {...fade} className="border-line bg-panel overflow-hidden rounded-2xl border">
