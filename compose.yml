@@ -1,15 +1,163 @@
-# Optional: real Postgres. Without DATABASE_URL the API uses embedded Postgres (PGlite)
-# in apps/api/data/pglite, so Docker is not needed to develop.
+name: atom-mubit
+
+x-api-build: &api-build
+  context: .
+  dockerfile: apps/api/Dockerfile
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.6-alpine
     environment:
-      POSTGRES_USER: desk
-      POSTGRES_PASSWORD: desk
-      POSTGRES_DB: desk
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-postgres-local}
+      DESK_DB_PASSWORD: ${DESK_DB_PASSWORD:-desk-local}
+      LANGFLOW_DB_PASSWORD: ${LANGFLOW_DB_PASSWORD:-langflow-local}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    image: &api-image atom-mubit-api:local
+    build: *api-build
+    command: ['node', 'dist/migrate.js']
+    environment:
+      DATABASE_URL: postgres://desk:${DESK_DB_PASSWORD:-desk-local}@postgres:5432/desk
+      RUN_MIGRATIONS: '1'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    image: *api-image
+    build: *api-build
+    command: ['node', 'dist/main.js']
+    environment:
+      DATABASE_URL: postgres://desk:${DESK_DB_PASSWORD:-desk-local}@postgres:5432/desk
+      RUN_MIGRATIONS: '0'
+      PORT: '4000'
+      WEB_ORIGIN: http://localhost:3100
+      LANGFLOW_URL: http://langflow:7860
+      LANGFLOW_API_KEY: ${LANGFLOW_API_KEY:-}
+      LANGFLOW_EXTRACTION_FLOW_ID: ${LANGFLOW_EXTRACTION_FLOW_ID:-}
+      LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
+      MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
+      WORKFLOW_MODE: langflow
+      AGENT_MODEL: ${AGENT_MODEL:-openai/gpt-6-luna}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen/qwen3-30b-a3b-instruct-2507}
+      FEEDBACK_MODEL: ${FEEDBACK_MODEL:-openai/gpt-6-luna}
+      MUBIT_API_KEY: ${MUBIT_API_KEY:-}
+      MUBIT_BASE_URL: ${MUBIT_BASE_URL:-https://api.mubit.ai/compat/openrouter/v1}
+      SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      WATCHLIST_TICKERS: ${WATCHLIST_TICKERS:-AAPL,MSFT,NVDA,WMT,JPM}
+    ports:
+      - '127.0.0.1:4000:4000'
+    volumes:
+      - documents:/app/apps/api/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      langflow:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+
+  worker:
+    image: *api-image
+    build: *api-build
+    command: ['node', 'dist/worker.js']
+    environment:
+      DATABASE_URL: postgres://desk:${DESK_DB_PASSWORD:-desk-local}@postgres:5432/desk
+      RUN_MIGRATIONS: '0'
+      LANGFLOW_URL: http://langflow:7860
+      LANGFLOW_API_KEY: ${LANGFLOW_API_KEY:-}
+      LANGFLOW_EXTRACTION_FLOW_ID: ${LANGFLOW_EXTRACTION_FLOW_ID:-}
+      LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
+      MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
+      WORKFLOW_MODE: langflow
+      AGENT_MODEL: ${AGENT_MODEL:-openai/gpt-6-luna}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen/qwen3-30b-a3b-instruct-2507}
+      FEEDBACK_MODEL: ${FEEDBACK_MODEL:-openai/gpt-6-luna}
+      MUBIT_API_KEY: ${MUBIT_API_KEY:-}
+      MUBIT_BASE_URL: ${MUBIT_BASE_URL:-https://api.mubit.ai/compat/openrouter/v1}
+      SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      WATCHLIST_TICKERS: ${WATCHLIST_TICKERS:-AAPL,MSFT,NVDA,WMT,JPM}
+    volumes:
+      - documents:/app/apps/api/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      langflow:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      PORT: '3100'
+    ports:
+      - '127.0.0.1:3100:3100'
+    depends_on:
+      api:
+        condition: service_healthy
+
+  benchmark:
+    image: *api-image
+    build: *api-build
+    profiles: [benchmark]
+    working_dir: /app/apps/api
+    command: ['node', 'benchmarks/run.mjs']
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      MUBIT_API_KEY: ${MUBIT_API_KEY:-}
+      BENCH_DIRECT_INPUT_USD_PER_MILLION: ${BENCH_DIRECT_INPUT_USD_PER_MILLION:-}
+      BENCH_DIRECT_OUTPUT_USD_PER_MILLION: ${BENCH_DIRECT_OUTPUT_USD_PER_MILLION:-}
+      BENCH_MUBIT_INPUT_USD_PER_MILLION: ${BENCH_MUBIT_INPUT_USD_PER_MILLION:-}
+      BENCH_MUBIT_OUTPUT_USD_PER_MILLION: ${BENCH_MUBIT_OUTPUT_USD_PER_MILLION:-}
+      BENCH_DIRECT_CACHE_READ_USD_PER_MILLION: ${BENCH_DIRECT_CACHE_READ_USD_PER_MILLION:-}
+      BENCH_DIRECT_CACHE_WRITE_USD_PER_MILLION: ${BENCH_DIRECT_CACHE_WRITE_USD_PER_MILLION:-}
+      BENCH_MUBIT_CACHE_READ_USD_PER_MILLION: ${BENCH_MUBIT_CACHE_READ_USD_PER_MILLION:-}
+      BENCH_MUBIT_CACHE_WRITE_USD_PER_MILLION: ${BENCH_MUBIT_CACHE_WRITE_USD_PER_MILLION:-}
+      MUBIT_UNRECORDED_CONFIRMED: ${MUBIT_UNRECORDED_CONFIRMED:-}
+      BENCH_MUBIT_FEE_USD_PER_CALL: ${BENCH_MUBIT_FEE_USD_PER_CALL:-}
+    volumes:
+      - ./benchmarks/results:/app/apps/api/benchmarks/results
+
+  langflow:
+    image: langflowai/langflow:1.13.0
+    environment:
+      LANGFLOW_DATABASE_URL: postgresql://langflow:${LANGFLOW_DB_PASSWORD:-langflow-local}@postgres:5432/langflow
+      LANGFLOW_COMPONENTS_PATH: /app/custom_components
+      LANGFLOW_AUTO_LOGIN: 'true'
+      MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
+      MODEL_GATEWAY_URL: http://api:4000/internal/model
+    ports:
+      - '127.0.0.1:7860:7860'
+    volumes:
+      - ./workflows/langflow/components:/app/custom_components:ro
+      - langflow-data:/app/langflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/health_check', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
 volumes:
   pgdata:
+  documents:
+  langflow-data:

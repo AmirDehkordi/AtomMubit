@@ -1,3 +1,5 @@
+> Historical v1 contract. The implemented integrated API and worker use [contract v2](extraction-contract-v2.md); keep this document for legacy task/citation context.
+
 # Extraction contract
 
 For whoever builds the extraction module. The rest of the desk (filing search, XBRL numbers,

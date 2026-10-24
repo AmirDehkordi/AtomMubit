@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import type { StreamEvent } from '@desk/shared';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { Dashboard } from '@/components/dashboard/dashboard';
+import { ExtractionPanel } from '@/components/extraction-panel';
 import { API_URL, api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
 
@@ -79,6 +80,7 @@ export default function DeskPage() {
             </Link>
             <span className="truncate text-sm font-medium">{split ? 'Desk chat' : title || 'Earnings Desk'}</span>
           </div>
+          <ExtractionPanel projectId={projectId} />
           <div className="min-h-0 flex-1">
             <ChatPanel filings={filings} compact={split} />
           </div>

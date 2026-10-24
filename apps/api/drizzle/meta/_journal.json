@@ -15,6 +15,27 @@
       "when": 1792858664048,
       "tag": "0001_clear_leper_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792864657159,
+      "tag": "0002_colossal_nico_minoru",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792864804003,
+      "tag": "0003_first_sinister_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792865308156,
+      "tag": "0004_loose_wraith",
+      "breakpoints": true
     }
   ]
 }

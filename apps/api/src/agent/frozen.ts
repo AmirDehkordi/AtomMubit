@@ -57,7 +57,10 @@ export const TOOLS: FunctionTool[] = TOOL_NAMES.map((name) => ({
 }));
 
 export const TASK_FINGERPRINT = createHash('sha256')
-  .update(JSON.stringify({ model: AGENT_MODEL, system: SYSTEM_PROMPT, tools: TOOLS }))
+  // OpenRouter's explicit `openai/` provider prefix qualifies the same frozen
+  // model ID that the previous Mubit integration recorded without a prefix.
+  // Normalize this alias so the existing desk_agent.lock is preserved.
+  .update(JSON.stringify({ model: AGENT_MODEL.replace(/^openai\//, ''), system: SYSTEM_PROMPT, tools: TOOLS }))
   .digest('hex')
   .slice(0, 16);
 
@@ -76,5 +79,21 @@ export function assertAgentFrozen(): void {
         'This would start a new Mubit task and reset its examples. Revert the change, ' +
         'or delete data/desk_agent.lock (or set ALLOW_TASK_CHANGE=1) if you mean it.',
     );
+  }
+}
+
+/** Transport changes are versioned independently from the frozen task. This
+ * migration leaves data/desk_agent.lock byte-for-byte intact. */
+export const TRANSPORT_FINGERPRINT = createHash('sha256')
+  .update(JSON.stringify({ version: 2, protocol: 'responses-to-chat-completions', retries: 0, baseURL: config.mubitBaseUrl }))
+  .digest('hex').slice(0, 16);
+
+export function assertTransportFrozen(): void {
+  const lockPath = join(config.dataDir, 'mubit_transport.lock');
+  mkdirSync(config.dataDir, { recursive: true });
+  if (!existsSync(lockPath)) { writeFileSync(lockPath, TRANSPORT_FINGERPRINT + '\n'); return; }
+  const locked = readFileSync(lockPath, 'utf8').trim();
+  if (locked !== TRANSPORT_FINGERPRINT && process.env.ALLOW_TRANSPORT_CHANGE !== '1') {
+    throw new Error(`The Mubit transport changed (lock ${locked}, now ${TRANSPORT_FINGERPRINT}). Set ALLOW_TRANSPORT_CHANGE=1 to intentionally migrate the transport version.`);
   }
 }

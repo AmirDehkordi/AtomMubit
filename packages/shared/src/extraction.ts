@@ -1,4 +1,4 @@
-// The boundary between the desk and the extraction module (built separately).
+// Filing ingestion types shared by the desk and the integrated extraction worker.
 // See docs/extraction-contract.md.
 
 /** One HTML document of a filing, exactly as the SEC serves it. */
@@ -45,6 +45,6 @@ export interface ExtractionSummary {
 
 /** The service the extraction module provides to the rest of the API. */
 export interface ExtractionApi {
-  /** Reads one filing. Idempotent: a finished filing returns its summary without new LLM calls. */
-  extractFiling(job: ExtractionJob): Promise<ExtractionSummary>;
+  /** Durably queue SEC document retrieval and extraction; completion is polled via /v1/data. */
+  submitFiling(accession: string, projectId: string, requestId?: string, fields?: string[]): Promise<{accession: string; state: string}>;
 }

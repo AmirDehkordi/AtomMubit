@@ -10,3 +10,8 @@ apps/web/next-env.d.ts
 .DS_Store
 !apps/api/data/*.lock
 samples
+
+.pnpm-store/
+__pycache__/
+*.pyc
+benchmarks/results/

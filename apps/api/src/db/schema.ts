@@ -9,6 +9,8 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
+  bigserial,
 } from 'drizzle-orm/pg-core';
 import type { BlockStatus, FilingStatus, ToolName, ViewSpec } from '@desk/shared';
 
@@ -18,6 +20,7 @@ const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull(
 
 export const projects = pgTable('projects', {
   id: text('id').primaryKey(),
+  teamId: text('team_id').notNull().default('internal'),
   title: text('title').notNull(),
   createdAt: createdAt(),
 });
@@ -217,3 +220,91 @@ export const views = pgTable(
   },
   (t) => [index('views_project_idx').on(t.projectId)],
 );
+
+/** Durable extraction v2 state. Legacy citations remain immutable. */
+export const sourceDocuments = pgTable('source_documents', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  accession: text('accession'), ticker: text('ticker'), name: text('name').notNull(),
+  format: text('format').notNull(), checksum: text('checksum').notNull(),
+  content: text('content').notNull(), rawBase64: text('raw_base64'),
+  sourceUrl: text('source_url'), metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt(),
+}, t => [uniqueIndex('source_documents_identity').on(t.teamId, t.checksum, t.name, t.ticker)]);
+
+export const projectDocuments = pgTable('project_documents', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  projectId: text('project_id').notNull().references(() => projects.id),
+  documentId: text('document_id').notNull().references(() => sourceDocuments.id),
+}, t => [uniqueIndex('project_documents_membership').on(t.projectId, t.documentId)]);
+export const projectFilings = pgTable('project_filings', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  projectId: text('project_id').notNull().references(() => projects.id),
+  accession: text('accession').notNull().references(() => filings.accession),
+}, t => [uniqueIndex('project_filings_membership').on(t.projectId, t.accession)]);
+
+export const extractionRequests = pgTable('extraction_requests', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  projectId: text('project_id').notNull().references(() => projects.id),
+  key: text('key').notNull().unique(), fingerprint: text('fingerprint').notNull(),
+  text: text('text').notNull(), parentId: text('parent_id'),
+  state: text('state').notNull().default('queued'), question: text('question'),
+  plan: jsonb('plan').$type<Record<string, unknown>>(), error: text('error'), createdAt: createdAt(),
+});
+export const extractionRuns = pgTable('extraction_runs', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  projectId: text('project_id').notNull().references(() => projects.id), requestId: text('request_id'),
+  documentId: text('document_id').notNull().references(() => sourceDocuments.id),
+  identity: text('identity').notNull().unique(), state: text('state').notNull().default('queued'),
+  ruleVersion: integer('rule_version').notNull().default(0),
+  specification: jsonb('specification').$type<Record<string, unknown>>().notNull().default({}),
+  output: jsonb('output').$type<Record<string, unknown>>(), error: text('error'),
+  accepted: boolean('accepted').notNull().default(false), createdAt: createdAt(), completedAt: timestamp('completed_at', { withTimezone: true }),
+});
+export const workJobs = pgTable('work_jobs', {
+  id: text('id').primaryKey(), key: text('key').notNull().unique(), kind: text('kind').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  state: text('state').notNull().default('queued'), attempts: integer('attempts').notNull().default(0),
+  availableAt: timestamp('available_at', { withTimezone: true }).notNull().defaultNow(),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }), leaseToken: text('lease_token'),
+  error: text('error'), createdAt: createdAt(),
+}, t => [index('work_jobs_available').on(t.state, t.availableAt)]);
+export const extractionEvents = pgTable('extraction_events', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(), teamId: text('team_id').notNull(),
+  projectId: text('project_id').notNull(), runId: text('run_id'),
+  type: text('type').notNull(), data: jsonb('data').$type<Record<string, unknown>>().notNull(), createdAt: createdAt(),
+}, t => [index('extraction_events_project').on(t.projectId, t.id)]);
+export const monitoringWatchlist = pgTable('monitoring_watchlist', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(), projectId: text('project_id').notNull(),
+  ticker: text('ticker').notNull(), lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+  error: text('error'), createdAt: createdAt(),
+}, t => [uniqueIndex('monitoring_watchlist_member').on(t.teamId, t.projectId, t.ticker)]);
+export const policyVersions = pgTable('policy_versions', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(),
+  version: integer('version').notNull(), ticker: text('ticker'),
+  feedbackId: text('feedback_id'), lesson: text('lesson').notNull(),
+  target: text('target').notNull(), active: boolean('active').notNull().default(true), createdAt: createdAt(),
+}, t => [uniqueIndex('policy_versions_sequence').on(t.teamId, t.version)]);
+export const extractionFeedback = pgTable('extraction_feedback', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(), projectId: text('project_id').notNull(),
+  runId: text('run_id').notNull().references(() => extractionRuns.id), key: text('key').notNull().unique(),
+  fingerprint: text('fingerprint').notNull(), text: text('text').notNull(),
+  state: text('state').notNull().default('queued'), decision: jsonb('decision').$type<Record<string, unknown>>(),
+  createdAt: createdAt(),
+});
+export const inferenceAttempts = pgTable('inference_attempts', {
+  id: text('id').primaryKey(), teamId: text('team_id').notNull(), runId: text('run_id'),
+  task: text('task').notNull(), route: text('route').notNull(), model: text('model').notNull(),
+  requestId: text('request_id'), provider: text('provider'), latencyMs: doublePrecision('latency_ms').notNull(),
+  tokensIn: integer('tokens_in'), tokensOut: integer('tokens_out'), costUsd: doublePrecision('cost_usd'),
+  ok: boolean('ok').notNull(), error: text('error'), details: jsonb('details').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt(),
+});
+/** Row locks reserve SEC request slots across API and worker processes. */
+export const serviceLocks = pgTable('service_locks', {
+  id: text('id').primaryKey(), nextAt: timestamp('next_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const requestRuns = pgTable('request_runs', {
+  id: text('id').primaryKey(),
+  requestId: text('request_id').notNull().references(() => extractionRequests.id),
+  runId: text('run_id').notNull().references(() => extractionRuns.id),
+}, t => [uniqueIndex('request_runs_membership').on(t.requestId, t.runId)]);

@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { EdgarModule } from '../edgar/edgar.module';
-import { ExtractionStubModule } from '../extraction-stub/extraction-stub.module';
+import { ExtractionModule } from '../extraction/extraction.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { AgentController } from './agent.controller';
 import { AgentService } from './agent.service';
 import { ToolsService } from './tools.service';
 
 @Module({
-  // Swap ExtractionStubModule for the real ExtractionModule when it lands.
-  imports: [EdgarModule, DashboardModule, ProjectsModule, ExtractionStubModule],
+  imports: [EdgarModule, DashboardModule, ProjectsModule, ExtractionModule],
   providers: [AgentService, ToolsService],
   controllers: [AgentController],
 })
