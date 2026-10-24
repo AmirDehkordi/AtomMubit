@@ -24,12 +24,14 @@ pnpm --filter @desk/api fake-llm                     # port 4099
 MUBIT_BASE_URL=http://localhost:4099/v1 MUBIT_API_KEY=fake pnpm dev
 ```
 
-**Giving Mubit volume:** with the API running on a real key, replay templated questions about 25 large
-US companies. Replayed conversations don't start extraction. Mubit's reviewer reads at most 200 new
-calls per task per day, so start early.
+**Giving Mubit volume:** with the API running on a real key, replay templated questions about 50 large
+US companies. Replayed conversations don't start extraction, and no question is sent twice. Mubit's
+reviewer reads at most 200 new calls per task per day (reset 00:00 UTC), so cap each day's batch;
+see [docs/mubit-training.md](docs/mubit-training.md).
 
 ```bash
-pnpm --filter @desk/api replay --count 120 --concurrency 4
+pnpm --filter @desk/api replay --max-calls 215 --concurrency 3           # now
+pnpm --filter @desk/api replay --max-calls 215 --concurrency 3 --wait-reset  # just after 00:00 UTC
 ```
 
 No Docker needed: without `DATABASE_URL` the API runs embedded Postgres (PGlite) in
