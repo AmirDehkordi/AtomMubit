@@ -8,6 +8,13 @@
       "when": 1792857356646,
       "tag": "0000_complex_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792858664048,
+      "tag": "0001_clear_leper_queen",
+      "breakpoints": true
     }
   ]
 }

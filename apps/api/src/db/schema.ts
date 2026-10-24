@@ -170,7 +170,11 @@ export const llmCalls = pgTable(
 
 export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
-  projectId: text('project_id').references(() => projects.id),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => projects.id),
+  /** Replayed questions (to give Mubit volume) don't start real extraction. */
+  replay: boolean('replay').notNull().default(false),
   createdAt: createdAt(),
 });
 
@@ -191,6 +195,10 @@ export const messages = pgTable(
     role: text('role').$type<'user' | 'assistant'>().notNull(),
     content: text('content').notNull(),
     toolTrace: jsonb('tool_trace').$type<ToolTraceEntry[]>().notNull().default([]),
+    /** The turn's tool calls and results as Responses API input items, replayed as history. */
+    items: jsonb('items').$type<unknown[]>().notNull().default([]),
+    /** An ask_user card shown at the end of the turn, if any. */
+    choice: jsonb('choice').$type<{ id: string; question: string; options: string[] } | null>(),
     createdAt: createdAt(),
   },
   (t) => [index('messages_conversation_idx').on(t.conversationId)],

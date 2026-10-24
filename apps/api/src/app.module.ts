@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
-import { EventsService } from './core/events.service';
+import { AgentModule } from './agent/agent.module';
+import { CoreModule } from './core/core.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { DbModule } from './db/db.module';
 import { EdgarModule } from './edgar/edgar.module';
-import { MubitModule } from './mubit/mubit.module';
 import { HealthController } from './health.controller';
+import { MubitModule } from './mubit/mubit.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
-  imports: [DbModule, MubitModule, EdgarModule],
+  imports: [CoreModule, DbModule, MubitModule, EdgarModule, DashboardModule, ProjectsModule, AgentModule],
   controllers: [HealthController],
-  providers: [EventsService],
 })
 export class AppModule {}

@@ -38,7 +38,7 @@ export const TOOL_ARGS = {
     ids: z.array(z.string()).min(1).max(8),
   }),
   compare: z.strictObject({
-    metric: z.string(),
+    metric: MetricKey,
     tickers: z.array(z.string()).min(2).max(8),
     periodEnd: z.string().nullable(),
   }),

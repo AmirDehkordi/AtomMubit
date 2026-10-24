@@ -41,7 +41,7 @@ only the summary counts.
 - Provide it under the injection token `EXTRACTION_API` (`apps/api/src/core/extraction.token.ts`):
   `providers: [ExtractionService, { provide: EXTRACTION_API, useExisting: ExtractionService }]`,
   `exports: [EXTRACTION_API]`.
-- In `apps/api/src/app.module.ts`, replace `ExtractionStubModule` with your `ExtractionModule`. The
+- In `apps/api/src/agent/agent.module.ts`, replace `ExtractionStubModule` with your `ExtractionModule`. The
   stub (`apps/api/src/extraction-stub/`) only marks filings ready so the desk works before
   extraction lands; delete it once yours is in.
 - The agent's `add_filings` tool sets `filings.projectId` and `status: 'queued'`, then calls
