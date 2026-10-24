@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
-import type { ExtractionApi, ExtractionJob, ExtractionSummary } from '@desk/shared';
+import { eq, inArray } from 'drizzle-orm';
+import type { ExtractionApi, ExtractionJob, ExtractionSummary, RereadRequest } from '@desk/shared';
 import { EventsService } from '../core/events.service';
 import { DbService } from '../db/db.service';
-import { filings } from '../db/schema';
+import { blocks, filings } from '../db/schema';
 
 /**
  * Stand-in until the real extraction module lands (docs/extraction-contract.md):
@@ -30,5 +30,15 @@ export class ExtractionStubService implements ExtractionApi {
       review: 0,
     });
     return summary;
+  }
+
+  /** The stub can't re-read; it puts the blocks back to their stored status so the UI settles. */
+  async rereadSections({ projectId, sectionIds }: RereadRequest): Promise<void> {
+    if (!sectionIds.length) return;
+    const rows = await this.dbs.db
+      .select({ id: blocks.id, status: blocks.status })
+      .from(blocks)
+      .where(inArray(blocks.sectionId, sectionIds));
+    for (const b of rows) this.events.emit(projectId, { type: 'block', id: b.id, status: b.status });
   }
 }

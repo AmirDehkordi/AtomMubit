@@ -1,7 +1,7 @@
 import { BadRequestException, Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { asc, eq, inArray, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { blocks, checks, companies, filings, sections } from '../db/schema';
+import { blocks, checks, companies, corrections, filings, rules, sections } from '../db/schema';
 import { fiscalLabel, quarterName, releaseLabel } from '../edgar/fiscal';
 
 /** What the filing reader shows: a filing's sections, a section's text with its blocks, and block lookups. */
@@ -69,13 +69,17 @@ export class ReaderController {
 
   private async withChecks(rows: (typeof blocks.$inferSelect)[]) {
     if (!rows.length) return [];
-    const all = await this.dbs.db
-      .select()
-      .from(checks)
-      .where(inArray(checks.blockId, rows.map((b) => b.id)));
+    const ids = rows.map((b) => b.id);
+    const all = await this.dbs.db.select().from(checks).where(inArray(checks.blockId, ids));
+    const fixes = await this.dbs.db
+      .select({ id: corrections.id, blockId: corrections.blockId, note: corrections.note, status: corrections.status, ruleCode: rules.code, ruleText: rules.text })
+      .from(corrections)
+      .innerJoin(rules, eq(corrections.ruleId, rules.id))
+      .where(inArray(corrections.blockId, ids));
     return rows.map(({ tsv: _tsv, ...b }) => ({
       ...b,
       checks: all.filter((c) => c.blockId === b.id).map(({ verifier, passed, detail }) => ({ verifier, passed, detail })),
+      corrections: fixes.filter((c) => c.blockId === b.id && c.status !== 'dismissed').map(({ blockId: _b, ...c }) => c),
     }));
   }
 }

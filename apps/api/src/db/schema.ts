@@ -235,3 +235,31 @@ export const mubitStatus = pgTable('mubit_status', {
   note: text('note'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * A person's correction of an extracted block. It proposes a desk rule; once
+ * confirmed, the rule becomes active and the affected sections are re-read
+ * with it (those re-read calls are the corrected examples Mubit learns from).
+ */
+export const corrections = pgTable(
+  'corrections',
+  {
+    id: text('id').primaryKey(),
+    blockId: text('block_id')
+      .notNull()
+      .references(() => blocks.id),
+    accession: text('accession').notNull(),
+    sectionId: text('section_id').notNull(),
+    projectId: text('project_id'),
+    note: text('note').notNull(),
+    ruleId: text('rule_id')
+      .notNull()
+      .references(() => rules.id),
+    status: text('status').$type<'proposed' | 'applied' | 'dismissed'>().notNull().default('proposed'),
+    /** Sections re-read when the correction was applied. */
+    rereadSections: jsonb('reread_sections').$type<string[]>().notNull().default([]),
+    createdAt: createdAt(),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+  },
+  (t) => [index('corrections_block_idx').on(t.blockId)],
+);

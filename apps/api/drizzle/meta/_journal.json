@@ -22,6 +22,13 @@
       "when": 1792862519293,
       "tag": "0002_abandoned_hobgoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792862971600,
+      "tag": "0003_tiresome_swordsman",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Wrench } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Flag, Loader2, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatValue } from '@desk/shared';
 import { api, type ReaderBlock } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { useDesk } from '@/lib/desk-store';
+import { CorrectionFlow } from './correction-flow';
 
 const STATUS = {
   verified: { label: 'Verified', icon: CheckCircle2, mark: 'decoration-up', text: 'text-up' },
@@ -134,21 +136,47 @@ function SectionView({ sectionId, highlight }: { sectionId: string; highlight: s
 }
 
 function BlockCard({ block, active, onClick }: { block: ReaderBlock; active: boolean; onClick: () => void }) {
+  const [flagging, setFlagging] = useState(false);
+  const rereading = useDesk((s) => s.rereading.has(block.id));
   const status = STATUS[block.status];
   const Icon = status.icon;
   const failed = block.checks.filter((c) => !c.passed);
+  const applied = block.corrections.filter((c) => c.status === 'applied');
   return (
-    <li>
-      <button
+    <li className="space-y-1.5">
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onClick}
+        onKeyDown={(e) => e.key === 'Enter' && onClick()}
         className={cn(
-          'bg-ink w-full rounded-lg border p-2.5 text-left text-xs transition-colors',
+          'bg-ink group w-full cursor-pointer rounded-lg border p-2.5 text-left text-xs transition-colors',
           active ? 'border-accent/60' : 'border-line hover:border-accent/30',
         )}
       >
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-medium">{block.label}</span>
-          <Icon className={cn('size-3.5 shrink-0', status.text)} aria-label={status.label} />
+          <span className="flex shrink-0 items-center gap-1.5">
+            {!flagging && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick();
+                  setFlagging(true);
+                }}
+                title="Flag a mistake"
+                aria-label="Flag a mistake"
+                className="text-muted hover:text-down opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              >
+                <Flag className="size-3.5" />
+              </button>
+            )}
+            {rereading ? (
+              <Loader2 className="text-accent size-3.5 animate-spin" aria-label="Re-reading" />
+            ) : (
+              <Icon className={cn('size-3.5', status.text)} aria-label={status.label} />
+            )}
+          </span>
         </div>
         {block.value !== null && <p className="mt-1 text-sm font-semibold tabular-nums">{blockValue(block)}</p>}
         {block.text && <p className="text-muted mt-1 line-clamp-3">{block.text}</p>}
@@ -161,7 +189,14 @@ function BlockCard({ block, active, onClick }: { block: ReaderBlock; active: boo
             {c.verifier}: {c.detail}
           </p>
         ))}
-      </button>
+        {applied.map((c) => (
+          <p key={c.id} className="text-accent mt-1">
+            Corrected: {c.note} → {c.ruleCode}
+            {rereading && <span className="text-muted"> · re-reading</span>}
+          </p>
+        ))}
+      </div>
+      {flagging && <CorrectionFlow block={block} onClose={() => setFlagging(false)} />}
     </li>
   );
 }

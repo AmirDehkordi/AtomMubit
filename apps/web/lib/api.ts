@@ -103,6 +103,32 @@ export interface ReaderBlock {
   spanEnd: number | null;
   status: 'verified' | 'fixed' | 'review' | 'unchecked';
   checks: { verifier: string; passed: boolean; detail: string }[];
+  corrections: { id: string; note: string; status: 'proposed' | 'applied'; ruleCode: string; ruleText: string }[];
+}
+
+export interface Rule {
+  id: string;
+  code: string;
+  text: string;
+  source: 'seed' | 'verifier' | 'user';
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ProposedCorrection {
+  correction: { id: string; blockId: string; status: 'proposed' };
+  rule: Rule;
+  affected: { id: string; accession: string; item: string; title: string }[];
+}
+
+async function post<T>(path: string, body: unknown = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  return res.json() as Promise<T>;
 }
 
 export interface FilingOutline {
@@ -130,6 +156,11 @@ export const api = {
   outline: (accession: string) => get<FilingOutline>(`/filings/${accession}/sections`),
   section: (id: string) => get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}`),
   blocks: (ids: string[]) => get<ReaderBlock[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
+  rules: () => get<Rule[]>('/rules'),
+  proposeCorrection: (input: { blockId: string; note: string; ruleCode: string | null; ruleText: string | null }) =>
+    post<ProposedCorrection>('/corrections', input),
+  applyCorrection: (id: string) => post<{ sectionIds: string[] }>(`/corrections/${id}/apply`),
+  dismissCorrection: (id: string) => post<{ ok: true }>(`/corrections/${id}/dismiss`),
   mubitStatus: () => get<MubitStatus>('/mubit/status'),
   saveConsoleStatus: async (status: Omit<ConsoleStatus, 'updatedAt'>) => {
     const res = await fetch(`${API_URL}/mubit/console-status`, {

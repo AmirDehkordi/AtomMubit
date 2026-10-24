@@ -69,6 +69,15 @@ Or over HTTP: `GET /filings/<accession>/job` (job with document sizes) and
   ```
 
   Idempotent: calling it again for a finished filing returns its summary without new LLM calls.
+
+  ```ts
+  rereadSections(request: RereadRequest): Promise<void>
+  // { projectId, sectionIds, correctionId, ruleCode }
+  ```
+
+  Called when a person corrects a block and confirms a rule (section 7). Re-run section_extractor on
+  those sections **even if they were read before**, with the current active rules, replace their
+  blocks and checks, and stream `block` / `extraction` events. Not awaited by the desk.
 - Provide it under the injection token `EXTRACTION_API` (`apps/api/src/core/extraction.token.ts`):
   `providers: [ExtractionService, { provide: EXTRACTION_API, useExisting: ExtractionService }]`,
   `exports: [EXTRACTION_API]`.
@@ -216,7 +225,20 @@ active yet (`source: 'verifier'`), and run that section once more with the updat
 That second call is the corrected example Mubit can learn from. Never put the expected answer
 (e.g. "XBRL says 96,221") in the input; only the general rule.
 
-Suggested starting rules (`source: 'seed'`):
+**People correct blocks too.** In the filing reader, a person flags a block ("this is the nine-month
+figure"), picks an existing rule or writes a new one, and confirms. The desk then:
+
+1. stores a row in `corrections` (block, note, rule) and makes the rule active (`source: 'user'`),
+2. emits `{ type: 'block', id, status: 'unchecked' }` for the blocks being re-read,
+3. calls `rereadSections` with the block's section plus the sections with the same `item` and `kind`
+   in the project's other filings.
+
+Your re-run calls carry the new rule in `input.rules`, so they are the corrected examples Mubit keeps.
+Set the re-read blocks' status as usual (`fixed` when they pass now). Keep block ids stable where you
+can (`<section id>:<n>`), so a correction still points at its block after the re-read.
+
+The desk seeds these starting rules on startup (`source: 'seed'`, `apps/api/src/rules/seed-rules.ts`);
+read active rules from the `rules` table ordered by `code`:
 
 | Code | Text |
 |---|---|

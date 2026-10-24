@@ -31,6 +31,9 @@ interface DeskState {
   sending: boolean;
   /** Bumped when filings change, so the dashboard refetches. */
   filingsVersion: number;
+  /** Blocks being re-read after a correction (from `block` events with status unchecked). */
+  rereading: Set<string>;
+  blockEvent: (id: string, status: string) => void;
   start: (projectId: string, conversationId: string, question: string) => void;
   load: (projectId: string, conversationId: string | null, messages: StoredMessage[], view: ViewSpec | null) => void;
   send: (text: string) => Promise<void>;
@@ -58,6 +61,14 @@ export const useDesk = create<DeskState>((set, get) => ({
   view: null,
   sending: false,
   filingsVersion: 0,
+  rereading: new Set(),
+  blockEvent: (id, status) =>
+    set((s) => {
+      const next = new Set(s.rereading);
+      if (status === 'unchecked') next.add(id);
+      else next.delete(id);
+      return { rereading: next };
+    }),
 
   start: (projectId, conversationId, question) =>
     set({ projectId, conversationId, pendingQuestion: question, messages: [], view: null }),

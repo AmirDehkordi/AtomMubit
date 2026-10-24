@@ -40,6 +40,8 @@ export function MubitButton({ className }: { className?: string }) {
 /** How the desk feeds Mubit: calls per task, today's review budget, and what the console shows. */
 function MubitPanel({ onClose }: { onClose: () => void }) {
   const { data, error } = useQuery({ queryKey: ['mubit'], queryFn: api.mubitStatus, refetchInterval: 10_000 });
+  const rules = useQuery({ queryKey: ['rules'], queryFn: api.rules, refetchInterval: 10_000 });
+  const active = (rules.data ?? []).filter((r) => r.active).sort((a, b) => Number(a.code.slice(1)) - Number(b.code.slice(1)));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -76,6 +78,25 @@ function MubitPanel({ onClose }: { onClose: () => void }) {
           {data?.tasks.map((t) => (
             <TaskCard key={t.task} task={t} status={data} />
           ))}
+          {active.length > 0 && (
+            <section>
+              <h3 className="text-muted mb-1 text-xs tracking-wide uppercase">Desk rules ({active.length})</h3>
+              <p className="text-muted mb-2 text-xs">Every section_extractor call carries these. Corrections add new ones.</p>
+              <ul className="border-line divide-line divide-y rounded-xl border">
+                {active.map((r) => (
+                  <li key={r.id} className="flex gap-2 px-3 py-2 text-xs">
+                    <span className="text-accent w-7 shrink-0 font-semibold">{r.code}</span>
+                    <span className="flex-1">{r.text}</span>
+                    {r.source !== 'seed' && (
+                      <span className="border-line text-muted h-fit shrink-0 rounded border px-1 text-[10px]">
+                        {r.source === 'user' ? 'from a correction' : 'from a check'}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {data && data.recent.length > 0 && (
             <section>
               <h3 className="text-muted mb-2 text-xs tracking-wide uppercase">Latest calls</h3>

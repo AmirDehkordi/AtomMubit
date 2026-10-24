@@ -43,8 +43,24 @@ export interface ExtractionSummary {
   review: number;
 }
 
+/** A person corrected a block and confirmed a rule: read these sections again with the active rules. */
+export interface RereadRequest {
+  projectId: string;
+  /** Sections to re-read, possibly across several filings of the project. */
+  sectionIds: string[];
+  /** Why: the correction and the rule it added or pointed at. */
+  correctionId: string;
+  ruleCode: string;
+}
+
 /** The service the extraction module provides to the rest of the API. */
 export interface ExtractionApi {
   /** Reads one filing. Idempotent: a finished filing returns its summary without new LLM calls. */
   extractFiling(job: ExtractionJob): Promise<ExtractionSummary>;
+  /**
+   * Re-runs section_extractor on already-read sections with the current active rules (always,
+   * even if they were read before), replaces their blocks and checks, and streams `block` and
+   * `extraction` events. Each re-run call is a corrected example Mubit can keep.
+   */
+  rereadSections(request: RereadRequest): Promise<void>;
 }

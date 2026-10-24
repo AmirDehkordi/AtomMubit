@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
 import Link from 'next/link';
@@ -18,6 +18,7 @@ export default function DeskPage() {
   const view = useDesk((s) => s.view);
   const filingsVersion = useDesk((s) => s.filingsVersion);
   const loaded = useRef(false);
+  const client = useQueryClient();
 
   const project = useQuery({
     queryKey: ['project', projectId, filingsVersion],
@@ -41,10 +42,17 @@ export default function DeskPage() {
     const source = new EventSource(`${API_URL}/events/${projectId}`);
     source.onmessage = (msg) => {
       const event = JSON.parse(msg.data) as StreamEvent;
-      if (event.type === 'extraction') useDesk.getState().filingsChanged();
+      if (event.type === 'extraction') {
+        useDesk.getState().filingsChanged();
+        void client.invalidateQueries({ queryKey: ['outline', event.accession] });
+      }
+      if (event.type === 'block') {
+        useDesk.getState().blockEvent(event.id, event.status);
+        if (event.status !== 'unchecked') void client.invalidateQueries({ queryKey: ['section'] });
+      }
     };
     return () => source.close();
-  }, [projectId]);
+  }, [projectId, client]);
 
   const filings = project.data?.filings ?? [];
   const title = project.data?.project.title ?? '';
