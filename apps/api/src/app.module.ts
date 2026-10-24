@@ -7,9 +7,10 @@ import { EdgarModule } from './edgar/edgar.module';
 import { HealthController } from './health.controller';
 import { MubitModule } from './mubit/mubit.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ReaderModule } from './reader/reader.module';
 
 @Module({
-  imports: [CoreModule, DbModule, MubitModule, EdgarModule, DashboardModule, ProjectsModule, AgentModule],
+  imports: [CoreModule, DbModule, MubitModule, EdgarModule, DashboardModule, ProjectsModule, ReaderModule, AgentModule],
   controllers: [HealthController],
 })
 export class AppModule {}

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
 import { Composer } from './chat/composer';
+import { MubitButton } from './mubit/mubit-panel';
 
 const EXAMPLES = [
   "Get NVIDIA's last four quarters",
@@ -34,7 +35,8 @@ export function EmptyDesk() {
   };
 
   return (
-    <main className="grid min-h-dvh place-items-center px-4">
+    <main className="relative grid min-h-dvh place-items-center px-4">
+      <MubitButton className="absolute top-4 right-4" />
       <motion.div layoutId="chat" className="w-full max-w-2xl" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="mb-2 text-center text-3xl font-semibold tracking-tight">Earnings Desk</h1>
         <p className="text-muted mb-8 text-center">

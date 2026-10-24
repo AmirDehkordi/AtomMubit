@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import type { StreamEvent } from '@desk/shared';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { Dashboard } from '@/components/dashboard/dashboard';
+import { MubitButton } from '@/components/mubit/mubit-panel';
 import { API_URL, api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
 
@@ -77,7 +78,8 @@ export default function DeskPage() {
             <Link href="/" className="text-muted hover:text-text" aria-label="New desk">
               <ArrowLeft className="size-4" />
             </Link>
-            <span className="truncate text-sm font-medium">{split ? 'Desk chat' : title || 'Earnings Desk'}</span>
+            <span className="flex-1 truncate text-sm font-medium">{split ? 'Desk chat' : title || 'Earnings Desk'}</span>
+            <MubitButton />
           </div>
           <div className="min-h-0 flex-1">
             <ChatPanel filings={filings} compact={split} />

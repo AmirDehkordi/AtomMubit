@@ -52,6 +52,69 @@ export interface Comparison {
   rows: { ticker: string; name: string; periodEnd: string; quarter: string; value: Cell; yearAgo: Cell; yoy: number | null }[];
 }
 
+export const ADAPTER_STATES = ['collecting', 'reviewing', 'training', 'testing', 'silent_test', 'rollout', 'live', 'prompt_only'] as const;
+export type AdapterState = (typeof ADAPTER_STATES)[number];
+
+export interface ConsoleStatus {
+  task: string;
+  kept: number | null;
+  adapterVersion: string | null;
+  adapterState: AdapterState | null;
+  quality: number | null;
+  note: string | null;
+  updatedAt: string;
+}
+
+export interface MubitStatus {
+  reviewLimit: number;
+  firstTrainingAt: number;
+  resetAt: string;
+  tasks: {
+    task: string;
+    label: string;
+    calls: number;
+    callsToday: number;
+    sessions: number;
+    failed: number;
+    avgLatencyMs: number | null;
+    lastCallAt: string | null;
+    console: ConsoleStatus | null;
+  }[];
+  recent: { task: string; requestId: string | null; latencyMs: number; ok: boolean; createdAt: string }[];
+}
+
+export const MUBIT_CONSOLE_URL = process.env.NEXT_PUBLIC_MUBIT_CONSOLE_URL ?? 'https://app.mubit.ai/';
+
+export interface ReaderBlock {
+  id: string;
+  sectionId: string;
+  accession: string;
+  type: string;
+  key: string | null;
+  label: string;
+  periodEnd: string | null;
+  months: number | null;
+  value: number | null;
+  unit: string | null;
+  scale: string | null;
+  text: string | null;
+  quote: string;
+  spanStart: number | null;
+  spanEnd: number | null;
+  status: 'verified' | 'fixed' | 'review' | 'unchecked';
+  checks: { verifier: string; passed: boolean; detail: string }[];
+}
+
+export interface FilingOutline {
+  filing: { accession: string; ticker: string; form: string; periodEnd: string; quarter: string; url: string; status: string };
+  sections: { id: string; item: string; title: string; kind: string; ordinal: number; charCount: number; blocks: number; review: number }[];
+}
+
+export interface SectionWithBlocks {
+  section: { id: string; accession: string; item: string; title: string; kind: string; text: string };
+  blocks: ReaderBlock[];
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`);
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
@@ -63,6 +126,19 @@ export const api = {
     const res = await fetch(`${API_URL}/conversations`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
     if (!res.ok) throw new Error(`Could not start a desk (${res.status})`);
     return res.json();
+  },
+  outline: (accession: string) => get<FilingOutline>(`/filings/${accession}/sections`),
+  section: (id: string) => get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}`),
+  blocks: (ids: string[]) => get<ReaderBlock[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
+  mubitStatus: () => get<MubitStatus>('/mubit/status'),
+  saveConsoleStatus: async (status: Omit<ConsoleStatus, 'updatedAt'>) => {
+    const res = await fetch(`${API_URL}/mubit/console-status`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(status),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    return res.json() as Promise<ConsoleStatus>;
   },
   project: (id: string) => get<ProjectData>(`/projects/${id}`),
   overview: (ticker: string, periods: string[]) =>

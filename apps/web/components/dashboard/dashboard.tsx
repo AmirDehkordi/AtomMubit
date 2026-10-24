@@ -1,9 +1,11 @@
 'use client';
 
 import { CheckCircle2, ExternalLink, Loader2 } from 'lucide-react';
+import { useDesk } from '@/lib/desk-store';
 import type { ViewSpec } from '@desk/shared';
 import type { DeskFiling } from '@/lib/api';
 import { CompareView } from './compare-view';
+import { FilingReader } from './filing-reader';
 import { MetricDetail } from './metric-detail';
 import { QuarterOverview } from './quarter-overview';
 
@@ -15,13 +17,15 @@ export function Dashboard({ view, filings, title }: { view: ViewSpec; filings: D
         {filings.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {filings.map((f) => (
-              <a
+              <span
                 key={f.accession}
-                href={f.url}
-                target="_blank"
-                rel="noreferrer"
                 className="border-line bg-panel hover:border-accent group inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors"
               >
+                <button
+                  className="inline-flex items-center gap-2"
+                  title="Open in the reader"
+                  onClick={() => useDesk.getState().showView({ view: 'filing_reader', accession: f.accession, sectionId: null, highlight: [] })}
+                >
                 {f.status === 'ready' ? (
                   <CheckCircle2 className="text-up size-3.5" />
                 ) : (
@@ -31,8 +35,11 @@ export function Dashboard({ view, filings, title }: { view: ViewSpec; filings: D
                   {f.ticker} {f.form}
                 </span>
                 <span className="text-muted">{f.quarter}</span>
-                <ExternalLink className="text-muted size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-              </a>
+                </button>
+                <a href={f.url} target="_blank" rel="noreferrer" title="Original on SEC" aria-label="Original on SEC">
+                  <ExternalLink className="text-muted hover:text-text size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                </a>
+              </span>
             ))}
           </div>
         )}
@@ -48,6 +55,8 @@ function View({ view }: { view: ViewSpec }) {
       return <QuarterOverview ticker={view.ticker} periods={view.periods} />;
     case 'metric_detail':
       return <MetricDetail ticker={view.ticker} metric={view.metric} periods={view.periods} />;
+    case 'filing_reader':
+      return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} />;
     case 'compare':
       return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} />;
     default:

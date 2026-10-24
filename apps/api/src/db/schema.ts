@@ -217,3 +217,21 @@ export const views = pgTable(
   },
   (t) => [index('views_project_idx').on(t.projectId)],
 );
+
+export const ADAPTER_STATES = ['collecting', 'reviewing', 'training', 'testing', 'silent_test', 'rollout', 'live', 'prompt_only'] as const;
+export type AdapterState = (typeof ADAPTER_STATES)[number];
+
+/**
+ * What Mubit's console shows for a task (kept examples, adapter version and
+ * state). Mubit has no API for this, so the team copies it in from the console.
+ */
+export const mubitStatus = pgTable('mubit_status', {
+  task: text('task').primaryKey(),
+  kept: integer('kept'),
+  adapterVersion: text('adapter_version'),
+  adapterState: text('adapter_state').$type<AdapterState>(),
+  /** Share of held-out test cases matching the provider, 0–1. */
+  quality: doublePrecision('quality'),
+  note: text('note'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

@@ -15,6 +15,13 @@
       "when": 1792858664048,
       "tag": "0001_clear_leper_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792862519293,
+      "tag": "0002_abandoned_hobgoblin",
+      "breakpoints": true
     }
   ]
 }

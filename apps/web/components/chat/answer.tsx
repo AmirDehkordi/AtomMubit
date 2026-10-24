@@ -2,7 +2,8 @@
 
 import { FileText, Quote } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import type { DeskFiling } from '@/lib/api';
+import { api, type DeskFiling } from '@/lib/api';
+import { useDesk } from '@/lib/desk-store';
 
 const CITATION = /\[\[(f|b):([^\]]+)\]\]/g;
 
@@ -35,10 +36,20 @@ export function Answer({ text, filings }: { text: string; filings: DeskFiling[] 
 
 function Citation({ kind, id, filings }: { kind: 'f' | 'b'; id: string; filings: DeskFiling[] }) {
   if (kind === 'b') {
+    // Opens the filing reader on the cited passage.
+    const open = async () => {
+      const [block] = await api.blocks([id]).catch(() => []);
+      if (!block) return;
+      useDesk.getState().showView({ view: 'filing_reader', accession: block.accession, sectionId: block.sectionId, highlight: [id] });
+    };
     return (
-      <span className="border-line text-muted mx-0.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-px align-middle text-xs">
+      <button
+        onClick={open}
+        title="Open the passage"
+        className="border-line text-muted hover:border-accent hover:text-text mx-0.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-px align-middle text-xs transition-colors"
+      >
         <Quote className="size-3" /> passage
-      </span>
+      </button>
     );
   }
   const filing = filings.find((f) => f.accession === id);
