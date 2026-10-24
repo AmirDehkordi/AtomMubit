@@ -48,60 +48,106 @@ export function useReveal(text: string, enabled: boolean, onDone?: () => void): 
   return text.slice(0, shown).replace(/\[\[[^\]]*\]?$/, '');
 }
 
-/** Markdown answer with [[f:accession]] and [[b:block]] citations rendered as chips. */
-export function Answer({ text, filings }: { text: string; filings: DeskFiling[] }) {
-  const withLinks = text.replace(CITATION, (_m, kind: string, id: string) => `[${kind}:${id}](cite:${kind}:${id})`);
+/** Every cited source in order of first mention. */
+function sourcesOf(text: string): { kind: 'f' | 'b'; id: string }[] {
+  const seen = new Map<string, { kind: 'f' | 'b'; id: string }>();
+  for (const m of text.matchAll(CITATION)) {
+    const key = `${m[1]}:${m[2]}`;
+    if (!seen.has(key)) seen.set(key, { kind: m[1] as 'f' | 'b', id: m[2]! });
+  }
+  return [...seen.values()];
+}
+
+/**
+ * Markdown answer. Citations become small numbered markers ([1], [2]) and, once the answer is
+ * complete, a list of sources underneath, like a research assistant.
+ */
+export function Answer({ text, filings, showSources }: { text: string; filings: DeskFiling[]; showSources: boolean }) {
+  const sources = sourcesOf(text);
+  const number = (kind: string, id: string) => sources.findIndex((s) => s.kind === kind && s.id === id) + 1;
+  // Repeated markers in a row ("[[f:a]] [[f:b]] [[f:a]]") collapse to one each.
+  const withLinks = text
+    .replace(/(\[\[(?:f|b):[^\]]+\]\]\s*)+/g, (run) => {
+      const ids = [...new Set([...run.matchAll(CITATION)].map((m) => `${m[1]}:${m[2]}`))];
+      return ids.map((k) => `[${k}](cite:${k})`).join('') + (run.endsWith(' ') ? ' ' : '');
+    });
   return (
-    <div className="answer text-[15px] leading-[1.7]">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        urlTransform={(url) => url}
-        components={{
-          a: ({ href, children }) => {
-            if (href?.startsWith('cite:')) {
-              const [, kind, id] = href.split(':');
-              return <Citation kind={kind as 'f' | 'b'} id={id ?? ''} filings={filings} />;
-            }
-            return (
-              <a href={href} target="_blank" rel="noreferrer" className="text-accent underline-offset-2 hover:underline">
-                {children}
-              </a>
-            );
-          },
-        }}
-      >
-        {withLinks}
-      </ReactMarkdown>
+    <div>
+      <div className="answer text-[15px] leading-[1.75]">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          urlTransform={(url) => url}
+          components={{
+            a: ({ href, children }) => {
+              if (href?.startsWith('cite:')) {
+                const [, kind, id] = href.split(':');
+                return <Marker n={number(kind!, id!)} kind={kind as 'f' | 'b'} id={id ?? ''} filings={filings} />;
+              }
+              return (
+                <a href={href} target="_blank" rel="noreferrer" className="text-accent underline-offset-2 hover:underline">
+                  {children}
+                </a>
+              );
+            },
+          }}
+        >
+          {withLinks}
+        </ReactMarkdown>
+      </div>
+      {showSources && sources.length > 0 && <Sources sources={sources} filings={filings} />}
     </div>
   );
 }
 
-const chip =
-  'border-line bg-raised text-muted hover:text-text hover:border-[color-mix(in_oklab,var(--color-text)_25%,transparent)] mx-0.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-px align-[1px] text-[11px] font-medium transition-colors';
-
-function Citation({ kind, id, filings }: { kind: 'f' | 'b'; id: string; filings: DeskFiling[] }) {
+function openSource(kind: 'f' | 'b', id: string, filings: DeskFiling[]) {
   if (kind === 'b') {
-    // Opens the filing reader on the cited passage.
-    const open = async () => {
-      const [block] = await api.blocks([id]).catch(() => []);
-      if (!block) return;
-      useDesk.getState().showView({ view: 'filing_reader', accession: block.accession, sectionId: block.sectionId, highlight: [id] });
-    };
-    return (
-      <button onClick={open} title="Open the passage" className={chip}>
-        <Quote className="size-3" /> passage
-      </button>
-    );
+    void api
+      .blocks([id])
+      .then(([block]) => {
+        if (block) useDesk.getState().showView({ view: 'filing_reader', accession: block.accession, sectionId: block.sectionId, highlight: [id] });
+      })
+      .catch(() => undefined);
+    return;
   }
-  const filing = filings.find((f) => f.accession === id);
-  const open = () => {
-    if (filing) useDesk.getState().showView({ view: 'filing_reader', accession: id, sectionId: null, highlight: [] });
-    else window.open(`https://www.sec.gov/edgar/search/#/q=%22${id}%22`, '_blank', 'noreferrer');
-  };
+  if (filings.some((f) => f.accession === id)) {
+    useDesk.getState().showView({ view: 'filing_reader', accession: id, sectionId: null, highlight: [] });
+  } else {
+    window.open(`https://www.sec.gov/edgar/search/#/q=%22${id}%22`, '_blank', 'noreferrer');
+  }
+}
+
+function label(kind: 'f' | 'b', id: string, filings: DeskFiling[]): string {
+  if (kind === 'b') return 'Passage';
+  const f = filings.find((x) => x.accession === id);
+  return f ? `${f.ticker} ${f.form} · ${f.quarter}` : 'SEC filing';
+}
+
+function Marker({ n, kind, id, filings }: { n: number; kind: 'f' | 'b'; id: string; filings: DeskFiling[] }) {
   return (
-    <button onClick={open} title={id} className={chip}>
-      <FileText className="size-3" />
-      {filing ? `${filing.form} ${filing.quarter}` : 'SEC filing'}
+    <button
+      onClick={() => openSource(kind, id, filings)}
+      title={label(kind, id, filings)}
+      className="bg-raised text-muted hover:bg-accent hover:text-ink mx-[1px] inline-grid h-[17px] min-w-[17px] place-items-center rounded-[5px] px-1 align-[2px] text-[10px] font-semibold tabular-nums transition-colors"
+    >
+      {n}
     </button>
+  );
+}
+
+function Sources({ sources, filings }: { sources: { kind: 'f' | 'b'; id: string }[]; filings: DeskFiling[] }) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {sources.map((s, i) => (
+        <button
+          key={`${s.kind}:${s.id}`}
+          onClick={() => openSource(s.kind, s.id, filings)}
+          className="border-line bg-panel text-muted hover:text-text hover:border-[color-mix(in_oklab,var(--color-text)_20%,transparent)] inline-flex items-center gap-2 rounded-lg border py-1 pr-2.5 pl-1 text-[12px] transition-colors"
+        >
+          <span className="bg-raised grid size-5 place-items-center rounded-md text-[10px] font-semibold">{i + 1}</span>
+          {s.kind === 'b' ? <Quote className="size-3" /> : <FileText className="size-3" />}
+          {label(s.kind, s.id, filings)}
+        </button>
+      ))}
+    </div>
   );
 }

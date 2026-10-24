@@ -201,7 +201,7 @@ function Message({
           className="transition-[mask-image] duration-300"
           style={typing ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 2.2em), rgba(0,0,0,0.15))' } : undefined}
         >
-          <Answer text={text} filings={filings} />
+          <Answer text={text} filings={filings} showSources={!typing} />
         </div>
       )}
 
