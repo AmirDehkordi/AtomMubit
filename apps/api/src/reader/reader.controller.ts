@@ -84,12 +84,23 @@ export class ReaderController {
     return [...(await this.withChecks(rows)), ...passages];
   }
 
-  /** Legacy IDs have no run prefix; current outlines show only accepted revisions. */
+  /**
+   * Legacy IDs have no run prefix. Current outlines show one revision per document: the accepted
+   * one, or, when none is accepted yet, the latest finished run (completed or needs_review), so
+   * the desk shows what was read with its review flags instead of nothing.
+   */
   private revisionScope(projectId?: string, acceptedOnly = true) {
     const legacy = sql`not exists (select 1 from extraction_runs r where starts_with(${sections.id}, r.id || ':'))`;
     // Older callers retain the unversioned reader without mixing project-specific revisions.
     if (!projectId) return legacy;
-    return sql`(${legacy} or exists (select 1 from extraction_runs r where starts_with(${sections.id}, r.id || ':') and r.project_id = ${projectId} and r.team_id = ${teamId()} ${acceptedOnly ? sql`and r.accepted = true` : sql``}))`;
+    const shown = acceptedOnly
+      ? sql`and (r.accepted = true or (
+          r.state in ('completed', 'needs_review')
+          and not exists (select 1 from extraction_runs a where a.document_id = r.document_id and a.project_id = r.project_id and a.team_id = r.team_id and a.accepted = true)
+          and not exists (select 1 from extraction_runs n where n.document_id = r.document_id and n.project_id = r.project_id and n.team_id = r.team_id
+            and n.state in ('completed', 'needs_review') and (n.created_at > r.created_at or (n.created_at = r.created_at and n.id > r.id)))))`
+      : sql``;
+    return sql`(${legacy} or exists (select 1 from extraction_runs r where starts_with(${sections.id}, r.id || ':') and r.project_id = ${projectId} and r.team_id = ${teamId()} ${shown}))`;
   }
 
   private async assertFilingProject(accession: string, projectId: string) {
