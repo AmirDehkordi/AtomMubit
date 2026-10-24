@@ -27,7 +27,9 @@ export function CellValue({ cell, unit, className }: { cell: Cell; unit: string;
 
 export function Change({ value, points }: { value: number | null; points?: boolean }) {
   if (value === null || !Number.isFinite(value)) return <span className="text-muted">—</span>;
+  const flat = Math.round(value * 1000) === 0;
   const up = value >= 0;
-  const text = points ? `${up ? '+' : ''}${(value * 100).toFixed(1)}pp` : `${up ? '+' : ''}${(value * 100).toFixed(1)}%`;
-  return <span className={cn('tabular-nums', up ? 'text-up' : 'text-down')}>{text}</span>;
+  const unit = points ? 'pp' : '%';
+  const text = flat ? `0.0${unit}` : `${up ? '+' : ''}${(value * 100).toFixed(1)}${unit}`;
+  return <span className={cn('tabular-nums', flat ? 'text-muted' : up ? 'text-up' : 'text-down')}>{text}</span>;
 }
