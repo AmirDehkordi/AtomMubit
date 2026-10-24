@@ -59,12 +59,12 @@ browser. The API/worker are configured for `WORKFLOW_MODE=langflow` in Compose.
 
 Set `MUBIT_API_KEY` to enable paid inference. Leaving it empty allows the
 services to start with model jobs queued. Once credentials and flow IDs are
-configured, the worker processes queued work; a configured SEC watchlist can
-therefore trigger paid inference automatically. Leave `SEC_USER_AGENT` empty
-to disable automatic SEC ingestion while setting up the flows.
+configured, the worker processes queued work. Automatic SEC monitoring (the
+watchlist) is off unless `SEC_MONITORING=1`, because it triggers paid inference
+on its own; filings a desk adds are still read.
 
-Select `INFERENCE_BACKEND=openrouter` (default) or `mubit` for native Mubit
-models. Native mode uses `MUBIT_AGENT_MODEL`, `MUBIT_EXTRACTOR_MODEL`, and
+Select `INFERENCE_BACKEND=mubit` (default) for native Mubit models, or `openrouter` for
+Mubit → OpenRouter models. Native mode uses `MUBIT_AGENT_MODEL`, `MUBIT_EXTRACTOR_MODEL`, and
 `MUBIT_FEEDBACK_MODEL`; see [backend settings](openrouter.md#switch-the-production-backend).
 Model settings are shared by API and worker. Extraction defaults to
 `qwen/qwen3-30b-a3b-instruct-2507` (`EXTRACTOR_MODEL`); the planner (`AGENT_MODEL`)

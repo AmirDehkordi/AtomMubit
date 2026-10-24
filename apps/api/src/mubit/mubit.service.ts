@@ -7,6 +7,7 @@ import { config } from '../core/config';
 import { DbService } from '../db/db.service';
 import { inferenceAttempts, llmCalls } from '../db/schema';
 import { assertTransportFrozen } from '../agent/frozen';
+import { withTransientRetry } from './transient-retry';
 import { executeGemini } from './gemini-transport';
 
 export type MubitTask = 'desk_agent' | 'section_extractor' | 'feedback_evaluator';
@@ -43,7 +44,8 @@ export const DEFAULT_JSON_MAX_OUTPUT_TOKENS = 8_000;
  * Production inference gateway for OpenRouter, native OpenAI, and native Gemini
  * through Mubit. The desk agent retains its internal Responses contract.
  * This adapter intentionally translates the supported subset in both
- * directions and disables SDK retries so attempts remain observable.
+ * directions. SDK retries stay off; productionCompletion retries only Mubit's
+ * transient gateway errors, which never reached the provider.
  */
 @Injectable()
 export class MubitService {
@@ -54,7 +56,12 @@ export class MubitService {
   constructor(private readonly dbs: DbService) { assertTransportFrozen(); }
   get configured(): boolean { return Boolean(config.mubitApiKey); }
 
+  /** Transient gateway errors (429/5xx before anything reached the provider) are retried; see transient-retry.ts. */
   private productionCompletion(body: any, headers: Record<string, string>) {
+    return withTransientRetry(() => this.productionAttempt(body, headers));
+  }
+
+  private productionAttempt(body: any, headers: Record<string, string>) {
     if (config.inferenceBackend === 'openrouter') return this.client.chat.completions.create(body, {headers}).withResponse();
     const { ['x-openrouter-metadata']: _ignored, ...nativeHeaders } = headers;
     if (body.model.startsWith('gemini-')) {

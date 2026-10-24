@@ -1,7 +1,7 @@
 /** Separate model profiles let one switch select a backend without stale model IDs. */
 export function inferenceConfig(environment: Record<string, string | undefined>) {
   const env = (name: string, fallback: string) => environment[name]?.trim() || fallback;
-  const backend = env('INFERENCE_BACKEND', 'openrouter');
+  const backend = env('INFERENCE_BACKEND', 'mubit');
   if (backend !== 'openrouter' && backend !== 'mubit') throw new Error('INFERENCE_BACKEND must be openrouter or mubit');
   const native = backend === 'mubit';
   const agentModel = native ? env('MUBIT_AGENT_MODEL', 'gpt-6-luna') : env('AGENT_MODEL', 'openai/gpt-6-luna');

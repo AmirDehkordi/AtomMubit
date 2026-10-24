@@ -16,3 +16,5 @@ __pycache__/
 *.pyc
 benchmarks/results/
 apps/api/data/* 2.*
+# Transport locks depend on each machine's base URLs; only task locks are shared.
+apps/api/data/*transport.lock

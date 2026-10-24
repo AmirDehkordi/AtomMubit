@@ -80,7 +80,8 @@ export class ProcessorService {
         }
         throw error;
       }
-      await this.addWatchlist(request.projectId, found.company.ticker);
+      // Keep watching the company for new filings only when monitoring is switched on.
+      if (monitoringEnabled()) await this.addWatchlist(request.projectId, found.company.ticker);
       for (const filing of found.filings) await this.extraction.submitFiling(filing.accession, request.projectId, id, intent.fields);
     }
     for (const documentId of documents) {
@@ -108,7 +109,8 @@ export class ProcessorService {
     });
   }
   async schedule() {
-    if (!process.env.SEC_USER_AGENT?.trim()) return; // Local uploads work without SEC credentials.
+    // Automatic SEC monitoring spends inference credit and Mubit's daily review budget, so it is opt-in.
+    if (!monitoringEnabled()) return;
     const id = `monitoring-${teamId()}`;
     await this.dbs.db.insert(projects).values({ id, teamId: teamId(), title: 'Automatic SEC monitoring' }).onConflictDoNothing();
     for (const ticker of (process.env.WATCHLIST_TICKERS || 'AAPL,MSFT,NVDA,WMT,JPM').split(',').map(t=>t.trim().toUpperCase()).filter(t=>/^[A-Z0-9.-]{1,12}$/.test(t))) await this.addWatchlist(id, ticker);
@@ -191,4 +193,9 @@ export class ProcessorService {
     return {runId, documentId:document.id, content:document.content, format: document.format === 'html' ? 'html' : 'text', sourceUrl:document.sourceUrl ?? undefined,
       company:document.metadata.company as EngineInput['company'], filing: document.metadata.filing as EngineInput['filing'], requestedFields:spec.fields, rules:spec.rules};
   }
+}
+
+/** Automatic SEC monitoring (watchlists and periodic discovery): only with SEC_MONITORING=1 and an SEC contact. */
+export function monitoringEnabled(): boolean {
+  return process.env.SEC_MONITORING === '1' && Boolean(process.env.SEC_USER_AGENT?.trim());
 }

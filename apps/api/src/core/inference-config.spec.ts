@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { inferenceConfig } from './inference-config';
 
 describe('inference backend selection', () => {
-  it('preserves existing OpenRouter settings by default', () => {
-    expect(inferenceConfig({MUBIT_BASE_URL: 'http://localhost:4099/v1', EXTRACTOR_MODEL: 'custom/model'})).toMatchObject({
+  it('defaults to native Mubit routes', () => {
+    expect(inferenceConfig({})).toMatchObject({
+      inferenceBackend: 'mubit', mubitBaseUrl: 'https://api.mubit.ai/openai/v1', agentModel: 'gpt-6-luna',
+    });
+  });
+  it('keeps OpenRouter settings when OpenRouter is selected', () => {
+    expect(inferenceConfig({INFERENCE_BACKEND: 'openrouter', MUBIT_BASE_URL: 'http://localhost:4099/v1', EXTRACTOR_MODEL: 'custom/model'})).toMatchObject({
       inferenceBackend: 'openrouter', mubitBaseUrl: 'http://localhost:4099/v1', extractorModel: 'custom/model', agentModel: 'openai/gpt-6-luna',
     });
   });

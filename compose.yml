@@ -50,7 +50,7 @@ services:
       LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
       MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
       WORKFLOW_MODE: langflow
-      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-openrouter}
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-mubit}
       MUBIT_AGENT_MODEL: ${MUBIT_AGENT_MODEL:-gpt-6-luna}
       MUBIT_EXTRACTOR_MODEL: ${MUBIT_EXTRACTOR_MODEL:-gemini-3.5-flash-lite}
       MUBIT_FEEDBACK_MODEL: ${MUBIT_FEEDBACK_MODEL:-gpt-6-luna}
@@ -62,6 +62,7 @@ services:
       MUBIT_API_KEY: ${MUBIT_API_KEY:-}
       MUBIT_BASE_URL: ${MUBIT_BASE_URL:-https://api.mubit.ai/compat/openrouter/v1}
       SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      SEC_MONITORING: ${SEC_MONITORING:-0}
       WATCHLIST_TICKERS: ${WATCHLIST_TICKERS:-AAPL,MSFT,NVDA,WMT,JPM}
     ports:
       - '127.0.0.1:4000:4000'
@@ -91,7 +92,7 @@ services:
       LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
       MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
       WORKFLOW_MODE: langflow
-      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-openrouter}
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-mubit}
       MUBIT_AGENT_MODEL: ${MUBIT_AGENT_MODEL:-gpt-6-luna}
       MUBIT_EXTRACTOR_MODEL: ${MUBIT_EXTRACTOR_MODEL:-gemini-3.5-flash-lite}
       MUBIT_FEEDBACK_MODEL: ${MUBIT_FEEDBACK_MODEL:-gpt-6-luna}
@@ -103,6 +104,7 @@ services:
       MUBIT_API_KEY: ${MUBIT_API_KEY:-}
       MUBIT_BASE_URL: ${MUBIT_BASE_URL:-https://api.mubit.ai/compat/openrouter/v1}
       SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      SEC_MONITORING: ${SEC_MONITORING:-0}
       WATCHLIST_TICKERS: ${WATCHLIST_TICKERS:-AAPL,MSFT,NVDA,WMT,JPM}
     volumes:
       - documents:/app/apps/api/data

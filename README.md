@@ -138,8 +138,8 @@ task per day, so the replay script feeds each task just after the 00:00 UTC rese
 
 A research desk for SEC filings, with a conversational planner, automated
 filing ingestion, evidence-linked extraction, and scoped house rules learned
-from feedback. `INFERENCE_BACKEND=openrouter` routes AI through **Mubit → OpenRouter**;
-`INFERENCE_BACKEND=mubit` uses native Mubit OpenAI/Gemini routes. In OpenRouter mode the
+from feedback. `INFERENCE_BACKEND=mubit` (the default) uses native Mubit OpenAI/Gemini routes;
+`INFERENCE_BACKEND=openrouter` routes AI through **Mubit → OpenRouter**. In OpenRouter mode the
 extractor defaults to `qwen/qwen3-30b-a3b-instruct-2507`; the planner and feedback
 evaluator use `openai/gpt-6-luna`. Each model is configurable.
 
@@ -153,7 +153,7 @@ cp apps/api/.env.example apps/api/.env   # set MUBIT_API_KEY and SEC_USER_AGENT
 pnpm dev                                  # API on :4000, web on :3100
 ```
 
-Set `MUBIT_API_KEY`. For OpenRouter mode, connect an OpenRouter provider key in Mubit. For native mode, set `INFERENCE_BACKEND=mubit` and use the configured native model profile. The desk is
+Set `MUBIT_API_KEY`. Native Mubit (`INFERENCE_BACKEND=mubit`) is the default. For OpenRouter mode, set `INFERENCE_BACKEND=openrouter` and connect an OpenRouter provider key in Mubit. In native mode, use the configured native model profile. The desk is
 at <http://localhost:3100>, API at <http://localhost:4000>. With no `DATABASE_URL`,
 the API and local worker share one PGlite instance. Model work stays queued
 until credentials are configured. Text-based PDF uploads need Poppler's

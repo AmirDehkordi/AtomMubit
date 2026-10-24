@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { config } from '../core/config';
 import { DbService } from '../db/db.service';
-import { extractionFeedback, extractionRequests, extractionRuns, monitoringWatchlist, requestRuns, workJobs } from '../db/schema';
+import { extractionFeedback, extractionRequests, extractionRuns, filings, monitoringWatchlist, requestRuns, sourceDocuments, workJobs } from '../db/schema';
 import { JobsService, MAX_ATTEMPTS, type Job, type Transaction } from './jobs.service';
 import { ProcessorService } from '../extraction/processor.service';
 import { FeedbackService } from '../feedback/feedback.service';
@@ -70,7 +70,12 @@ export class WorkerLoop {
     const update = async (tx:Transaction)=>{
       if (job.payload.runId) {
         const [run] = await tx.update(extractionRuns).set({state:'failed',error:message}).where(and(eq(extractionRuns.id,String(job.payload.runId)),inArray(extractionRuns.state,['queued','running']))).returning();
-        if(run) await event(tx,run.projectId,'failed',{error:message},run.id);
+        if(run) {
+          // The filing stops showing "reading": the desk shows it failed (and why) instead of spinning.
+          const [document] = await tx.select({accession:sourceDocuments.accession}).from(sourceDocuments).where(eq(sourceDocuments.id,run.documentId));
+          if(document?.accession) await tx.update(filings).set({status:'failed'}).where(eq(filings.accession,document.accession));
+          await event(tx,run.projectId,'failed',{error:message,accession:document?.accession ?? null},run.id);
+        }
       }
       if(job.payload.requestId) await tx.update(extractionRequests).set({state:'failed',error:message}).where(eq(extractionRequests.id,String(job.payload.requestId)));
       if(job.payload.feedbackId) await tx.update(extractionFeedback).set({state:'failed',decision:{reason:message}}).where(eq(extractionFeedback.id,String(job.payload.feedbackId)));
