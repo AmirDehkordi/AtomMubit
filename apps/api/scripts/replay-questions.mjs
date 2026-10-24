@@ -98,7 +98,8 @@ async function worker() {
   while (queue.length && consecutiveFailures < 5) {
     const questions = queue.shift();
     try {
-      toolCalls += await run(questions);
+      const calls = await run(questions);
+      toolCalls += calls;
       consecutiveFailures = 0;
       done++;
     } catch (err) {
