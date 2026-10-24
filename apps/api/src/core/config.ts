@@ -13,5 +13,7 @@ export const config = {
   mubitBaseUrl: env('MUBIT_BASE_URL', 'https://api.mubit.ai/openai/v1'),
   agentModel: env('AGENT_MODEL', 'gpt-6-luna'),
   extractorModel: env('EXTRACTOR_MODEL', 'gpt-6-luna'),
+  /** Reasoning effort for the agent (gpt-6-luna is a reasoning model): low keeps the chat quick. */
+  agentReasoningEffort: env('AGENT_REASONING_EFFORT', 'low') as 'minimal' | 'low' | 'medium' | 'high',
   secUserAgent: env('SEC_USER_AGENT'),
 } as const;

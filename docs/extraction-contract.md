@@ -38,7 +38,18 @@ only the summary counts.
   | The document HTML | `EdgarClient.text(url, FOREVER)`: declared User-Agent, rate limit, disk cache |
   | The answer key for numbers | `XbrlService.quarterValue(cik, metric, periodEnd)` |
 
-- Register `ExtractionModule` in `apps/api/src/app.module.ts`.
+- Provide it under the injection token `EXTRACTION_API` (`apps/api/src/core/extraction.token.ts`):
+  `providers: [ExtractionService, { provide: EXTRACTION_API, useExisting: ExtractionService }]`,
+  `exports: [EXTRACTION_API]`.
+- In `apps/api/src/app.module.ts`, replace `ExtractionStubModule` with your `ExtractionModule`. The
+  stub (`apps/api/src/extraction-stub/`) only marks filings ready so the desk works before
+  extraction lands; delete it once yours is in.
+- The agent's `add_filings` tool sets `filings.projectId` and `status: 'queued'`, then calls
+  `extractFiling` **without awaiting it** and tells the user the filings are being read. Progress
+  reaches the UI through your events (section 8).
+- Make every LLM call through `MubitService.respond(params, { task: 'section_extractor',
+  promptCacheKey: accession })` (`apps/api/src/mubit/mubit.service.ts`). It adds the Mubit
+  headers, logs the call in `llm_calls`, and returns `{ response, requestId }`.
 
 ## 3. Input documents
 
@@ -78,7 +89,7 @@ if the hash changes.
 
 | Part | Value |
 |---|---|
-| API | OpenAI **Responses API**, base URL `config.mubitBaseUrl`, key `config.mubitApiKey` |
+| API | OpenAI **Responses API** through `MubitService.respond` |
 | Model | `config.extractorModel` (default `gpt-6-luna`: reasoning model, `temperature` 1 only, use `max_output_tokens`) |
 | Instructions | Your frozen system prompt. General rules only, no company specifics |
 | Output format | `text.format = { type: 'json_schema', name: 'section_extraction', strict: true, schema: strictJsonSchema(ExtractorOutput) }` |
