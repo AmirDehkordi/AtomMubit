@@ -1,7 +1,5 @@
 packages:
   - apps/*
-  # MuTick UI installs on its own with npm (see apps/mutick/README.md).
-  - '!apps/mutick'
   - packages/*
 onlyBuiltDependencies:
   - '@nestjs/core'
