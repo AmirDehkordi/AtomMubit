@@ -4,6 +4,8 @@ import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import {
   METRICS,
   TOOL_ARGS,
+  formatChange,
+  formatValue,
   type ExtractionApi,
   type ToolArgs,
   type ToolName,
@@ -16,7 +18,7 @@ import { blocks, companies, filings, projects } from '../db/schema';
 import { EdgarService } from '../edgar/edgar.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { XbrlService } from '../xbrl/xbrl.service';
-import { formatChange, formatValue } from './format';
+
 
 export interface ToolContext {
   projectId: string;

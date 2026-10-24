@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Response } from 'openai/resources/responses/responses';
-import type { StreamEvent } from '@desk/shared';
+import type { StreamEvent, ViewSpec } from '@desk/shared';
 import { runAgent, MAX_TOOL_ROUNDS } from './run-agent';
 import type { ToolResult } from './tools.service';
 
@@ -36,7 +36,7 @@ const okResult = (summary: string, extra: Partial<ToolResult> = {}): ToolResult 
 
 describe('runAgent', () => {
   it('runs tools until the model answers in text', async () => {
-    const view = { view: 'quarter_overview', ticker: 'NVDA', periods: ['2026-07-26'] } as const;
+    const view: ViewSpec = { view: 'quarter_overview', ticker: 'NVDA', periods: ['2026-07-26'] };
     const { deps: d, events, inputs } = deps(
       [
         reply([call('add_filings', { accessions: ['a'] })]),
