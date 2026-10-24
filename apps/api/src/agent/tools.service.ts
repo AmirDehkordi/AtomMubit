@@ -17,6 +17,7 @@ import { DbService } from '../db/db.service';
 import { blocks, companies, filings, projectFilings, projects } from '../db/schema';
 import { DocumentsService } from '../edgar/documents.service';
 import { EdgarService } from '../edgar/edgar.service';
+import { FilingTextService } from '../edgar/filing-text.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { XbrlService } from '../xbrl/xbrl.service';
 
@@ -69,6 +70,7 @@ export class ToolsService {
     private readonly xbrl: XbrlService,
     private readonly dashboard: DashboardService,
     private readonly documents: DocumentsService,
+    private readonly filingText: FilingTextService,
     @Inject(EXTRACTION_API) private readonly extraction: ExtractionApi,
   ) {}
 
@@ -261,11 +263,26 @@ export class ToolsService {
       .orderBy(sql`ts_rank(${blocks.tsv}, plainto_tsquery('english', ${args.query})) desc`)
       .limit(8);
     if (!rows.length) {
-      const [count] = await this.dbs.db.select({ n: sql<number>`count(*)::int` }).from(blocks).where(inProject);
-      const n = count?.n ?? 0;
+      // Nothing extracted matches (or nothing is extracted yet): search the filings' own text,
+      // plus the companies' latest earnings releases.
+      const passages = await this.filingText.search(ctx.projectId, args.query, {
+        ticker: args.ticker,
+        periodEnd: args.periodEnd,
+        limit: 6,
+      });
+      if (!passages.length) return ok({ blocks: [], note: 'Nothing in these filings matches.' }, 'No matching passages');
       return ok(
-        { blocks: [], note: n ? 'No passages match.' : 'Nothing has been read from these filings yet.' },
-        n ? 'No matching passages' : 'Nothing read yet',
+        {
+          blocks: passages.map((p) => ({
+            id: p.id,
+            type: 'passage',
+            ticker: p.ticker,
+            source: `${p.form} ${p.documentType === p.form ? '' : `${p.documentType} `}for ${p.quarter}`.replace(/\s+/g, ' '),
+            snippet: p.text.slice(0, 420),
+          })),
+          note: 'Passages from the filing text. Open the useful ones with get_blocks and cite them as [[b:<id>]].',
+        },
+        `Found ${passages.length} passage${passages.length === 1 ? '' : 's'} in the filings`,
       );
     }
     return ok(
@@ -285,12 +302,22 @@ export class ToolsService {
   }
 
   private async getBlocks(args: ToolArgs<'get_blocks'>): Promise<ToolResult> {
-    const rows = await this.dbs.db
-      .select()
-      .from(blocks)
-      .where(and(inArray(blocks.id, args.ids), isNotNull(blocks.id)));
+    const passageIds = args.ids.filter((id) => id.startsWith('p:'));
+    const blockIds = args.ids.filter((id) => !id.startsWith('p:'));
+    const rows = blockIds.length
+      ? await this.dbs.db
+          .select()
+          .from(blocks)
+          .where(and(inArray(blocks.id, blockIds), isNotNull(blocks.id)))
+      : [];
+    const passages = await this.filingText.passages(passageIds);
     return ok(
       {
+        passages: passages.map((p) => ({
+          id: p.id,
+          source: `${p.ticker} ${p.form} (${p.documentType}) for ${p.quarter}`,
+          text: p.text,
+        })),
         blocks: rows.map((r) => ({
           id: r.id,
           type: r.type,
@@ -302,7 +329,7 @@ export class ToolsService {
           checked: r.status,
         })),
       },
-      `Opened ${rows.length} passage${rows.length === 1 ? '' : 's'}`,
+      `Opened ${rows.length + passages.length} passage${rows.length + passages.length === 1 ? '' : 's'}`,
     );
   }
 

@@ -80,8 +80,10 @@ export function Answer({ text, filings, showSources }: { text: string; filings: 
           components={{
             a: ({ href, children }) => {
               if (href?.startsWith('cite:')) {
-                const [, kind, id] = href.split(':');
-                return <Marker n={number(kind!, id!)} kind={kind as 'f' | 'b'} id={id ?? ''} filings={filings} />;
+                // cite:<kind>:<id>, where the id itself may contain colons (p:<accession>:<n>)
+                const kind = href.slice(5, 6) as 'f' | 'b';
+                const id = href.slice(7);
+                return <Marker n={number(kind, id)} kind={kind} id={id} filings={filings} />;
               }
               return (
                 <a href={href} target="_blank" rel="noreferrer" className="text-accent underline-offset-2 hover:underline">
@@ -101,12 +103,22 @@ export function Answer({ text, filings, showSources }: { text: string; filings: 
 
 function openSource(kind: 'f' | 'b', id: string, filings: DeskFiling[]) {
   if (kind === 'b') {
+    // Open the tab now (a browser only allows it during the click), then point it at the passage.
+    const tab = id.startsWith('p:') ? window.open('about:blank', '_blank') : null;
     void api
       .blocks([id])
       .then(([block]) => {
-        if (block) useDesk.getState().showView({ view: 'filing_reader', accession: block.accession, sectionId: block.sectionId, highlight: [id] });
+        if (!block) return tab?.close();
+        if (block.sectionId) {
+          useDesk.getState().showView({ view: 'filing_reader', accession: block.accession, sectionId: block.sectionId, highlight: [id] });
+        } else if ('url' in block && tab) {
+          // A text fragment scrolls the SEC document to the passage and highlights it.
+          const words = block.quote.split('\n')[1] ?? block.quote;
+          const fragment = encodeURIComponent(words.split(/\s+/).slice(0, 8).join(' '));
+          tab.location.href = `${block.url}#:~:text=${fragment}`;
+        }
       })
-      .catch(() => undefined);
+      .catch(() => tab?.close());
     return;
   }
   if (filings.some((f) => f.accession === id)) {
@@ -117,7 +129,12 @@ function openSource(kind: 'f' | 'b', id: string, filings: DeskFiling[]) {
 }
 
 function label(kind: 'f' | 'b', id: string, filings: DeskFiling[]): string {
-  if (kind === 'b') return 'Passage';
+  if (kind === 'b') {
+    const accession = /^p:(.+):\d+$/.exec(id)?.[1];
+    if (!accession) return 'Passage';
+    const f = filings.find((x) => x.accession === accession);
+    return f ? `${f.ticker} ${f.form} · ${f.quarter} · text` : 'Earnings release · text';
+  }
   const f = filings.find((x) => x.accession === id);
   return f ? `${f.ticker} ${f.form} · ${f.quarter}` : 'SEC filing';
 }

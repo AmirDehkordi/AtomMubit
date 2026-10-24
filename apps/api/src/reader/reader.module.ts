@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
+import { EdgarModule } from '../edgar/edgar.module';
 import { ReaderController } from './reader.controller';
 
-@Module({ controllers: [ReaderController] })
+@Module({ imports: [EdgarModule], controllers: [ReaderController] })
 export class ReaderModule {}
