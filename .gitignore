@@ -10,3 +10,4 @@ apps/web/next-env.d.ts
 .DS_Store
 !apps/api/data/*.lock
 samples
+apps/api/data/* 2.*
