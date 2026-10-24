@@ -32,6 +32,11 @@ Earnings Desk…".
 
 ## Plan
 
+Tonight's `desk_agent` batch is scheduled: `apps/api/data/feed/overnight-feed.sh` (local, not in git)
+sleeps until 00:01 UTC, reuses a desk API already running on 4000/4001/4010 or starts one on 4010,
+sends about 215 calls of new questions, and logs to `apps/api/data/feed/overnight.log`. Cancel with
+`pkill -f overnight-feed.sh`. Keep the laptop open and on power (a closed lid sleeps).
+
 - **Don't send more `desk_agent` calls on a day whose 200 are used.** Extra calls cost credit and
   are not reviewed.
 - **Feed each new day just after the reset**, with questions never sent before:
@@ -48,8 +53,11 @@ Earnings Desk…".
   `apps/api/data/replayed-questions.json` and never repeated.
 - **Each task feeds separately.** When extraction lands, `section_extractor` needs its own daily
   batch (roughly 200 sections: about 5–8 filings).
-- **Demo honestly.** By Sunday 10:00 there is at most one more review window (00:00 UTC Sunday). A
-  first adapter in silent test is the realistic best case; "answered by your model" is unlikely.
+- **Demo honestly.** Code freeze is Sunday 07:00 London, awards at 09:00. There is one more review
+  window before then (00:00 UTC = 01:00 London, just before the clocks go back at 02:00), and the
+  reviewer runs about hourly, so kept examples should show by roughly 02:00–03:00 and a first adapter
+  (if 25 are kept) a few hours later. A first adapter in silent test is the realistic best case;
+  "answered by your model" is unlikely.
   Show the task, its kept examples and the History panel, and say the replay is public data.
 - **Check progress:** `GET /mubit/stats` (our own count per task, since 00:00 UTC by default) and
   the task's History panel in the Mubit console.
