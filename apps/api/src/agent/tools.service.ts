@@ -14,7 +14,7 @@ import {
 import { EXTRACTION_API } from '../core/extraction.token';
 import { DashboardService, change } from '../dashboard/dashboard.service';
 import { DbService } from '../db/db.service';
-import { blocks, companies, filings, projects } from '../db/schema';
+import { blocks, companies, filings, projectFilings, projects } from '../db/schema';
 import { DocumentsService } from '../edgar/documents.service';
 import { EdgarService } from '../edgar/edgar.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
@@ -153,9 +153,13 @@ export class ToolsService {
     if (!rows.length) return fail('None of those accession numbers were found. Call find_filings first.');
 
     await this.dbs.db
+      .insert(projectFilings)
+      .values(rows.map((r) => ({ projectId: ctx.projectId, accession: r.accession })))
+      .onConflictDoNothing();
+    await this.dbs.db
       .update(filings)
-      .set({ projectId: ctx.projectId, status: ctx.replay ? 'ready' : 'queued' })
-      .where(inArray(filings.accession, rows.map((r) => r.accession)));
+      .set({ status: ctx.replay ? 'ready' : 'queued' })
+      .where(and(inArray(filings.accession, rows.map((r) => r.accession)), eq(filings.status, 'found')));
 
     const tickers = [...new Set(rows.map((r) => r.ticker))];
     const quarters = rows
@@ -234,7 +238,7 @@ export class ToolsService {
   }
 
   private async searchBlocks(args: ToolArgs<'search_blocks'>, ctx: ToolContext): Promise<ToolResult> {
-    const inProject = sql`${blocks.accession} in (select accession from filings where project_id = ${ctx.projectId})`;
+    const inProject = sql`${blocks.accession} in (select accession from project_filings where project_id = ${ctx.projectId})`;
     const conditions = [inProject, sql`${blocks.tsv} @@ plainto_tsquery('english', ${args.query})`];
     if (args.ticker) conditions.push(eq(companies.ticker, args.ticker.toUpperCase()));
     if (args.periodEnd) conditions.push(eq(blocks.periodEnd, args.periodEnd));

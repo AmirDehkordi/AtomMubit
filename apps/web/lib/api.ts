@@ -159,7 +159,7 @@ export const api = {
   section: (id: string) => get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}`),
   blocks: (ids: string[]) => get<ReaderBlock[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
   rules: () => get<Rule[]>('/rules'),
-  proposeCorrection: (input: { blockId: string; note: string; ruleCode: string | null; ruleText: string | null }) =>
+  proposeCorrection: (input: { blockId: string; projectId: string | null; note: string; ruleCode: string | null; ruleText: string | null }) =>
     post<ProposedCorrection>('/corrections', input),
   applyCorrection: (id: string) => post<{ sectionIds: string[] }>(`/corrections/${id}/apply`),
   dismissCorrection: (id: string) => post<{ ok: true }>(`/corrections/${id}/dismiss`),

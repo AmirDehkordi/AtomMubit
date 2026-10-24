@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { companies, conversations, filings, messages, projects } from '../db/schema';
+import { companies, conversations, filings, messages, projectFilings, projects } from '../db/schema';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { DashboardService } from '../dashboard/dashboard.service';
 
@@ -77,9 +77,10 @@ export class ProjectsService {
         ticker: companies.ticker,
         fiscalYearEnd: companies.fiscalYearEnd,
       })
-      .from(filings)
+      .from(projectFilings)
+      .innerJoin(filings, eq(projectFilings.accession, filings.accession))
       .innerJoin(companies, eq(filings.cik, companies.cik))
-      .where(eq(filings.projectId, projectId))
+      .where(eq(projectFilings.projectId, projectId))
       .orderBy(asc(filings.periodEnd));
     return rows.map(({ fiscalYearEnd, ...f }) => ({
       ...f,

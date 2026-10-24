@@ -84,7 +84,8 @@ Or over HTTP: `GET /filings/<accession>/job` (job with document sizes) and
 - In `apps/api/src/agent/agent.module.ts`, replace `ExtractionStubModule` with your `ExtractionModule`. The
   stub (`apps/api/src/extraction-stub/`) only marks filings ready so the desk works before
   extraction lands; delete it once yours is in.
-- The agent's `add_filings` tool sets `filings.projectId` and `status: 'queued'`, fetches the
+- The agent's `add_filings` tool links the filing to the desk (`project_filings`; a filing can be on
+  several desks, so read it once and reuse its blocks), sets `status: 'queued'`, fetches the
   documents, then calls `extractFiling` **without awaiting it** and tells the user the filings are
   being read. Progress reaches the UI through your events (section 8).
 - Make every LLM call through `MubitService.respond(params, { task: 'section_extractor',

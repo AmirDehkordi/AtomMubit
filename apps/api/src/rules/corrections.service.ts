@@ -5,11 +5,13 @@ import type { ExtractionApi } from '@desk/shared';
 import { EXTRACTION_API } from '../core/extraction.token';
 import { EventsService } from '../core/events.service';
 import { DbService } from '../db/db.service';
-import { blocks, corrections, filings, rules, sections } from '../db/schema';
+import { blocks, corrections, projectFilings, rules, sections } from '../db/schema';
 import { RulesService } from './rules.service';
 
 export interface CorrectionInput {
   blockId: string;
+  /** The desk the person is on (a filing can be on several). */
+  projectId: string | null;
   /** What the person said was wrong. */
   note: string;
   /** Point at an existing rule (e.g. "R3")… */
@@ -38,13 +40,19 @@ export class CorrectionsService {
   async propose(input: CorrectionInput) {
     const note = input.note.trim();
     if (!note) throw new BadRequestException('Say what is wrong');
-    const [row] = await this.dbs.db
-      .select({ block: blocks, section: sections, projectId: filings.projectId })
+    const [found] = await this.dbs.db
+      .select({ block: blocks, section: sections })
       .from(blocks)
       .innerJoin(sections, eq(blocks.sectionId, sections.id))
-      .innerJoin(filings, eq(blocks.accession, filings.accession))
       .where(eq(blocks.id, input.blockId));
-    if (!row) throw new NotFoundException(`No block ${input.blockId}`);
+    if (!found) throw new NotFoundException(`No block ${input.blockId}`);
+    const desks = await this.dbs.db
+      .select({ projectId: projectFilings.projectId })
+      .from(projectFilings)
+      .where(eq(projectFilings.accession, found.block.accession));
+    const projectId =
+      input.projectId && desks.some((d) => d.projectId === input.projectId) ? input.projectId : (desks[0]?.projectId ?? null);
+    const row = { ...found, projectId };
 
     let rule: typeof rules.$inferSelect | null = input.ruleCode ? await this.rulesService.byCode(input.ruleCode) : null;
     if (input.ruleCode && !rule) throw new BadRequestException(`No rule ${input.ruleCode}`);
@@ -123,8 +131,8 @@ export class CorrectionsService {
     const rows = await this.dbs.db
       .select({ id: sections.id, accession: sections.accession, item: sections.item, title: sections.title })
       .from(sections)
-      .innerJoin(filings, eq(sections.accession, filings.accession))
-      .where(and(eq(filings.projectId, projectId), eq(sections.item, section.item), eq(sections.kind, section.kind)));
+      .innerJoin(projectFilings, eq(sections.accession, projectFilings.accession))
+      .where(and(eq(projectFilings.projectId, projectId), eq(sections.item, section.item), eq(sections.kind, section.kind)));
     return rows.some((r) => r.id === section.id) ? rows : [section, ...rows];
   }
 

@@ -5,6 +5,7 @@ import { RulesService } from './rules.service';
 
 const CorrectionBody = z.object({
   blockId: z.string().min(1),
+  projectId: z.string().nullable().default(null),
   note: z.string().min(1).max(500),
   ruleCode: z.string().regex(/^R\d+$/).nullable().default(null),
   ruleText: z.string().max(500).nullable().default(null),

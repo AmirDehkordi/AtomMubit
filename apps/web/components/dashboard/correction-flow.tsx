@@ -5,6 +5,7 @@ import { Check, Loader2, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { api, type ProposedCorrection, type ReaderBlock } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { useDesk } from '@/lib/desk-store';
 
 /** Common mistakes, each pointing at the house rule that covers it. */
 const REASONS: { label: string; rule: string | null }[] = [
@@ -32,6 +33,7 @@ export function CorrectionFlow({ block, onClose }: { block: ReaderBlock; onClose
     mutationFn: () =>
       api.proposeCorrection({
         blockId: block.id,
+        projectId: useDesk.getState().projectId,
         note: note.trim() || reason?.label || '',
         ruleCode: reason?.rule ?? null,
         ruleText: reason?.rule ? null : ruleText.trim(),

@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
@@ -264,4 +265,19 @@ export const corrections = pgTable(
     appliedAt: timestamp('applied_at', { withTimezone: true }),
   },
   (t) => [index('corrections_block_idx').on(t.blockId)],
+);
+
+/** Which filings are on which desk. A filing can be on many desks. */
+export const projectFilings = pgTable(
+  'project_filings',
+  {
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    accession: text('accession')
+      .notNull()
+      .references(() => filings.accession),
+    addedAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.accession] }), index('project_filings_accession_idx').on(t.accession)],
 );
