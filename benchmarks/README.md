@@ -41,3 +41,40 @@ still useful because local estimates are not a billing guarantee.
 
 The default Compose benchmark profile runs the same offline smoke. No live
 model benchmark has been run in this implementation.
+
+## Recorded Mubit development examples
+
+`fixtures/mubit-development.json` contains 25 fictional earnings excerpts and
+expected fields. These are development examples, not a held-out test set. The
+native Mubit or OpenRouter profile is read from `apps/api/.env`.
+
+Prepare individual sample files without sending requests:
+
+```sh
+node benchmarks/mubit-development.mjs --output benchmarks/results/development-preview
+node --test benchmarks/development-scoring.test.mjs
+```
+
+Explicitly send the batch after building the API:
+
+```sh
+node benchmarks/mubit-development.mjs --send --max-calls 50 \
+  --output benchmarks/results/development-run
+```
+
+The runner invokes the production extraction engine and workflow with the
+unchanged task prompt/schema and starter rules. Gold labels never enter model
+prompts. Each single-section example permits at most one repair; the process
+checks the global cap before every call, uses no SDK retries, and caps each
+response at 3,000 output tokens. Authentication, payment, permission and rate
+errors stop the batch. Provider-internal retries cannot be established here.
+No application worker or SEC discovery is started. Calls are recorded under
+normal `section_extractor` semantics; Mubit decides which examples to keep and
+whether to train. Sending examples does not prove training or promotion.
+
+Reports include model field agreement and source-verified agreement separately,
+per-case results, call latency (including client/telemetry overhead), token
+counts, and request IDs. Missing-field application fallbacks do not count as
+correct model abstentions. Billed cost remains unknown without invoices. The
+runner writes a separate telemetry database and JSON/Markdown reports under the
+output directory, which is ignored by Git when placed in `benchmarks/results/`.
