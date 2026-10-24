@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Form } from './filings';
 import { BLOCK_TYPES } from './blocks';
-import { MetricKey } from './metrics';
+import { DeskMetricKey } from './metrics';
 import { ViewSpec } from './views';
 
 // The desk_agent task's fixed tool list. The full list is sent on every agent
@@ -25,7 +25,7 @@ export const TOOL_ARGS = {
   }),
   get_metrics: z.strictObject({
     ticker: z.string(),
-    metrics: z.array(MetricKey).min(1),
+    metrics: z.array(DeskMetricKey).min(1),
     periodEnds: z.array(z.string()).max(12).describe('Quarter end dates (YYYY-MM-DD)'),
   }),
   search_blocks: z.strictObject({
@@ -38,7 +38,7 @@ export const TOOL_ARGS = {
     ids: z.array(z.string()).min(1).max(8),
   }),
   compare: z.strictObject({
-    metric: MetricKey,
+    metric: DeskMetricKey,
     tickers: z.array(z.string()).min(2).max(8),
     periodEnd: z.string().nullable(),
   }),

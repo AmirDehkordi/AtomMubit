@@ -16,9 +16,10 @@ export function formatValue(value: number | null, unit: string): string {
   }
 }
 
-export function formatChange(fraction: number | null): string | null {
+/** "+12.3%" for a growth fraction, or "+1.2pp" when `points` (a change between two margins). */
+export function formatChange(fraction: number | null, points = false): string | null {
   if (fraction === null || !Number.isFinite(fraction)) return null;
-  return `${fraction >= 0 ? '+' : ''}${(fraction * 100).toFixed(1)}%`;
+  return `${fraction >= 0 ? '+' : ''}${(fraction * 100).toFixed(1)}${points ? 'pp' : '%'}`;
 }
 
 function money(v: number): string {

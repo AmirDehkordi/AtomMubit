@@ -67,6 +67,8 @@ export const api = {
   project: (id: string) => get<ProjectData>(`/projects/${id}`),
   overview: (ticker: string, periods: string[]) =>
     get<QuarterOverview>(`/views/quarter-overview?ticker=${encodeURIComponent(ticker)}&periods=${periods.join(',')}`),
+  metric: (ticker: string, metric: string, periods: string[]) =>
+    get<QuarterOverview>(`/views/metric?ticker=${encodeURIComponent(ticker)}&metric=${metric}&periods=${periods.join(',')}`),
   compare: (metric: string, tickers: string[], periodEnd: string | null) =>
     get<Comparison>(`/views/compare?metric=${metric}&tickers=${tickers.join(',')}&periodEnd=${periodEnd ?? ''}`),
 };

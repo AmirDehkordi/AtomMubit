@@ -4,6 +4,7 @@ import { CheckCircle2, ExternalLink, Loader2 } from 'lucide-react';
 import type { ViewSpec } from '@desk/shared';
 import type { DeskFiling } from '@/lib/api';
 import { CompareView } from './compare-view';
+import { MetricDetail } from './metric-detail';
 import { QuarterOverview } from './quarter-overview';
 
 export function Dashboard({ view, filings, title }: { view: ViewSpec; filings: DeskFiling[]; title: string }) {
@@ -45,6 +46,8 @@ function View({ view }: { view: ViewSpec }) {
   switch (view.view) {
     case 'quarter_overview':
       return <QuarterOverview ticker={view.ticker} periods={view.periods} />;
+    case 'metric_detail':
+      return <MetricDetail ticker={view.ticker} metric={view.metric} periods={view.periods} />;
     case 'compare':
       return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} />;
     default:

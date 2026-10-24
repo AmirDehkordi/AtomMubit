@@ -48,3 +48,24 @@ export interface QuarterValue {
   restated: boolean;
   note: string | null;
 }
+
+/** Margins: a reported metric divided by revenue. Computed in code, never by the model. */
+export const MARGINS = {
+  gross_margin: { label: 'Gross margin', numerator: 'gross_profit' },
+  operating_margin: { label: 'Operating margin', numerator: 'operating_income' },
+  net_margin: { label: 'Net margin', numerator: 'net_income' },
+} as const satisfies Record<string, { label: string; numerator: MetricKey }>;
+
+export type MarginKey = keyof typeof MARGINS;
+export const MARGIN_KEYS = Object.keys(MARGINS) as MarginKey[];
+
+/** Anything the agent can ask for: a reported metric or a margin. */
+export type DeskMetricKey = MetricKey | MarginKey;
+export const DESK_METRIC_KEYS: DeskMetricKey[] = [...METRIC_KEYS, ...MARGIN_KEYS];
+export const DeskMetricKey = z.enum(DESK_METRIC_KEYS as [DeskMetricKey, ...DeskMetricKey[]]);
+
+export const isMargin = (key: string): key is MarginKey => key in MARGINS;
+
+export function metricInfo(key: DeskMetricKey): { label: string; unit: string } {
+  return isMargin(key) ? { label: MARGINS[key].label, unit: 'percent' } : METRICS[key];
+}

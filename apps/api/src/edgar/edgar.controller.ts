@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
-import { TOOL_ARGS } from '@desk/shared';
+import { MetricKey, TOOL_ARGS } from '@desk/shared';
 import { z } from 'zod';
 import { XbrlService } from '../xbrl/xbrl.service';
 import { DocumentsService } from './documents.service';
@@ -33,7 +33,7 @@ export class EdgarController {
   // GET /metrics?ticker=NVDA&metrics=revenue,net_income&periodEnds=2026-01-25,2026-04-26
   @Get('metrics')
   metrics(@Query() q: Record<string, unknown>) {
-    const args = parse(TOOL_ARGS.get_metrics, {
+    const args = parse(z.object({ ticker: z.string(), metrics: z.array(MetricKey).min(1), periodEnds: z.array(z.string()) }), {
       ticker: q.ticker,
       metrics: list(q.metrics),
       periodEnds: list(q.periodEnds),

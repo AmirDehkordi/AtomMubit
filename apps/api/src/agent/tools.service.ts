@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import {
-  METRICS,
   TOOL_ARGS,
   formatChange,
   formatValue,
@@ -12,7 +11,7 @@ import {
   type ViewSpec,
 } from '@desk/shared';
 import { EXTRACTION_API } from '../core/extraction.token';
-import { DashboardService } from '../dashboard/dashboard.service';
+import { DashboardService, change } from '../dashboard/dashboard.service';
 import { DbService } from '../db/db.service';
 import { blocks, companies, filings, projects } from '../db/schema';
 import { DocumentsService } from '../edgar/documents.service';
@@ -182,34 +181,29 @@ export class ToolsService {
   }
 
   private async getMetrics(args: ToolArgs<'get_metrics'>): Promise<ToolResult> {
-    const result = await this.xbrl.getMetrics(args);
-    const order = [...result.periods].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
-    const values = args.metrics.map((metric) => {
-      let previous: number | null = null;
-      return {
-        metric,
-        label: METRICS[metric].label,
-        quarters: order.map(({ periodEnd, quarter }) => {
-          const v = result.values.find((x) => x.metric === metric && x.periodEnd === periodEnd)!;
-          const change = previous !== null && v.value !== null && previous !== 0 ? (v.value - previous) / Math.abs(previous) : null;
-          previous = v.value;
-          return {
-            quarter,
-            periodEnd,
-            value: formatValue(v.value, v.unit),
-            changeVsPrevious: formatChange(change),
-            how: v.method,
-            note: v.note,
-            approximate: v.approximate || undefined,
-            restated: v.restated || undefined,
-            sources: v.accessions,
-          };
-        }),
-      };
-    });
+    const series = await this.dashboard.series(args.ticker, args.metrics, args.periodEnds);
+    const values = series.rows.map((row) => ({
+      metric: row.key,
+      label: row.label,
+      quarters: series.quarters.map(({ periodEnd, quarter }, i) => {
+        const c = row.cells[i]!;
+        const before = i > 0 ? row.cells[i - 1]!.value : null;
+        return {
+          quarter,
+          periodEnd,
+          value: formatValue(c.value, row.unit),
+          changeVsPrevious: formatChange(change(c.value, before, row.kind === 'margin'), row.kind === 'margin'),
+          how: c.method,
+          note: c.note,
+          approximate: c.approximate || undefined,
+          restated: c.restated || undefined,
+          sources: c.accessions,
+        };
+      }),
+    }));
     return ok(
-      { company: { ticker: result.company.ticker, name: result.company.name }, values },
-      `${result.company.ticker}: ${args.metrics.length} metric${args.metrics.length === 1 ? '' : 's'} × ${order.length} quarter${order.length === 1 ? '' : 's'}`,
+      { company: { ticker: series.ticker, name: series.name }, values },
+      `${series.ticker}: ${args.metrics.length} metric${args.metrics.length === 1 ? '' : 's'} × ${series.quarters.length} quarter${series.quarters.length === 1 ? '' : 's'}`,
     );
   }
 
@@ -224,7 +218,7 @@ export class ToolsService {
           periodEnd: r.periodEnd,
           value: formatValue(r.value.value, result.unit),
           yearAgo: formatValue(r.yearAgo.value, result.unit),
-          changeVsYearAgo: formatChange(r.yoy),
+          changeVsYearAgo: formatChange(r.yoy, result.unit === 'percent'),
           sources: r.value.accessions,
         })),
       },

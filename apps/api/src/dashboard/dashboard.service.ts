@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { desc, eq } from 'drizzle-orm';
-import { METRICS, type MetricKey, type QuarterValue, type ViewSpec } from '@desk/shared';
+import {
+  MARGINS,
+  MARGIN_KEYS,
+  isMargin,
+  metricInfo,
+  type DeskMetricKey,
+  type MetricKey,
+  type QuarterValue,
+  type ViewSpec,
+} from '@desk/shared';
 import { DbService } from '../db/db.service';
 import { views } from '../db/schema';
 import { EdgarService } from '../edgar/edgar.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { XbrlService } from '../xbrl/xbrl.service';
 
-export const OVERVIEW_METRICS: MetricKey[] = [
+export const OVERVIEW_METRICS: DeskMetricKey[] = [
   'revenue',
   'gross_profit',
   'operating_income',
@@ -17,6 +26,7 @@ export const OVERVIEW_METRICS: MetricKey[] = [
   'diluted_shares',
   'operating_cash_flow',
   'capex',
+  ...MARGIN_KEYS,
 ];
 
 export interface Cell {
@@ -28,19 +38,19 @@ export interface Cell {
   note: string | null;
 }
 
-export interface OverviewRow {
-  key: string;
+export interface SeriesRow {
+  key: DeskMetricKey;
   label: string;
   unit: string;
   kind: 'value' | 'margin';
   cells: Cell[];
 }
 
-export interface QuarterOverview {
+export interface Series {
   ticker: string;
   name: string;
   quarters: { periodEnd: string; quarter: string }[];
-  rows: OverviewRow[];
+  rows: SeriesRow[];
 }
 
 export interface CompareRow {
@@ -50,26 +60,21 @@ export interface CompareRow {
   quarter: string;
   value: Cell;
   yearAgo: Cell;
-  /** Change against the same quarter a year earlier, as a fraction (0.12 = +12%). */
+  /** Change against the same quarter a year earlier: a fraction for values (0.12 = +12%), points for margins. */
   yoy: number | null;
 }
 
 export interface Comparison {
-  metric: MetricKey;
+  metric: DeskMetricKey;
   label: string;
   unit: string;
   rows: CompareRow[];
 }
 
-const MARGINS: { key: string; label: string; numerator: MetricKey }[] = [
-  { key: 'gross_margin', label: 'Gross margin', numerator: 'gross_profit' },
-  { key: 'operating_margin', label: 'Operating margin', numerator: 'operating_income' },
-  { key: 'net_margin', label: 'Net margin', numerator: 'net_income' },
-];
-
 /**
- * The numbers behind the dashboard views, and the view the agent last chose.
- * All arithmetic happens here (margins, growth), never in the LLM.
+ * The numbers behind the dashboard views and the agent's metric tools, and the
+ * view the agent last chose. All arithmetic happens here (margins, growth),
+ * never in the LLM.
  */
 @Injectable()
 export class DashboardService {
@@ -94,33 +99,37 @@ export class DashboardService {
     return row?.spec ?? null;
   }
 
-  async quarterOverview(ticker: string, periods: string[]): Promise<QuarterOverview> {
-    const sorted = [...periods].sort();
-    const result = await this.xbrl.getMetrics({ ticker, metrics: OVERVIEW_METRICS, periodEnds: sorted });
+  /** Metrics (reported values and margins) for one company over quarters, oldest first. */
+  async series(ticker: string, metrics: DeskMetricKey[], periods: string[]): Promise<Series> {
+    const sorted = [...new Set(periods)].sort();
+    const base = new Set<MetricKey>();
+    for (const m of metrics) {
+      if (isMargin(m)) {
+        base.add(MARGINS[m].numerator);
+        base.add('revenue');
+      } else base.add(m);
+    }
+    const result = await this.xbrl.getMetrics({ ticker, metrics: [...base], periodEnds: sorted });
     const byKey = new Map<string, QuarterValue>(result.values.map((v) => [`${v.metric}|${v.periodEnd}`, v]));
     const cell = (metric: MetricKey, periodEnd: string): Cell => toCell(byKey.get(`${metric}|${periodEnd}`));
 
-    const rows: OverviewRow[] = OVERVIEW_METRICS.map((metric) => ({
-      key: metric,
-      label: METRICS[metric].label,
-      unit: METRICS[metric].unit,
-      kind: 'value',
-      cells: sorted.map((p) => cell(metric, p)),
-    }));
-    for (const m of MARGINS) {
-      rows.push({
-        key: m.key,
-        label: m.label,
-        unit: 'percent',
-        kind: 'margin',
-        cells: sorted.map((p) => ratio(cell(m.numerator, p), cell('revenue', p))),
-      });
-    }
-    return { ticker: result.company.ticker, name: result.company.name, quarters: result.periods, rows };
+    const rows = metrics.map((key): SeriesRow => {
+      const { label, unit } = metricInfo(key);
+      const cells = sorted.map((p) =>
+        isMargin(key) ? ratio(cell(MARGINS[key].numerator, p), cell('revenue', p)) : cell(key, p),
+      );
+      return { key, label, unit, kind: isMargin(key) ? 'margin' : 'value', cells };
+    });
+    const quarters = result.periods.slice().sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
+    return { ticker: result.company.ticker, name: result.company.name, quarters, rows };
+  }
+
+  quarterOverview(ticker: string, periods: string[]): Promise<Series> {
+    return this.series(ticker, OVERVIEW_METRICS, periods);
   }
 
   /** One metric across companies, each on its latest quarter (or the quarter ending `periodEnd`). */
-  async compare(metric: MetricKey, tickers: string[], periodEnd: string | null): Promise<Comparison> {
+  async compare(metric: DeskMetricKey, tickers: string[], periodEnd: string | null): Promise<Comparison> {
     const rows = await Promise.all(
       tickers.map(async (ticker): Promise<CompareRow> => {
         const found = await this.edgar.findFilings({ ticker, forms: ['10-Q', '10-K'], lastNQuarters: 8, fiscalYear: null });
@@ -128,9 +137,10 @@ export class DashboardService {
         const end = periodEnd ?? ends[0];
         if (!end) throw new Error(`No quarterly filings for ${ticker}`);
         const yearAgo = ends.find((e) => e < end && Math.abs(daysApart(e, end) - 364) <= 14) ?? null;
-        const metrics = await this.xbrl.getMetrics({ ticker, metrics: [metric], periodEnds: yearAgo ? [end, yearAgo] : [end] });
-        const value = toCell(metrics.values.find((v) => v.periodEnd === end));
-        const prior = toCell(yearAgo ? metrics.values.find((v) => v.periodEnd === yearAgo) : undefined);
+        const series = await this.series(ticker, [metric], yearAgo ? [yearAgo, end] : [end]);
+        const cells = series.rows[0]!.cells;
+        const value = cells[cells.length - 1]!;
+        const prior = yearAgo ? cells[0]! : toCell(undefined);
         return {
           ticker: found.company.ticker,
           name: found.company.name,
@@ -138,12 +148,20 @@ export class DashboardService {
           quarter: quarterName(fiscalLabel(end, found.company.fiscalYearEnd)),
           value,
           yearAgo: prior,
-          yoy: value.value !== null && prior.value ? (value.value - prior.value) / Math.abs(prior.value) : null,
+          yoy: change(value.value, prior.value, isMargin(metric)),
         };
       }),
     );
-    return { metric, label: METRICS[metric].label, unit: METRICS[metric].unit, rows };
+    const { label, unit } = metricInfo(metric);
+    return { metric, label, unit, rows };
   }
+}
+
+/** A fraction for values (0.12 = +12%), or the difference in points for margins. */
+export function change(now: number | null, before: number | null, points: boolean): number | null {
+  if (now === null || before === null) return null;
+  if (points) return now - before;
+  return before === 0 ? null : (now - before) / Math.abs(before);
 }
 
 function toCell(v: QuarterValue | undefined): Cell {
@@ -165,7 +183,7 @@ function ratio(numerator: Cell, denominator: Cell): Cell {
     approximate: false,
     restated: numerator.restated || denominator.restated,
     accessions: [...new Set([...numerator.accessions, ...denominator.accessions])],
-    note: null,
+    note: ok ? 'Computed from reported figures ÷ revenue' : null,
   };
 }
 

@@ -27,7 +27,7 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
               </span>
               <span className="flex items-baseline gap-3">
                 <CellValue cell={r.value} unit={data.unit} />
-                <Change value={r.yoy} />
+                <Change value={r.yoy} points={data.unit === 'percent'} />
               </span>
             </div>
             <div className="bg-ink h-2.5 overflow-hidden rounded-full">

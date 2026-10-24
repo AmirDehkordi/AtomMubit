@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { METRICS, type MetricKey, type QuarterValue, type ToolArgs } from '@desk/shared';
+import { METRICS, type MetricKey, type QuarterValue } from '@desk/shared';
 import { DbService } from '../db/db.service';
 import { facts as factsTable } from '../db/schema';
 import { EdgarClient, HOUR } from '../edgar/edgar.client';
@@ -52,8 +52,8 @@ export class XbrlService {
     private readonly dbs: DbService,
   ) {}
 
-  /** The get_metrics tool. Values are in raw units (USD, USD per share, shares). */
-  async getMetrics(args: ToolArgs<'get_metrics'>): Promise<MetricsResult> {
+  /** Reported metrics for quarters. Values are in raw units (USD, USD per share, shares). */
+  async getMetrics(args: { ticker: string; metrics: MetricKey[]; periodEnds: string[] }): Promise<MetricsResult> {
     const company = await this.edgarService.company(args.ticker);
     const index = await this.index(company.cik);
     const values = args.metrics.flatMap((metric) =>
