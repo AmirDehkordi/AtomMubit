@@ -1,24 +1,60 @@
 'use client';
 
 import { FileText, Quote } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api, type DeskFiling } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
 
 const CITATION = /\[\[(f|b):([^\]]+)\]\]/g;
+/** Characters revealed per animation frame while an answer "types" in. */
+const CHARS_PER_FRAME = 9;
 
-/** Markdown answer with [[f:accession]] and [[b:block]] citations rendered as chips. Fades in when it arrives. */
-export function Answer({ text, filings, animate }: { text: string; filings: DeskFiling[]; animate: boolean }) {
+/** The answer as plain text (for copying): citations removed. */
+export const plainAnswer = (text: string) => text.replace(CITATION, '').replace(/[ \t]+\n/g, '\n').trim();
+
+/**
+ * Reveals text progressively, like a streamed reply, then reports when it's done.
+ * Partial citations ("[[f:00…") are held back until complete.
+ */
+export function useReveal(text: string, enabled: boolean, onDone?: () => void): string {
+  const [shown, setShown] = useState(enabled ? 0 : text.length);
+  const done = useRef(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  useEffect(() => {
+    if (!enabled) {
+      setShown(text.length);
+      return;
+    }
+    done.current = false;
+    let n = 0;
+    let frame = 0;
+    const tick = () => {
+      n = Math.min(text.length, n + CHARS_PER_FRAME);
+      setShown(n);
+      if (n < text.length) {
+        frame = requestAnimationFrame(tick);
+      } else if (!done.current) {
+        done.current = true;
+        onDoneRef.current?.();
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [text, enabled]);
+  if (shown >= text.length) return text;
+  return text.slice(0, shown).replace(/\[\[[^\]]*\]?$/, '');
+}
+
+/** Markdown answer with [[f:accession]] and [[b:block]] citations rendered as chips. */
+export function Answer({ text, filings }: { text: string; filings: DeskFiling[] }) {
   const withLinks = text.replace(CITATION, (_m, kind: string, id: string) => `[${kind}:${id}](cite:${kind}:${id})`);
   return (
-    <motion.div
-      className="answer text-[15px] leading-[1.7] text-[color-mix(in_oklab,var(--color-text)_88%,transparent)]"
-      initial={animate ? { opacity: 0, y: 6, filter: 'blur(4px)' } : false}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div className="answer text-[15px] leading-[1.7]">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         urlTransform={(url) => url}
         components={{
           a: ({ href, children }) => {
@@ -36,12 +72,12 @@ export function Answer({ text, filings, animate }: { text: string; filings: Desk
       >
         {withLinks}
       </ReactMarkdown>
-    </motion.div>
+    </div>
   );
 }
 
 const chip =
-  'border-line bg-raised text-muted hover:border-accent/50 hover:text-text mx-0.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-px align-[1px] text-[11px] font-medium transition-colors';
+  'border-line bg-raised text-muted hover:text-text hover:border-[color-mix(in_oklab,var(--color-text)_25%,transparent)] mx-0.5 inline-flex items-center gap-1 rounded-md border px-1.5 py-px align-[1px] text-[11px] font-medium transition-colors';
 
 function Citation({ kind, id, filings }: { kind: 'f' | 'b'; id: string; filings: DeskFiling[] }) {
   if (kind === 'b') {

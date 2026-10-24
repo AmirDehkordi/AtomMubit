@@ -1,12 +1,16 @@
 'use client';
 
-import { ArrowUp, CornerDownLeft } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useState } from 'react';
+import { ArrowUp, Square } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 
+const MAX_HEIGHT = 220;
+
+/** The message box: grows with its text, Enter sends, and turns into Stop while the desk works. */
 export function Composer({
   onSend,
+  onStop,
+  busy,
   disabled,
   placeholder,
   autoFocus,
@@ -14,6 +18,8 @@ export function Composer({
   className,
 }: {
   onSend: (text: string) => void;
+  onStop?: () => void;
+  busy?: boolean;
   disabled?: boolean;
   placeholder: string;
   autoFocus?: boolean;
@@ -21,17 +27,27 @@ export function Composer({
   className?: string;
 }) {
   const [text, setText] = useState('');
-  const ready = text.trim().length > 0 && !disabled;
+  const box = useRef<HTMLTextAreaElement>(null);
+  const ready = text.trim().length > 0 && !disabled && !busy;
+
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT)}px`;
+  }, [text]);
+
   const submit = () => {
     if (!ready) return;
     onSend(text.trim());
     setText('');
   };
+
   return (
     <form
       className={cn(
-        'group border-line bg-panel relative rounded-2xl border transition-all duration-300',
-        'focus-within:border-accent/50 focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent),0_12px_40px_-12px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]',
+        'border-line bg-panel rounded-[20px] border transition-[border-color,box-shadow] duration-200',
+        'focus-within:border-[color-mix(in_oklab,var(--color-text)_22%,transparent)] focus-within:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]',
         className,
       )}
       onSubmit={(e) => {
@@ -40,36 +56,49 @@ export function Composer({
       }}
     >
       <textarea
+        ref={box}
         value={text}
         autoFocus={autoFocus}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
+          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
             submit();
           }
+          if (e.key === 'Escape' && busy) onStop?.();
         }}
-        rows={large ? 3 : 2}
+        rows={1}
         placeholder={placeholder}
         className={cn(
-          'placeholder:text-subtle block w-full resize-none bg-transparent px-4 pt-3.5 pb-11 outline-none',
-          large ? 'text-base' : 'text-[15px]',
+          'placeholder:text-subtle block w-full resize-none bg-transparent px-4 pt-3.5 outline-none',
+          large ? 'min-h-[84px] text-base' : 'min-h-[52px] text-[15px]',
         )}
       />
-      <div className="absolute right-3 bottom-2.5 left-4 flex items-center justify-between">
-        <span className="text-subtle flex items-center gap-1 text-[11px]">
-          <CornerDownLeft className="size-3" /> Enter to send · Shift+Enter for a new line
-        </span>
-        <motion.button
-          type="submit"
-          disabled={!ready}
-          whileTap={{ scale: 0.92 }}
-          animate={{ scale: ready ? 1 : 0.94, opacity: ready ? 1 : 0.4 }}
-          className="from-accent to-accent-2 text-ink grid size-8 place-items-center rounded-full bg-gradient-to-br shadow-[0_4px_16px_-4px_var(--color-accent)]"
-          aria-label="Send"
-        >
-          <ArrowUp className="size-4" strokeWidth={2.5} />
-        </motion.button>
+      <div className="flex items-center justify-between px-3 pt-1 pb-2.5">
+        <span className="text-subtle pl-1 text-[11px]">{busy ? 'Esc to stop' : 'Shift + Enter for a new line'}</span>
+        {busy ? (
+          <button
+            type="button"
+            onClick={onStop}
+            className="bg-text text-ink grid size-8 place-items-center rounded-full transition-transform active:scale-95"
+            aria-label="Stop"
+            title="Stop"
+          >
+            <Square className="size-3" fill="currentColor" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!ready}
+            className={cn(
+              'grid size-8 place-items-center rounded-full transition-all active:scale-95',
+              ready ? 'bg-text text-ink' : 'bg-raised text-subtle',
+            )}
+            aria-label="Send"
+          >
+            <ArrowUp className="size-4" strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     </form>
   );

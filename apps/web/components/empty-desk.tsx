@@ -60,7 +60,6 @@ export function EmptyDesk() {
       </header>
 
       <motion.div
-        layoutId="chat"
         className="relative w-full max-w-2xl"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

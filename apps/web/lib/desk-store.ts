@@ -20,6 +20,14 @@ export interface ChatMessage {
   choice: { id: string; question: string; options: string[] } | null;
   pending: boolean;
   error: string | null;
+  /** The person pressed Stop before the answer arrived. */
+  stopped?: boolean;
+  /** When the turn started, for the "thinking" timer. */
+  startedAt?: number;
+  /** The id the server gave the message (the local id stays, so nothing remounts). */
+  serverId?: string;
+  /** Loaded from history: shown as is, without animation. */
+  restored?: boolean;
 }
 
 /** A dashboard tab. The first one is pinned: it stays for the whole desk. */
@@ -30,6 +38,7 @@ export interface DeskTab {
 }
 
 const MAX_TABS = 8;
+let inFlight: AbortController | null = null;
 
 interface DeskState {
   projectId: string | null;
@@ -48,6 +57,10 @@ interface DeskState {
   start: (projectId: string, conversationId: string, question: string) => void;
   load: (projectId: string, conversationId: string | null, messages: StoredMessage[], views: ViewSpec[]) => void;
   send: (text: string) => Promise<void>;
+  /** Stops waiting for the current answer. */
+  stop: () => void;
+  /** Asks the last question again. */
+  retry: () => void;
   /** Opens a view in a tab: an identical view already open is focused instead. */
   showView: (view: ViewSpec) => void;
   focusTab: (id: string) => void;
@@ -84,6 +97,7 @@ const fromStored = (m: StoredMessage): ChatMessage => ({
   choice: m.choice,
   pending: false,
   error: null,
+  restored: true,
 });
 
 export const useDesk = create<DeskState>((set, get) => ({
@@ -135,7 +149,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       messages: [
         ...s.messages.map((m) => ({ ...m, choice: null })),
         { id: `user-${Date.now()}`, role: 'user', text, steps: [], choice: null, pending: false, error: null },
-        { id: replyId, role: 'assistant', text: '', steps: [], choice: null, pending: true, error: null },
+        { id: replyId, role: 'assistant', text: '', steps: [], choice: null, pending: true, error: null, startedAt: Date.now() },
       ],
     }));
     const patch = (fn: (m: ChatMessage) => ChatMessage) =>
@@ -171,20 +185,30 @@ export const useDesk = create<DeskState>((set, get) => ({
           patch((m) => ({ ...m, error: e.message }));
           break;
         case 'done':
-          patch((m) => ({ ...m, id: e.messageId, pending: false }));
+          patch((m) => ({ ...m, serverId: e.messageId, pending: false }));
           get().filingsChanged();
           break;
       }
     };
 
+    inFlight = new AbortController();
     try {
-      await streamChat(conversationId, text, onEvent);
+      await streamChat(conversationId, text, onEvent, inFlight.signal);
     } catch (err) {
-      patch((m) => ({ ...m, error: err instanceof Error ? err.message : String(err) }));
+      if (inFlight?.signal.aborted) patch((m) => ({ ...m, stopped: true }));
+      else patch((m) => ({ ...m, error: err instanceof Error ? err.message : String(err) }));
     } finally {
+      inFlight = null;
       patch((m) => ({ ...m, pending: false }));
       set({ sending: false });
     }
+  },
+
+  stop: () => inFlight?.abort(),
+
+  retry: () => {
+    const lastQuestion = [...get().messages].reverse().find((m) => m.role === 'user')?.text;
+    if (lastQuestion) void get().send(lastQuestion);
   },
 }));
 

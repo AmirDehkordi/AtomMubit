@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
-import { LayoutGroup, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
@@ -61,27 +61,23 @@ export default function DeskPage() {
   const title = project.data?.project.title ?? '';
 
   return (
-    <LayoutGroup>
       <main className="bg-ink flex h-dvh overflow-hidden">
         {hasTabs && (
           <motion.section
             key="dashboard"
-            initial={{ opacity: 0, x: -32 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, ease }}
             className="min-w-0 flex-1"
           >
             <Dashboard filings={filings} title={title} />
           </motion.section>
         )}
-        <motion.aside
-          layout
-          layoutId="chat"
-          transition={{ duration: 0.6, ease }}
+        <aside
           className={
             hasTabs
               ? 'border-line flex h-full w-[460px] shrink-0 flex-col border-l bg-[color-mix(in_oklab,var(--color-panel)_55%,var(--color-ink))]'
-              : 'mx-auto flex h-full w-full max-w-3xl flex-col'
+              : 'flex h-full w-full flex-col'
           }
         >
           <header className="border-line flex items-center gap-3 border-b px-5 py-3.5">
@@ -101,10 +97,9 @@ export default function DeskPage() {
             </Link>
           </header>
           <div className="min-h-0 flex-1">
-            <ChatPanel filings={filings} />
+            <ChatPanel filings={filings} wide={!hasTabs} />
           </div>
-        </motion.aside>
+        </aside>
       </main>
-    </LayoutGroup>
   );
 }

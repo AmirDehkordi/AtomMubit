@@ -183,11 +183,17 @@ export const api = {
 };
 
 /** Sends one chat message and calls `onEvent` for each server-sent event until the turn ends. */
-export async function streamChat(conversationId: string, text: string, onEvent: (e: StreamEvent) => void): Promise<void> {
+export async function streamChat(
+  conversationId: string,
+  text: string,
+  onEvent: (e: StreamEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
   const res = await fetch(`${API_URL}/chat/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ text }),
+    signal,
   });
   if (!res.ok || !res.body) throw new Error(`Chat failed (${res.status})`);
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
