@@ -49,6 +49,8 @@ function periodCheck(fact: ExtractionFactV2, content: string): FactCheckV2 {
     9: /(?:nine|9)[ -]months?|(?:thirty.nine|39)[ -]weeks?/i,
     12: /(?:twelve|12)[ -]months?|(?:fifty.two|fifty.three|52|53)[ -]weeks?|year(?:s)? ended|full.year|annual/i };
   const reportingWindows: string[] = [];
+  const printedDate = '(?:\\d{4}-\\d{2}-\\d{2}|(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\\.?\\s+\\d{1,2},?\\s+\\d{4})';
+  const explicitRange = new RegExp(`^\\s+from\\s+(${printedDate})\\s+(?:to|through)\\s+(${printedDate})(?!\\d)`, 'i');
   // Bind the date to an ended/ending reporting header. A publication date elsewhere
   // in the section cannot satisfy a reporting-period check (especially on 8-Ks).
   const headers = new RegExp(durations[period.months]!.source, 'gi');
@@ -58,6 +60,16 @@ function periodCheck(fact: ExtractionFactV2, content: string): FactCheckV2 {
     else {
       const ended = /^\s*(?:period\s+)?(?:ended|ending)\b/i.exec(tail);
       if (ended) reportingWindows.push(tail.slice(ended[0].length));
+      // Accept a printed reporting range only when both endpoints match the
+      // asserted interval. Do not borrow a publication date elsewhere nearby.
+      const range = explicitRange.exec(tail);
+      if (range) {
+        const parseUtc = (date: string) => Date.parse(/^\d{4}-/.test(date) ? date + 'T00:00:00Z' : date + ' UTC');
+        const start = parseUtc(range[1]!);
+        const days = (parseUtc(range[2]!) - start) / 86400000 + 1;
+        const matchesStart = Number.isFinite(start) && sourceHasDate(range[1]!, period.start ?? new Date(start).toISOString().slice(0, 10));
+        if (matchesStart && Math.abs(days - period.months * 30.4375) <= 17 && sourceHasDate(range[2]!, period.end)) reportingWindows.push(range[2]!);
+      }
     }
   }
   if (!reportingWindows.some((window) => sourceHasDate(window, period.end))) return { verifier: 'period', outcome: 'fail', detail: 'Reporting date and duration must be printed in the source; publication date alone is insufficient' };

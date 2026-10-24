@@ -57,6 +57,14 @@ describe('source and numerical verification', () => {
     expect(verifyFact(revenue({ period: { start: null, end: '2026-08-26', months: 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } }), section('Published August 26, 2026. ' + content)).supported).toBe(false);
     expect(verifyFact(revenue({ period: { start: '2026-01-01', end: '2026-07-26', months: 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } }), section()).supported).toBe(false);
   });
+  it('accepts explicitly printed from/to reporting ranges', () => {
+    const fact = revenue({period:{start:'2026-04-27',end:'2026-07-26',months:3,fiscalYear:2027,fiscalPeriod:'Q2'}});
+    expect(verifyFact(fact, section(content.replace('Three months ended July 26, 2026', 'Three months from April 27, 2026 to July 26, 2026'))).supported).toBe(true);
+    expect(verifyFact(fact, section(content.replace('Three months ended July 26, 2026', 'Three months from 2026-04-27 through 2026-07-26'))).supported).toBe(true);
+    expect(verifyFact(revenue(), section(content.replace('Three months ended July 26, 2026', 'Three months from April 27, 2026 to July 26, 2026'))).supported).toBe(true);
+    expect(verifyFact(revenue(), section(content.replace('Three months ended July 26, 2026', 'Three months from January 1, 2026 to July 26, 2026'))).supported).toBe(false);
+    expect(verifyFact(fact, section(content.replace('Three months ended July 26, 2026', 'Published July 26, 2026. Three months from April 27, 2026 to July 25, 2026'))).supported).toBe(false);
+  });
   it('marks missing XBRL unknown and skips mismatched annual references', () => {
     const checked = verifyFact(revenue(), section());
     expect(checked.checks.find((c) => c.verifier === 'xbrl')?.outcome).toBe('unknown');
