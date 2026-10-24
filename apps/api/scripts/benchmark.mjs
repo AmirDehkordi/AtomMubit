@@ -1,4 +1,4 @@
-// Benchmark: the same questions to gpt-6-luna on its own and to the Earnings Desk agent,
+// Benchmark: the same questions to gpt-6-luna on its own and to the MuTick agent,
 // scored automatically. Expected numbers come from the desk's own SEC XBRL endpoints;
 // text answers must cite a passage and mention the key fact; advice and forecasts must
 // be declined.
@@ -119,7 +119,7 @@ if (!project.filings.length) await chat(desk.conversationId, 'Add all');
 
 arms = [
   { name: `${MODEL} on its own`, ask: (q) => baseline(q) },
-  { name: 'Earnings Desk agent', ask: (q) => chat(desk.conversationId, q) },
+  { name: 'MuTick agent', ask: (q) => chat(desk.conversationId, q) },
 ];
 for (const arm of arms) {
   for (const item of QUESTIONS) {

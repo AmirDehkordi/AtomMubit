@@ -83,7 +83,7 @@ export default function DeskPage() {
           <header className="border-line flex items-center gap-3 border-b px-5 py-3.5">
             <BrandMark />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">Earnings Desk</p>
+              <p className="truncate text-sm font-semibold">MuTick</p>
               <p className="text-subtle truncate text-xs">{title && title !== 'New desk' ? title : 'SEC filings, read and checked'}</p>
             </div>
             <MubitButton />

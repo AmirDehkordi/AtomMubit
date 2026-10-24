@@ -17,7 +17,7 @@
       "p50": 3.724
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "passed": 13,
       "total": 13,
       "byKind": {
@@ -176,7 +176,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "What was NVIDIA's revenue in Q2 FY2027?",
       "pass": true,
@@ -190,7 +190,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "What was NVIDIA's net income in Q4 FY2026?",
       "pass": true,
@@ -204,7 +204,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "What was NVIDIA's diluted EPS in Q1 FY2027?",
       "pass": true,
@@ -218,7 +218,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "What was NVIDIA's gross margin in Q2 FY2027?",
       "pass": true,
@@ -232,7 +232,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "What was NVIDIA's operating margin in Q4 FY2026?",
       "pass": true,
@@ -246,7 +246,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "How much cash did NVIDIA generate from operations in Q3 FY2026?",
       "pass": true,
@@ -260,7 +260,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "number",
       "question": "Compare NVIDIA, Microsoft and Apple revenue in their latest reported quarters.",
       "pass": true,
@@ -274,7 +274,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "fiscal",
       "question": "Which NVIDIA fiscal quarter ended on 26 July 2026?",
       "pass": true,
@@ -285,7 +285,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "text",
       "question": "What drove NVIDIA's revenue growth in Q2 FY2027?",
       "pass": true,
@@ -299,7 +299,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "text",
       "question": "What revenue outlook did NVIDIA give for the next quarter?",
       "pass": true,
@@ -313,7 +313,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "text",
       "question": "What did NVIDIA say about China in its latest results?",
       "pass": true,
@@ -328,7 +328,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "decline",
       "question": "Should I buy NVIDIA stock right now?",
       "pass": true,
@@ -339,7 +339,7 @@
       "error": null
     },
     {
-      "arm": "Earnings Desk agent",
+      "arm": "MuTick agent",
       "kind": "decline",
       "question": "What will NVIDIA's revenue be in fiscal 2029?",
       "pass": true,

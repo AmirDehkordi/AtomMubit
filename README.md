@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" alt="Earnings Desk logo" width="72" />
+<img src="docs/images/logo.svg" alt="MuTick logo" width="72" />
 
-<h1>Earnings Desk</h1>
+<h1>MuTick</h1>
 
 <p><strong>A model that learns your house rules from reality.</strong></p>
 
@@ -27,7 +27,7 @@
 
 <br />
 
-<img src="docs/images/hero.png" alt="Earnings Desk: NVIDIA's last four quarters beside the chat" width="100%" />
+<img src="docs/images/hero.png" alt="MuTick: NVIDIA's last four quarters beside the chat" width="100%" />
 
 </div>
 
@@ -39,7 +39,7 @@ says the quarter hasn't been reported yet, or answers from memory. When it does 
 quietly breaks house conventions: adjusted EPS instead of GAAP, the nine-month column instead of the
 quarter, calendar quarters instead of the company's fiscal ones.
 
-Earnings Desk is a chat-first research desk. You ask in plain language; one agent finds the filings
+MuTick is a chat-first research desk. You ask in plain language; one agent finds the filings
 on SEC EDGAR, reads the numbers from the SEC's XBRL data, quotes the filings' own text, and lays it
 all out on a live dashboard beside the chat, with every figure and statement linked to its source.
 Corrections become house rules, and every LLM call goes through [Mubit](https://mubit.ai), which
@@ -68,7 +68,7 @@ trains a small model of the desk's own from them.
 
 ## How it works
 
-<img src="docs/images/how-it-works.svg" alt="How Earnings Desk works" width="100%" />
+<img src="docs/images/how-it-works.svg" alt="How MuTick works" width="100%" />
 
 1. **One agent, a fixed set of tools.** The chat is a single Mubit task (`desk_agent`): the same
    model, system prompt and ten tools on every call. It finds filings, adds them to the desk, reads
@@ -103,7 +103,7 @@ advice and forecasts must be declined. Run with `pnpm --filter @desk/api benchma
 | Setup | Passed | Exact figures | Fiscal labelling | From the filing text | Declines advice / forecasts | Answers with sources | p50 latency |
 | :-- | --: | --: | --: | --: | --: | --: | --: |
 | `gpt-6-luna` on its own | 2 / 13 | 0 / 7 | 1 / 1 | 0 / 3 | 1 / 2 | 0 / 11 | 3.7 s |
-| `gpt-6-luna` as the Earnings Desk agent | **13 / 13** | **7 / 7** | 1 / 1 | **3 / 3** | **2 / 2** | **10 / 11** | 4.6 s |
+| `gpt-6-luna` as the MuTick agent | **13 / 13** | **7 / 7** | 1 / 1 | **3 / 3** | **2 / 2** | **10 / 11** | 4.6 s |
 
 - On its own, the model answered *"NVIDIA has not yet reported Q4 FY2026 net income"*, gave a
   *"base case of about $350 billion"* for fiscal 2029 revenue, and cited nothing.
@@ -111,9 +111,12 @@ advice and forecasts must be declined. Run with `pnpm --filter @desk/api benchma
   explained Q2 FY2027 growth and guidance from NVIDIA's earnings release with sources, and declined
   investment advice and forecasts.
 - Full answers and per-question results: [`docs/benchmark/latest.json`](docs/benchmark/latest.json).
+  Measured on 24 Oct, when the product was still called Earnings Desk; the agent's prompt has changed
+  only in the product's name since.
 
 **Mubit, in practice (24 Oct):** 636 `desk_agent` calls recorded across 127 sessions, none failed,
-1.9 s average, every call with a Mubit request id. Mubit's reviewer reads at most 200 new calls per
+1.9 s average, every call with a Mubit request id (on the task as it was before the rename, which
+started a new task). Mubit's reviewer reads at most 200 new calls per
 task per day, so the replay script feeds each task just after the 00:00 UTC reset
 ([notes](docs/mubit-training.md)).
 

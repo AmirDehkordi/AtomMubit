@@ -19,16 +19,17 @@ Confirmed on Quell's own Mubit console (24 Oct 2026), which runs the same Mubit 
    95%). "Answered by your model" stays 0% until it passes that target and is promoted.
 6. **Quell for comparison:** 2,188 calls, 198 examples kept, 1 adapter in silent test.
 
-## Where Earnings Desk stands
+## Where MuTick stands
 
 | Task | Calls recorded | Notes |
 |---|---|---|
 | `desk_agent` | 525 on 24 Oct (16:42–16:53 UTC) | 120 replayed conversations plus manual tests, 122 sessions. Only up to 200 can be reviewed on 24 Oct |
 | `section_extractor` | 0 | Starts when the extraction module lands; its own 200 a day |
 
-The first `desk_agent` lock was replaced on 24 Oct (margins became metrics), so only calls made after
-that change belong to the current task. Check the console for the task named "You are the analyst at
-Earnings Desk…".
+The `desk_agent` task has been re-locked twice on 24 Oct: when margins became metrics, and at about
+20:10 UTC when the product was renamed from Earnings Desk to MuTick (the name is in the system prompt).
+The 636 calls above belong to the older task, "You are the analyst at Earnings Desk…"; the current
+task is "You are the analyst at MuTick…", and tonight's batch is its first.
 
 ## Plan
 
