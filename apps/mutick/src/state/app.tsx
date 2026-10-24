@@ -104,6 +104,7 @@ export function effectiveFields(release: Release, mode: Mode, corrections: Corre
       ...f,
       value: c.to,
       status: "corrected",
+      kept: c.from === c.to,
       sourceSegment: pick?.segmentId ?? f.sourceSegment,
       check: { by: "analyst", ok: true, message: c.from === c.to ? `Kept at ${fmt(c.to)} despite the failed check.` : `Changed from ${fmt(c.from)} to ${fmt(c.to)}.` },
     }
@@ -208,7 +209,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     release,
     fields: release ? effectiveFields(release, state.mode, state.project.corrections) : [],
     track, upload, ask, correct,
-    select: (id) => dispatch({ type: "select", releaseId: id }),
+    // A fix toast belongs to the company it was made on, so it goes when the company changes.
+    select: (id) => { toast.dismiss(); dispatch({ type: "select", releaseId: id }) },
     setTab: (t) => dispatch({ type: "tab", tab: t }),
     setFixing: (field) => dispatch({ type: "fixing", field }),
     setMode: (m) => dispatch({ type: "mode", mode: m }),

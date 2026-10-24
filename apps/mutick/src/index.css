@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Tickmark theme, in shadcn/ui tokens. Dark only: graphite surfaces, one amber accent.
+ * MuTick theme, in shadcn/ui tokens. Dark only: graphite surfaces, one amber accent.
  * Standard shadcn variables first, then the few this product needs that shadcn doesn't ship
  * (a third text tier, success, warning, and a soft primary tint for selected states).
  */

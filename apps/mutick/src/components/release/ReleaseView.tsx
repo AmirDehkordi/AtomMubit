@@ -59,6 +59,8 @@ export function ReleaseView() {
   if (!release) return <p className="p-6 text-13 text-muted-foreground">Pick a release in the sidebar.</p>
   const company = project.companies.find((c) => c.ticker === release.ticker)
   const issues = fields.filter((f) => f.status === "flagged").length
+  // The panel covers the red box, so it offers the next number that needs you itself.
+  const nextFlagged = fields.find((f) => f.status === "flagged" && f.key !== fixItem?.key)
 
   /** Fix pressed again for the open number: the panel is already there, so go to it. */
   const onFix = (k: FieldKey) => {
@@ -78,7 +80,7 @@ export function ReleaseView() {
         {company?.name ?? release.ticker} {release.fiscalLabel}
       </h1>
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="gap-4">
-        <TabsList className="h-10">
+        <TabsList className="h-10 animate-in fade-in slide-in-from-left-3 duration-500 ease-out [animation-fill-mode:both] motion-reduce:animate-none [animation-delay:80ms]">
           {([["overview", "Overview"], ["check", "Release check"]] as const).map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="h-8 gap-1.5 px-3 dark:data-[state=active]:border-primary/60 dark:data-[state=active]:bg-primary-soft dark:data-[state=active]:text-primary">
               {label}
@@ -91,12 +93,17 @@ export function ReleaseView() {
           ))}
         </TabsList>
 
+        {/* On arrival from the start screen the page comes in from the left, a step at a time. */}
         {mode === "before" && (
-          <AttentionStrip fields={fields} fixing={fixItem?.key} onFix={onFix} />
+          <div className="animate-in fade-in slide-in-from-left-3 duration-500 ease-out [animation-fill-mode:both] motion-reduce:animate-none [animation-delay:160ms]">
+            <AttentionStrip fields={fields} fixing={fixItem?.key} onFix={onFix} />
+          </div>
         )}
 
-        <TabsContent value="overview" className="focus-ring rounded-lg"><OverviewTab /></TabsContent>
-        <TabsContent value="check" className="focus-ring rounded-lg"><CheckTab /></TabsContent>
+        <div className="animate-in fade-in slide-in-from-left-3 duration-500 ease-out [animation-fill-mode:both] motion-reduce:animate-none [animation-delay:240ms]">
+          <TabsContent value="overview" className="focus-ring rounded-lg"><OverviewTab /></TabsContent>
+          <TabsContent value="check" className="focus-ring rounded-lg"><CheckTab /></TabsContent>
+        </div>
       </Tabs>
 
       {/* Not modal: no dimming, and a click on another red number moves the panel to that number. */}
@@ -108,6 +115,8 @@ export function ReleaseView() {
           className="w-full gap-0 p-0 shadow-2xl sm:w-[420px] sm:max-w-[420px]"
           // The fix card focuses itself so its shortcuts work; don't move focus to the first button.
           onOpenAutoFocus={(e) => e.preventDefault()}
+          // Esc in a text box goes back to the card (the card handles it) instead of closing and losing the text.
+          onEscapeKeyDown={(e) => { if ((e.target as HTMLElement | null)?.closest("input, textarea")) e.preventDefault() }}
           // Radix would return focus to a trigger this panel doesn't have; return it to the opener instead,
           // unless the analyst clicked or tabbed away, in which case focus is already where they want it.
           onInteractOutside={() => { closedOutside.current = true }}
@@ -115,7 +124,15 @@ export function ReleaseView() {
         >
           <SheetTitle className="sr-only">Fix {fixItem?.label}</SheetTitle>
           <SheetDescription className="sr-only">Pick the right number from the release, type it with its source, or keep the AI value with a reason.</SheetDescription>
-          {fixItem && <ReviewCard key={`${release.id}-${fixItem.key}`} item={{ release, field: fixItem }} onClose={() => setFixing(undefined)} />}
+          {fixItem && (
+            <ReviewCard
+              key={`${release.id}-${fixItem.key}`}
+              item={{ release, field: fixItem }}
+              next={nextFlagged}
+              onNext={nextFlagged ? () => setFixing(nextFlagged.key) : undefined}
+              onClose={() => setFixing(undefined)}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>
@@ -126,6 +143,8 @@ export function ReleaseView() {
 function CheckTab() {
   const { release, fields, mode, highlight, setHighlight, project, setFixing } = useApp()
   const [openHistory, setOpenHistory] = useState<FieldKey>()
+  // Two fields can share a source segment (GAAP and adjusted EPS), so the selected row is tracked by field.
+  const [selected, setSelected] = useState<FieldKey>()
   if (!release) return null
 
   const ex = release.extractions[mode]
@@ -169,7 +188,10 @@ function CheckTab() {
                 const fixable = f.status === "flagged" && mode === "before"
                 const hasHistory = !!c && mode === "before"
                 const open = () => {
+                  setSelected(f.key)
                   setHighlight(f.sourceSegment)
+                  // A fix's toast sits over the history row it would open; clear it.
+                  if (hasHistory) toast.dismiss()
                   if (fixable) setFixing(f.key)
                   if (hasHistory) setOpenHistory((cur) => (cur === f.key ? undefined : f.key))
                 }
@@ -177,7 +199,7 @@ function CheckTab() {
                   <Fragment key={f.key}>
                     {/* The whole row is the mouse target; the field name is the same action as a button for the keyboard. */}
                     <TableRow
-                      data-state={highlight && highlight === f.sourceSegment ? "selected" : undefined}
+                      data-state={(selected ? selected === f.key : !!highlight && highlight === f.sourceSegment) ? "selected" : undefined}
                       className={cn("cursor-pointer data-[state=selected]:bg-muted", f.beforeValue !== undefined && "bg-primary-soft/60 hover:bg-primary-soft")}
                       onClick={open}
                     >
@@ -216,7 +238,7 @@ function CheckTab() {
                           </Tooltip>
                         ) : <span className="text-xs text-subtle-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="w-[1%] py-2.5 align-top"><StatusChip status={f.status} short /></TableCell>
+                      <TableCell className="w-[1%] py-2.5 align-top"><StatusChip status={f.status} kept={f.kept} short /></TableCell>
                     </TableRow>
                     {showHistory && c && (
                       <TableRow className="hover:bg-transparent">
@@ -255,7 +277,7 @@ function AuditLine({ correction: c, field, original }: { correction: Correction;
   const when = new Date(c.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZoneName: "short" })
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      <span className="inline-flex items-center gap-1 text-foreground"><History className="size-3.5 text-subtle-foreground" aria-hidden /> Fixed by {c.by}</span>
+      <span className="inline-flex items-center gap-1 text-foreground"><History className="size-3.5 text-subtle-foreground" aria-hidden /> {c.from === c.to ? "Kept" : "Fixed"} by {c.by}</span>
       <span className="tabular-nums">{when}</span>
       {c.from === c.to ? (
         <span className="tabular-nums">Kept <span className="text-foreground">{fmtValue(field, "table")}</span> despite the failed check</span>

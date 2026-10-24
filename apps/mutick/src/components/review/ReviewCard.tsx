@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, TriangleAlert, X } from "lucide-react"
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
-import type { Candidate, Field } from "@/api/types"
+import type { Candidate, Field as FieldData } from "@/api/types"
 import { RULES } from "@/api/types"
 import { SourceExcerpt } from "@/components/release/SourceExcerpt"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
  * and never from a text field. Enter picks the highlighted number; K keeps the AI's value.
  * One save per card: after the first pick, further clicks and keys are ignored until it closes.
  */
-export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; next?: Field; onNext?: () => void; onClose?: () => void }) {
+export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; next?: FieldData; onNext?: () => void; onClose?: () => void }) {
   const { correct } = useApp()
   const { release, field } = item
   const [mode, setMode] = useState<"choose" | "type" | "keep">("choose")
@@ -159,7 +159,7 @@ export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; 
                   <span className="flex min-w-0 flex-col items-start gap-0.5">
                     <span className="text-base font-semibold tabular-nums">{fmtValue({ unit: field.unit, value: c.value })}</span>
                     <span className={cn("text-xs font-normal whitespace-normal", isSuggested ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                      {c.label}{isAi ? " · the AI's answer, asks why" : isSuggested ? " · matches the check" : ""}
+                      {c.label}{isAi ? " · the AI's answer" : isSuggested ? " · matches the check" : ""}
                     </span>
                   </span>
                   <span className="flex shrink-0 gap-1" aria-hidden>
@@ -170,7 +170,7 @@ export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; 
               )
             })}
             <p className="text-xs text-subtle-foreground">
-              Picking saves the fix and teaches the model{rule ? `, using rule ${rule} (${RULES[rule].title})` : ""}.
+              Picking saves the fix and teaches the model. Enter picks the highlighted number{rule ? `. Rule ${rule}: ${RULES[rule].title}` : ""}.
             </p>
           </section>
         )}
@@ -198,7 +198,7 @@ export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; 
             </Field>
             <p id={`fill-${field.key}`} className="text-xs text-subtle-foreground">Both are needed to save. Or pick a number in the release below to fill both.</p>
             <div className="flex gap-2">
-              <Button type="submit" size="sm" className="h-9">Save fix</Button>
+              <Button type="submit" size="sm" className="h-9" disabled={saving}>Save fix</Button>
               <Button type="button" size="sm" variant="ghost" className="h-9" onClick={back}><ArrowLeft /> Back</Button>
             </div>
           </form>
@@ -217,7 +217,7 @@ export function ReviewCard({ item, next, onNext, onClose }: { item: ReviewItem; 
               {errors.reason && <FieldError id={`keep-${field.key}-error`} className="text-xs">{errors.reason}</FieldError>}
             </Field>
             <div className="flex gap-2">
-              <Button type="submit" size="sm" className="h-9">Keep {aiValue}</Button>
+              <Button type="submit" size="sm" className="h-9" disabled={saving}>Keep {aiValue}</Button>
               <Button type="button" size="sm" variant="ghost" className="h-9" onClick={back}><ArrowLeft /> Back</Button>
             </div>
           </form>

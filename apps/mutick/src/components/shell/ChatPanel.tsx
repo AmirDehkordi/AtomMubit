@@ -38,9 +38,11 @@ export function ChatSidebar() {
     // Only a change in the sheet's own state should close the chat.
   }, [openMobile])
   const end = useRef<HTMLDivElement>(null)
+  // New messages and new suggestion chips both scroll into view, so the last chip is never cut off.
+  const suggestionKey = suggestions.join("|")
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" })
-  }, [messages])
+  }, [messages, suggestionKey])
 
   return (
     <Sidebar side="right" collapsible="icon" className="border-l" role="complementary" aria-label="Assistant">
@@ -53,7 +55,7 @@ export function ChatSidebar() {
           <span className="mt-3 text-xs tracking-wide text-subtle-foreground [writing-mode:vertical-rl]" aria-hidden>Assistant</span>
         </SidebarContent>
       ) : (
-        <motion.div layoutId="chat" transition={{ duration: 0.3, ease: "easeOut" }} className="flex h-full min-h-0 flex-col">
+        <motion.div layoutId="chat" transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} className="flex h-full min-h-0 flex-col">
           <SidebarHeader className="h-14 flex-row items-center border-b px-4">
             <h2 className="text-sm font-semibold text-foreground">Assistant</h2>
             <Button variant="ghost" size="icon" className="ml-auto size-7" aria-label="Close assistant" onClick={() => setChat(false)}>

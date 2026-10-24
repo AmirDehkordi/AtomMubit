@@ -29,7 +29,7 @@ export function StartScreen() {
   return (
     <main className="flex h-screen w-full justify-center bg-background px-4">
       <motion.div layoutId="chat" transition={layout} className="flex h-full w-full max-w-2xl flex-col py-8">
-        <h1 className="sr-only">Tickmark</h1>
+        <h1 className="sr-only">MuTick</h1>
         {empty ? (
           <div className="flex flex-1 flex-col items-center justify-end gap-3 pb-6 text-center">
             <Wordmark large />

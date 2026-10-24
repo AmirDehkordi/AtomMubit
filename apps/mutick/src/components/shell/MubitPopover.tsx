@@ -1,4 +1,6 @@
-import { MUBIT_STAGES } from "@/api/types"
+import { useEffect, useState } from "react"
+import { MUBIT_STAGES, type MubitStatus } from "@/api/types"
+import { RollingNumber } from "@/components/common/MetricNumber"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -7,6 +9,9 @@ import { Separator } from "@/components/ui/separator"
 import { examplesForNextVersion, withSessionFixes } from "@/lib/mubit"
 import { useApp } from "@/state/app"
 
+/** The count the analyst saw last time the panel was open, so the next opening can roll from it. */
+let lastSeen: number | undefined
+
 const RESULT = { passed: { label: "Passed", variant: "success" }, below_target: { label: "Below target", variant: "danger" }, prompt_only: { label: "Prompt only", variant: "muted" } } as const
 
 /**
@@ -14,16 +19,35 @@ const RESULT = { passed: { label: "Passed", variant: "success" }, below_target: 
  * and how close the next version is. The full mechanism is explained outside the product.
  */
 export function MubitPopover() {
-  const { mubit, project } = useApp()
-  if (!mubit) return null
+  const { mubit } = useApp()
+  return mubit ? <MubitPanel mubit={mubit} /> : null
+}
+
+function MubitPanel({ mubit }: { mubit: MubitStatus }) {
+  const { project } = useApp()
   const m = withSessionFixes(mubit, project.corrections)
   const live = m.versions[m.versions.length - 1]
   const needed = examplesForNextVersion(m)
   const have = Math.min(m.newSinceVersion, needed)
   const target = live?.needs ?? 90
+  const [open, setOpen] = useState(false)
+  const [shown, setShown] = useState(have)
+  const [gained, setGained] = useState(0)
+  // The count when the workspace opened is the baseline, so fixes made before the first opening still show.
+  useEffect(() => { lastSeen ??= have }, [])
+  // On opening, start at the last count seen and roll to the current one, so new fixes visibly add up.
+  useEffect(() => {
+    if (!open) return
+    const from = lastSeen ?? have
+    setShown(from)
+    setGained(have - from)
+    lastSeen = have
+    const t = setTimeout(() => setShown(have), 250)
+    return () => clearTimeout(t)
+  }, [open, have])
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -58,11 +82,14 @@ export function MubitPopover() {
         <Separator />
         <div className="flex flex-col gap-2 p-4">
           <div className="flex items-baseline justify-between text-xs">
-            <span className="text-subtle-foreground">Toward {m.nextVersion}</span>
-            <span className="text-foreground tabular-nums">{have} of {needed} new examples</span>
+            <span className="shrink-0 text-subtle-foreground">Toward {m.nextVersion}</span>
+            <span className="shrink-0 text-foreground tabular-nums"><RollingNumber value={shown} /> of {needed} new examples</span>
           </div>
-          <Progress value={(have / needed) * 100} className="h-1.5" aria-label={`New examples toward ${m.nextVersion}`} />
-          <p className="text-xs text-subtle-foreground">Each fix you save counts as one.{m.sample ? " Sample data." : ""}</p>
+          <Progress value={(shown / needed) * 100} className="h-1.5 [&>*]:duration-700" aria-label={`New examples toward ${m.nextVersion}`} />
+          <p className="text-xs text-subtle-foreground">
+            {gained > 0 && <span className="text-primary">+{gained} from your fixes. </span>}
+            Each fix you save counts as one.{m.sample ? " Sample data." : ""}
+          </p>
         </div>
       </PopoverContent>
     </Popover>

@@ -1,4 +1,4 @@
-import { CircleCheck, Clock, PenLine, TriangleAlert } from "lucide-react"
+import { Check, CircleCheck, Clock, PenLine, TriangleAlert } from "lucide-react"
 import type { FieldStatus } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -11,11 +11,14 @@ const STYLES: Record<FieldStatus, { label: string; short: string; icon: typeof C
   waiting: { label: "Awaiting the SEC filing", short: "Awaiting SEC", icon: Clock, variant: "muted" },
 }
 
+/** An analyst kept the AI's value despite the failed check: settled, but not a correction. */
+const KEPT = { label: "Kept by an analyst despite the failed check", short: "Kept", icon: Check, variant: "muted" } as const
+
 /** Plain-language status for exports and screen readers. */
 export const statusLabel = (s: FieldStatus) => STYLES[s].short
 
-export function StatusChip({ status, short, className }: { status: FieldStatus; short?: boolean; className?: string }) {
-  const s = STYLES[status]
+export function StatusChip({ status, kept, short, className }: { status: FieldStatus; kept?: boolean; short?: boolean; className?: string }) {
+  const s = kept && status === "corrected" ? KEPT : STYLES[status]
   const Icon = s.icon
   // The short label shows; screen readers get the full one, since its tooltip only opens on hover.
   const badge = (

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from "@/components/ui/item"
 import { fmtValue, inSentence } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { Fragment } from "react"
+import { AnimatePresence, motion } from "motion/react"
 
 /** What needs the analyst, before anything else on the release. The only red on the page. */
 export function AttentionStrip({ fields, fixing, onFix }: { fields: Field[]; fixing?: FieldKey; onFix: (k: FieldKey) => void }) {
@@ -36,24 +36,28 @@ export function AttentionStrip({ fields, fixing, onFix }: { fields: Field[]; fix
         <AlertDescription className="text-xs text-subtle-foreground">{waiting ? "Everything else passed or is waiting for the 10-Q." : "Everything else passed."}</AlertDescription>
       </div>
       <ItemGroup>
-        {flagged.map((f, i) => (
-          <Fragment key={f.key}>
-            {i > 0 && <ItemSeparator className="bg-destructive/25" />}
-            <Item role="listitem" size="sm" className={cn("rounded-none px-4 py-2.5", fixing === f.key && "bg-muted")}>
-              {/* On a narrow screen the message drops under the number instead of being cut off. */}
-              <ItemContent className="flex-row flex-wrap items-center gap-x-4 gap-y-1">
-                <ItemTitle className="w-40 shrink-0 text-13">{f.label}</ItemTitle>
-                <span className="w-24 shrink-0 text-right text-13 text-destructive tabular-nums">{fmtValue(f)}</span>
-                <ItemDescription className="min-w-48 flex-1 truncate text-xs">{f.check?.message}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <Button size="sm" variant={fixing === f.key ? "secondary" : "default"} className="h-8 px-3 text-xs" aria-label={`${fixing === f.key ? "Fixing" : "Fix"} ${inSentence(f.label)}`} data-fix={f.key} onClick={() => onFix(f.key)}>
-                  {fixing === f.key ? "Fixing" : "Fix"}
-                </Button>
-              </ItemActions>
-            </Item>
-          </Fragment>
-        ))}
+        <AnimatePresence initial={false}>
+          {flagged.map((f, i) => (
+            // A fixed row folds away rather than vanishing, so the eye follows what changed.
+            <motion.div key={f.key} role="listitem" exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="overflow-hidden">
+              {i > 0 && <ItemSeparator className="bg-destructive/25" />}
+              {/* The whole row is the mouse target, since the fix panel can cover the button; the button is the keyboard one. */}
+              <Item size="sm" className={cn("cursor-pointer rounded-none px-4 py-2.5 transition-colors hover:bg-destructive/5", fixing === f.key && "bg-muted")} onClick={() => onFix(f.key)}>
+                {/* On a narrow screen the message drops under the number instead of being cut off. */}
+                <ItemContent className="flex-row flex-wrap items-center gap-x-4 gap-y-1">
+                  <ItemTitle className="w-40 shrink-0 text-13">{f.label}</ItemTitle>
+                  <span className="w-24 shrink-0 text-right text-13 text-destructive tabular-nums">{fmtValue(f)}</span>
+                  <ItemDescription className="min-w-48 flex-1 text-xs line-clamp-none">{f.check?.message}</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Button size="sm" variant={fixing === f.key ? "secondary" : "default"} className="h-8 px-3 text-xs" aria-label={`${fixing === f.key ? "Fixing" : "Fix"} ${inSentence(f.label)}`} data-fix={f.key} onClick={(e) => { e.stopPropagation(); onFix(f.key) }}>
+                    {fixing === f.key ? "Fixing" : "Fix"}
+                  </Button>
+                </ItemActions>
+              </Item>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </ItemGroup>
     </Alert>
   )

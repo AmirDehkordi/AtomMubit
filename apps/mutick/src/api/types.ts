@@ -57,6 +57,8 @@ export interface Field {
   learnedFrom?: string
   /** UI-derived in "after" mode: the AI's original answer when learning changed it. */
   beforeValue?: number | string | null
+  /** UI-derived in "before" mode: an analyst kept the AI's value despite the failed check. */
+  kept?: boolean
 }
 
 export type Mode = "before" | "after"

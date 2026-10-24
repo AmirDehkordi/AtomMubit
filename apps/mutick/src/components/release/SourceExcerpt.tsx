@@ -5,14 +5,19 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
-/** The release text with numbers marked. The highlighted segment is where the selected value came from. */
+/**
+ * The release text with numbers marked. The highlighted segment is where the selected value came from.
+ * In the fix panel, the number the check points to lights up amber and the AI's wrong number red.
+ */
 export function SourceExcerpt({
-  release, highlight, candidates, onPick, className,
+  release, highlight, candidates, onPick, rightSegment, wrongSegment, className,
 }: {
   release: Release
   highlight?: string
   candidates?: Candidate[]
   onPick?: (c: Candidate) => void
+  rightSegment?: string
+  wrongSegment?: string
   className?: string
 }) {
   const root = useRef<HTMLDivElement>(null)
@@ -39,7 +44,8 @@ export function SourceExcerpt({
                     aria-label={`Use ${seg.text}, ${cand.label}`}
                     className={cn(
                       "focus-ring rounded px-1 py-0.5 font-medium text-foreground tabular-nums underline decoration-dotted decoration-primary underline-offset-4 transition-colors hover:bg-primary-soft hover:text-primary",
-                      lit && "bg-destructive/15 text-destructive decoration-destructive",
+                      lit && (seg.id === wrongSegment ? "bg-destructive/15 text-destructive decoration-destructive" : "bg-primary-soft text-primary"),
+                      seg.id === rightSegment && !lit && "decoration-solid",
                     )}
                   >
                     {seg.text}

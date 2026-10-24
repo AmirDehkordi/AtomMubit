@@ -9,14 +9,11 @@ export function LogoMark({ className }: { className?: string }) {
   )
 }
 
-/** Kept until the top bar's import is renamed. */
-export const AtomMark = LogoMark
-
 export function Wordmark({ large }: { large?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2">
       <LogoMark className={large ? "size-7" : undefined} />
-      <span className={cn("font-semibold tracking-tight text-foreground", large ? "text-xl" : "text-sm")}>Tickmark</span>
+      <span className={cn("font-semibold tracking-tight text-foreground", large ? "text-xl" : "text-sm")}>MuTick</span>
     </span>
   )
 }

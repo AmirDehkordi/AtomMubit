@@ -82,3 +82,42 @@ Also seen but not counted:
 - **Copy and Export CSV.** Plain numbers, ISO dates, the full audit columns, and the mode in the file name (`NVDA-Q2-FY2027-before.csv`). Copying the request ID copies the full ID.
 - **Chat.** Suggestions follow the flagged numbers, drop off once asked, and the fixed-EPS question disappears after the fix. The rail shows an unread dot when a reply lands while the chat is folded.
 - **Charts and tooltips.** The price range switch, price and bar hovers, the info tooltips, the "Fix the flagged number first" dashes and the red-cell tooltips all behave.
+
+## Outcome (24 Oct 2026, after the fixes)
+
+Re-tested in the browser pane at 1440×900 and 1024×768, with the chat open and folded, and with `console.error`, `console.warn` and uncaught errors captured. No errors were logged. axe 4.10.2 reports 0 violations on the Overview, with the fix panel open, and in After mode, at both widths. `npx tsc -b` and `npm run build` pass, and the gate grep is empty.
+
+| ID | Outcome |
+|---|---|
+| M1 | Fixed. Picking the AI's own number (key 2, its button, or its number in the release text) opens "Keep $1.24?" and asks why. Nothing is saved. |
+| M2 | Fixed. One save per panel: after the first pick, the options, keys and buttons are disabled. A double click gives one toast. |
+| M3 | Fixed. Money and share fields accept numbers only. "one seventeen" shows "Enter a number, for example 52940." and doesn't save. "76,420" saves. |
+| M4 | Fixed. Only "Track …", or a message that names NVIDIA or Microsoft, goes to tracking. "follow up on EPS please" gets the EPS answer. |
+| M5 | Fixed. "nvidia" or "NVDA" on its own tracks the company. |
+| M6 | Fixed. A file that isn't an NVIDIA or Microsoft release says so, instead of loading Microsoft. |
+| M7 | Fixed. Esc in a text box returns to the card and keeps the text; the panel stays open. |
+| M8 | Fixed. The whole red-box row opens the fix, so the visible label works when the panel covers the button. The panel footer offers "Next: fiscal quarter" when another number needs you. |
+| M9 | Fixed. In the release text the number the check points to lights up amber; only the AI's wrong number is red. |
+| M10 | Fixed. The start screen keeps the box at the bottom and scrolls the thread above it. |
+| m1 | Fixed. The Track NVIDIA and Track Microsoft buttons stay after an error. |
+| m2 | Fixed (by the accessibility pass). Only cards that lead somewhere are buttons. |
+| m3 | Fixed. The Release check selects one row, tracked by field rather than by source segment. |
+| m4 | Fixed. Toasts clear when you switch company or open a fix's history. |
+| m5 | Fixed. Enter picks the highlighted number; K keeps the AI's value. The hints say so. |
+| m6 | Fixed. A kept value shows a neutral "Kept" label and "Kept by …" in its history. |
+| m7 | Fixed. At 1440 with the chat open the top bar stays on one row (57px) in Before and After. On a narrow column "Trailing P/E" shortens to "P/E", and the After result drops "per release", which is in its tooltip. At 1024 with the chat open it still wraps to two rows, as the accessibility pass intends; nothing is hidden. |
+| m8 | Fixed. A follow-up stays on the last number asked about, and the shares answer reads "Diluted shares are 24.48B. It passed the arithmetic check." |
+| m9 | Fixed. "Learned from" lines no longer give counts, and the Mubit popover shows "+1 from your fixes", rolling the count and the bar from the last value you saw. |
+| m10 | Not fixed. Refresh still returns to the start screen; rehearse the demo without refreshing. |
+| m11 | Fixed. The chat scrolls to the end when the suggestions change. |
+| m12 | Fixed. At 1024 with the chat open the KPI cards sit 3 + 2. |
+
+### Animations added
+
+All respect reduced motion: Motion's `reducedMotion="user"`, NumberFlow's own setting, and `motion-reduce:animate-none` on the CSS ones.
+
+- **Start screen.** The box moves to the bottom once, the steps grow above it, and the whole column glides into the assistant (one shared `layoutId`). The workspace then comes in from the left: top bar, tabs, red box, then the panels.
+- **Fix landing.** The KPI value rolls from $1.24 to $1.17 (`@number-flow/react` 0.6.2), its colour fades from red, and the card glows amber once. The trailing P/E rolls too.
+- **Before/After.** The KPI values and the latest Fundamentals column roll to their new values.
+- **Pipeline.** Each step slides in, and the card grows smoothly.
+- **Red box.** Fixed rows fold away, and messages wrap on narrow widths.

@@ -1,4 +1,5 @@
 import { CircleCheck, Clock, ExternalLink, Loader2, TriangleAlert } from "lucide-react"
+import { motion } from "motion/react"
 import type { Answer, ProgressStep } from "@/api/types"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
@@ -46,6 +47,8 @@ const TONE = {
 
 export function ProgressTrace({ steps, done, error }: { steps: ProgressStep[]; done: boolean; error?: string }) {
   return (
+    // The card grows smoothly as each step lands, instead of jumping a row at a time.
+    <motion.div layout transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
     <Card className="gap-0 py-1">
       <CardContent className="px-1">
         <ItemGroup>
@@ -53,7 +56,7 @@ export function ProgressTrace({ steps, done, error }: { steps: ProgressStep[]; d
             const t = TONE[s.tone ?? "ok"]
             const Icon = t.icon
             return (
-              <Item key={s.id} role="listitem" size="sm" className="items-start gap-2 px-2 py-1.5 animate-in fade-in slide-in-from-bottom-1 duration-150">
+              <Item key={s.id} role="listitem" size="sm" className="items-start gap-2 px-2 py-1.5 animate-in fade-in slide-in-from-left-2 duration-300 ease-out motion-reduce:animate-none">
                 <ItemMedia className="pt-0.5"><Icon className={cn("size-3.5", t.cls)} aria-hidden /></ItemMedia>
                 <ItemContent className="min-w-0 gap-0">
                   <ItemTitle className="text-13 font-normal">
@@ -69,7 +72,7 @@ export function ProgressTrace({ steps, done, error }: { steps: ProgressStep[]; d
             )
           })}
           {!done && (
-            <Item role="listitem" size="sm" className="gap-2 px-2 py-1.5">
+            <Item key={`next-${steps.length}`} role="listitem" size="sm" className="gap-2 px-2 py-1.5 animate-in fade-in duration-300 motion-reduce:animate-none">
               <ItemMedia><Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-hidden /></ItemMedia>
               <ItemContent><ItemTitle className="text-13 font-normal text-muted-foreground">{NEXT_STEP[steps.length] ?? "Checking the numbers…"}</ItemTitle></ItemContent>
             </Item>
@@ -78,6 +81,7 @@ export function ProgressTrace({ steps, done, error }: { steps: ProgressStep[]; d
         {error && <p className="px-2 pb-2 text-13 text-warning">{error}</p>}
       </CardContent>
     </Card>
+    </motion.div>
   )
 }
 

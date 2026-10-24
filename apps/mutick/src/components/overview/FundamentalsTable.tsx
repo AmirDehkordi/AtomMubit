@@ -2,6 +2,7 @@ import { PenLine, TriangleAlert } from "lucide-react"
 import { Fragment } from "react"
 import { fmtDay } from "@/api/client"
 import type { Field, FieldKey } from "@/api/types"
+import { MetricNumber } from "@/components/common/MetricNumber"
 import { Panel } from "@/components/common/Panel"
 import { TONE_TEXT, TONE_WORD } from "@/components/overview/DeltaChip"
 import { Button } from "@/components/ui/button"
@@ -58,35 +59,31 @@ function LatestCell({ m, slice, fields, onFix }: { m: MetricDef; slice: Overview
       </Tooltip>
     )
   }
-  if (cell.learned && cell.learned.beforeValue !== undefined) {
-    const before = withRelease(slice.latest, fields.map((f) => (f.key === cell.learned!.key ? { ...f, value: f.beforeValue! } : f)))
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {/* Stacked like the Release check, so the column keeps its width. */}
-          <span className="inline-flex cursor-help flex-col items-end tabular-nums">
-            <span className="text-xs text-subtle-foreground line-through"><span className="sr-only">Before learning: </span>{fmtMetric(m.unit, m.value(before))}</span>
-            <span className="font-medium text-primary"><span className="sr-only">After: </span>{text}</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>Before learning: {fmtMetric(m.unit, m.value(before))}</TooltipContent>
-      </Tooltip>
-    )
-  }
-  if (cell.status === "corrected" && m.inputs.length === 1)
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex cursor-help items-center gap-1 text-foreground tabular-nums">
-            <PenLine className="size-3 text-primary" aria-hidden />
-            {text}
-            <span className="sr-only">, fixed by an analyst</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>Fixed by an analyst</TooltipContent>
-      </Tooltip>
-    )
-  return <span className="text-foreground tabular-nums">{text}</span>
+  // Learned, fixed and plain share one structure, so the number rolls when Before/After flips.
+  const value = m.value(slice.latest)
+  const learned = cell.learned && cell.learned.beforeValue !== undefined ? cell.learned : undefined
+  const before = learned ? withRelease(slice.latest, fields.map((f) => (f.key === learned.key ? { ...f, value: f.beforeValue! } : f))) : undefined
+  const settled = !learned && cell.status === "corrected" && m.inputs.length === 1 ? fields.find((f) => f.key === m.inputs[0]) : undefined
+  const tip = before ? `Before learning: ${fmtMetric(m.unit, m.value(before))}` : settled ? (settled.kept ? "Kept by an analyst despite the failed check" : "Fixed by an analyst") : undefined
+  const cellBody = (
+    // Stacked like the Release check, so the column keeps its width.
+    <span tabIndex={tip ? 0 : undefined} className={cn("inline-flex flex-col items-end tabular-nums", tip && "focus-ring cursor-help rounded-sm")}>
+      {before && <span className="text-xs text-subtle-foreground line-through"><span className="sr-only">Before learning: </span>{fmtMetric(m.unit, m.value(before))}</span>}
+      <span className={cn("inline-flex items-center gap-1 transition-colors duration-700", learned ? "font-medium text-primary" : "text-foreground")}>
+        {settled && <PenLine className="size-3 text-primary" aria-hidden />}
+        {learned && <span className="sr-only">After: </span>}
+        <MetricNumber unit={m.unit} value={value} />
+        {settled && <span className="sr-only">, {settled.kept ? "kept" : "fixed"} by an analyst</span>}
+      </span>
+    </span>
+  )
+  return (
+    // Always wrapped the same way (so the number keeps rolling); no tip, no content.
+    <Tooltip>
+      <TooltipTrigger asChild>{cellBody}</TooltipTrigger>
+      {tip && <TooltipContent>{tip}</TooltipContent>}
+    </Tooltip>
+  )
 }
 
 function YoyCell({ m, slice, fields }: { m: MetricDef; slice: OverviewSlice; fields: Field[] }) {
