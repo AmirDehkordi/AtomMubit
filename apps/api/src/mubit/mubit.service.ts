@@ -151,9 +151,12 @@ export class MubitService {
 
 /** OpenRouter routing controls are not valid native OpenAI parameters. */
 export function nativeOpenAIRequest(body: any) {
-  const {provider, session_id, max_tokens, ...request} = body;
+  const {provider, session_id, max_tokens, metadata, ...request} = body;
   return {...request,
-    ...(session_id ? {metadata: {...request.metadata, session_id}} : {}),
+    // Native Luna Chat Completions only supports function tools without reasoning.
+    ...(request.model === 'gpt-6-luna' && request.tools?.some((tool: any) => tool.type === 'function') ? {reasoning_effort: 'none'} : {}),
+    // Native Chat Completions metadata requires store=true. Keep requests stateless;
+    // the local ledger retains session IDs and Mubit can group by conversation history.
     ...(max_tokens !== undefined ? {max_completion_tokens: max_tokens} : {}),
   };
 }

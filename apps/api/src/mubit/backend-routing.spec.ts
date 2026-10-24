@@ -28,13 +28,21 @@ describe('backend transport routing', () => {
   it('routes GPT structured calls to native OpenAI without OpenRouter-only fields', async () => {
     await service().completeJson({...args,model:'gpt-6-luna'});
     const [body, options] = mocks.chat.mock.calls[0]!;
-    expect(body).toMatchObject({model:'gpt-6-luna',max_completion_tokens:8000,metadata:{session_id:expect.any(String)}});
-    expect(body).not.toHaveProperty('provider'); expect(body).not.toHaveProperty('session_id'); expect(body).not.toHaveProperty('max_tokens');
+    expect(body).toMatchObject({model:'gpt-6-luna',max_completion_tokens:8000});
+    expect(body).not.toHaveProperty('metadata'); expect(body).not.toHaveProperty('store'); expect(body).not.toHaveProperty('provider'); expect(body).not.toHaveProperty('session_id'); expect(body).not.toHaveProperty('max_tokens');
     expect(options.headers).not.toHaveProperty('x-openrouter-metadata');
   });
   it('routes planner tool calls through the selected native transport', async () => {
     await service().respond({model:'gemini-3.8-flash',input:'Hello',tools:[]} as any,{task:'desk_agent',promptCacheKey:'chat'});
     expect(mocks.gemini).toHaveBeenCalledTimes(1); expect(mocks.chat).not.toHaveBeenCalled();
+  });
+  it('disables reasoning for native Luna function tools while retaining tool definitions', async () => {
+    await service().respond({model:'gpt-6-luna',input:'Hello',reasoning:{effort:'low'},tools:[{type:'function',name:'ask_user',parameters:{type:'object',properties:{}},strict:true}]} as any,{task:'desk_agent',promptCacheKey:'chat'});
+    expect(mocks.chat.mock.calls[0]![0]).toMatchObject({reasoning_effort:'none',tools:[{type:'function',function:{name:'ask_user'}}]});
+  });
+  it('preserves reasoning on native Luna calls without tools', async () => {
+    await service().respond({model:'gpt-6-luna',input:'Hello',reasoning:{effort:'low'}} as any,{task:'desk_agent',promptCacheKey:'chat'});
+    expect(mocks.chat.mock.calls[0]![0].reasoning_effort).toBe('low');
   });
   it('retains OpenRouter provider constraints in OpenRouter mode', async () => {
     (config as any).inferenceBackend = 'openrouter';

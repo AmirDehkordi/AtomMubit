@@ -14,6 +14,11 @@ MUBIT_FEEDBACK_MODEL=gpt-6-luna
 ```
 
 The native extractor can also be `gemini-3.8-flash` or `gpt-6-luna`.
+Native GPT Luna Chat Completions requests with function tools automatically use
+`reasoning_effort: none`, as required by that endpoint. Calls without tools
+retain their requested reasoning setting. Native Chat Completions omit session
+metadata because that endpoint requires stored responses to accept it; session
+IDs remain in local telemetry, and Mubit groups calls from conversation history.
 Native GPT calls use `https://api.mubit.ai/openai/v1`; native Gemini calls use
 `https://api.mubit.ai/gemini/v1beta/models/{model}:generateContent`. Both use
 `MUBIT_API_KEY`. Native mode ignores the OpenRouter profile's `AGENT_MODEL`,
