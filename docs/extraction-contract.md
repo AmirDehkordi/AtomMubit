@@ -7,59 +7,90 @@ dashboard reads: change it only after agreeing with the desk side.
 
 ## 1. What the module does
 
-Given one filing that `find_filings` has already found and saved, the module:
+The desk sends the module one **extraction job** per filing: the filing's details plus its **raw
+HTML**, exactly as the SEC serves it. The module never calls the SEC itself. It:
 
-1. downloads the filing document,
-2. splits it into sections,
-3. calls the **section_extractor** LLM task once per section, through Mubit,
-4. checks every extracted block (verifiers),
-5. re-runs failed sections once with the broken rule added,
-6. stores sections, blocks and checks, and streams progress to the UI.
+1. splits the HTML into sections,
+2. calls the **section_extractor** LLM task once per section, through Mubit,
+3. checks every extracted block (verifiers),
+4. re-runs failed sections once with the broken rule added,
+5. stores sections, blocks and checks, and streams progress to the UI.
 
-The agent never reads filings itself. Its `add_filings` tool calls `extractFiling` and gets back
-only the summary counts.
+The agent never reads filings itself. Its `add_filings` tool builds the job, calls `extractFiling`
+and gets back only the summary counts.
 
-## 2. Where it plugs in
+## 2. The job you receive (`ExtractionJob`, fixed)
 
-- Code lives in `apps/api/src/extraction/` as a Nest `ExtractionModule` that exports an
-  `ExtractionService` implementing `ExtractionApi` from `packages/shared/src/extraction.ts`:
+Defined in `packages/shared/src/extraction.ts`:
+
+```ts
+interface ExtractionJob {
+  accession: string;                 // "0001045810-26-000075"
+  projectId: string;                 // the desk to stream progress to
+  company: { cik: number; ticker: string; name: string; fiscalYearEnd: string /* "01-31" */ };
+  filing: {
+    form: string;                    // "10-Q" | "10-K" | "8-K"
+    periodEnd: string;               // quarter end; for an 8-K, the release date
+    fiscalYear: number;              // 2027
+    fiscalPeriod: string;            // "Q1"–"Q3", "FY" for a 10-K
+    quarter: string;                 // "Q2 FY2027"; a 10-K is "Q4 FY2026"; an 8-K, the quarter it reports
+    filedAt: string;
+  };
+  documents: { type: string; url: string; html: string }[];  // main document first
+}
+```
+
+| Form | `documents` |
+|---|---|
+| 10-Q, 10-K | One: the filing itself (`type` "10-Q"/"10-K"), 1–2 million characters of HTML with inline XBRL |
+| 8-K (Item 2.02) | The press release (`EX-99.1`, a few hundred thousand characters) and, when filed, CFO commentary (`EX-99.2`). The 8-K's own cover page is left out |
+
+The HTML is untouched: no cleaning, no trimming. In 10-Qs and 10-Ks, reported numbers are wrapped in
+inline XBRL tags (`<ix:nonFraction name="us-gaap:Revenues" contextRef=… scale="6" …>`), which tell
+you the concept, period and scale of each figure; use them if they help.
+
+**Real samples to build against:** with the API running,
+
+```bash
+pnpm --filter @desk/api dump-filings --ticker NVDA --quarters 4 --releases 2
+```
+
+writes `samples/NVDA/<accession>/job.json` (the job without HTML) and the raw HTML files next to it.
+Or over HTTP: `GET /filings/<accession>/job` (job with document sizes) and
+`GET /filings/<accession>/html?doc=0` (one document's raw HTML).
+
+## 3. Where it plugs in
+
+- Code lives in `apps/api/src/extraction/` as a Nest `ExtractionModule` whose `ExtractionService`
+  implements `ExtractionApi`:
 
   ```ts
-  extractFiling(accession: string, projectId: string): Promise<ExtractionSummary>
+  extractFiling(job: ExtractionJob): Promise<ExtractionSummary>
   ```
 
   Idempotent: calling it again for a finished filing returns its summary without new LLM calls.
-- Import `EdgarModule` (`apps/api/src/edgar/edgar.module.ts`) for everything SEC-related:
-
-  | You need | Use |
-  |---|---|
-  | The filing row (form, period, fiscal labels, document URL, CIK) | `EdgarService.filing(accession)` |
-  | The company (ticker, name, fiscal year end) | `companies` table, by `cik` |
-  | The document HTML | `EdgarClient.text(url, FOREVER)`: declared User-Agent, rate limit, disk cache |
-  | The answer key for numbers | `XbrlService.quarterValue(cik, metric, periodEnd)` |
-
 - Provide it under the injection token `EXTRACTION_API` (`apps/api/src/core/extraction.token.ts`):
   `providers: [ExtractionService, { provide: EXTRACTION_API, useExisting: ExtractionService }]`,
   `exports: [EXTRACTION_API]`.
 - In `apps/api/src/agent/agent.module.ts`, replace `ExtractionStubModule` with your `ExtractionModule`. The
   stub (`apps/api/src/extraction-stub/`) only marks filings ready so the desk works before
   extraction lands; delete it once yours is in.
-- The agent's `add_filings` tool sets `filings.projectId` and `status: 'queued'`, then calls
-  `extractFiling` **without awaiting it** and tells the user the filings are being read. Progress
-  reaches the UI through your events (section 8).
+- The agent's `add_filings` tool sets `filings.projectId` and `status: 'queued'`, fetches the
+  documents, then calls `extractFiling` **without awaiting it** and tells the user the filings are
+  being read. Progress reaches the UI through your events (section 8).
 - Make every LLM call through `MubitService.respond(params, { task: 'section_extractor',
   promptCacheKey: accession })` (`apps/api/src/mubit/mubit.service.ts`). It adds the Mubit
   headers, logs the call in `llm_calls`, and returns `{ response, requestId }`.
+- For the xbrl verifier, import `EdgarModule` (`apps/api/src/edgar/edgar.module.ts`) and use
+  `XbrlService.quarterValue(cik, metric, periodEnd)`.
 
-## 3. Input documents
+**What to read in each document:**
 
-SEC filings are **HTML with inline XBRL, not PDF**.
-
-| Form | Document | Read these parts |
-|---|---|---|
-| 10-Q | `filings.url` (primary document) | Part I Item 1 financial statements (income statement, cash flow), the segment note, Part I Item 2 MD&A |
-| 10-K | `filings.url` | Item 7 MD&A, Item 8 income statement, cash flow and segment note, Item 1A risk factors |
-| 8-K (Item 2.02) | **Exhibit 99.1**, not the primary document (that is a cover page). Find it in `https://www.sec.gov/Archives/edgar/data/<cik>/<accession without dashes>/index.json` | Headline, highlights, income statement table, outlook |
+| Form | Read these parts |
+|---|---|
+| 10-Q | Part I Item 1 financial statements (income statement, cash flow), the segment note, Part I Item 2 MD&A |
+| 10-K | Item 7 MD&A, Item 8 income statement, cash flow and segment note, Item 1A risk factors |
+| 8-K | Headline, highlights, income statement table, outlook (EX-99.1); commentary (EX-99.2) |
 
 Fourth quarters have no 10-Q; the 10-K covers them. The desk derives Q4 numbers from XBRL
 (full year − nine months), so the extractor should report what the 10-K prints (often the full
@@ -71,7 +102,7 @@ year) with the right `period.months`, never compute Q4 itself.
 |---|---|
 | `id` | `<accession>:<ordinal>`, e.g. `0001045810-26-000075:12` |
 | `accession` | The filing |
-| `item` | `Item 2`, `Item 7`, `Note 14`, `Exhibit 99.1`… |
+| `item` | `Item 2`, `Item 7`, `Note 14`, `EX-99.1`… |
 | `title` | Heading as printed |
 | `kind` | `text` or `table` |
 | `ordinal` | Order in the document, from 0 |
@@ -213,7 +244,7 @@ Suggested starting rules (`source: 'seed'`):
 
 ## 9. Test filings
 
-All found by `GET /filings/find?ticker=NVDA&forms=10-Q,10-K&lastNQuarters=4`:
+All found by `GET /filings/find?ticker=NVDA&forms=10-Q,10-K&lastNQuarters=4` (and `forms=8-K&lastNQuarters=2`), and written by `dump-filings`:
 
 | Accession | Form | Period end | Quarter |
 |---|---|---|---|
@@ -221,6 +252,8 @@ All found by `GET /filings/find?ticker=NVDA&forms=10-Q,10-K&lastNQuarters=4`:
 | 0001045810-26-000052 | 10-Q | 2026-04-26 | Q1 FY2027 |
 | 0001045810-26-000021 | 10-K | 2026-01-25 | Q4 FY2026 |
 | 0001045810-25-000230 | 10-Q | 2025-10-26 | Q3 FY2026 |
+| 0001045810-26-000073 | 8-K | released 2026-08-26 | Q2 FY2027 (EX-99.1, EX-99.2) |
+| 0001045810-26-000051 | 8-K | released 2026-05-20 | Q1 FY2027 (EX-99.1, EX-99.2) |
 
 XBRL answer key for the same quarters: `GET /metrics?ticker=NVDA&metrics=revenue,net_income,eps_diluted&periodEnds=2025-10-26,2026-01-25,2026-04-26,2026-07-26`
 (revenue Q2 FY2027 = 96,221 million, reported; Q4 FY2026 = 68,127 million, derived).

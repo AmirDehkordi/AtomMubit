@@ -1,7 +1,8 @@
-import { BadRequestException, Controller, Get, NotFoundException, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
 import { TOOL_ARGS } from '@desk/shared';
 import { z } from 'zod';
 import { XbrlService } from '../xbrl/xbrl.service';
+import { DocumentsService } from './documents.service';
 import { EdgarError } from './edgar.client';
 import { EdgarService } from './edgar.service';
 
@@ -14,6 +15,7 @@ export class EdgarController {
   constructor(
     private readonly edgar: EdgarService,
     private readonly xbrl: XbrlService,
+    private readonly documents: DocumentsService,
   ) {}
 
   // GET /filings/find?ticker=NVDA&forms=10-Q,10-K&lastNQuarters=4
@@ -37,6 +39,26 @@ export class EdgarController {
       periodEnds: list(q.periodEnds),
     });
     return run(() => this.xbrl.getMetrics(args));
+  }
+
+  // GET /filings/0001045810-26-000075/job: the extraction job without the HTML (sizes instead)
+  @Get('filings/:accession/job')
+  async job(@Param('accession') accession: string) {
+    const job = await run(() => this.documents.job(accession, 'preview'));
+    return {
+      ...job,
+      documents: job.documents.map((d, i) => ({ type: d.type, url: d.url, chars: d.html.length, html: `/filings/${accession}/html?doc=${i}` })),
+    };
+  }
+
+  // GET /filings/0001045810-26-000075/html?doc=0: one document's raw HTML, as the SEC serves it
+  @Get('filings/:accession/html')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  async html(@Param('accession') accession: string, @Query('doc') doc?: string) {
+    const job = await run(() => this.documents.job(accession, 'preview'));
+    const document = job.documents[Number(doc ?? 0)];
+    if (!document) throw new NotFoundException(`Filing ${accession} has ${job.documents.length} document(s)`);
+    return document.html;
   }
 }
 

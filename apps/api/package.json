@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "test": "vitest run",
     "fake-llm": "node scripts/fake-llm.mjs",
-    "replay": "node scripts/replay-questions.mjs"
+    "replay": "node scripts/replay-questions.mjs",
+    "dump-filings": "node scripts/dump-filings.mjs"
   },
   "dependencies": {
     "@desk/shared": "workspace:*",

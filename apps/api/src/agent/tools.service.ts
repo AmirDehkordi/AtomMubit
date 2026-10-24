@@ -15,6 +15,7 @@ import { EXTRACTION_API } from '../core/extraction.token';
 import { DashboardService } from '../dashboard/dashboard.service';
 import { DbService } from '../db/db.service';
 import { blocks, companies, filings, projects } from '../db/schema';
+import { DocumentsService } from '../edgar/documents.service';
 import { EdgarService } from '../edgar/edgar.service';
 import { fiscalLabel, quarterName } from '../edgar/fiscal';
 import { XbrlService } from '../xbrl/xbrl.service';
@@ -65,6 +66,7 @@ export class ToolsService {
     private readonly edgar: EdgarService,
     private readonly xbrl: XbrlService,
     private readonly dashboard: DashboardService,
+    private readonly documents: DocumentsService,
     @Inject(EXTRACTION_API) private readonly extraction: ExtractionApi,
   ) {}
 
@@ -160,10 +162,13 @@ export class ToolsService {
 
     if (!ctx.replay) {
       for (const r of rows) {
-        // Not awaited: the desk reads in the background and streams progress.
-        this.extraction.extractFiling(r.accession, ctx.projectId).catch((err) => {
-          this.logger.warn(`Extraction of ${r.accession} failed: ${String(err)}`);
-        });
+        // Not awaited: the desk fetches the raw HTML and reads in the background, streaming progress.
+        this.documents
+          .job(r.accession, ctx.projectId)
+          .then((job) => this.extraction.extractFiling(job))
+          .catch((err) => {
+            this.logger.warn(`Extraction of ${r.accession} failed: ${String(err)}`);
+          });
       }
     }
     return ok(
