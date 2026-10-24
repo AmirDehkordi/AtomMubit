@@ -11,15 +11,20 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const data = await mkdtemp(join(tmpdir(), 'earnings-smoke-'));
 const source = 'Three months ended June 30, 2026. GAAP amounts in USD millions, except EPS in USD/share.\nRevenue was $1,000 million.\nNet income was $100 million.\nDiluted EPS was $1.00 per share.';
 const facts = [ ['revenue','Revenue',1000,'USD','millions','Revenue was $1,000 million.'], ['net_income','Net income',100,'USD','millions','Net income was $100 million.'], ['eps_diluted','Diluted EPS',1,'USD/share','units','Diluted EPS was $1.00 per share.'] ].map(([key,label,value,unit,scale,quote])=>({key,label,value,unit,scale,quote,basis:'GAAP',currency:'USD',period:{start:null,end:'2026-06-30',months:3,fiscalYear:2026,fiscalPeriod:'Q2'},range:null,qualifier:null,missingReason:null}));
+const nativeMode=process.argv.includes('--native');
 let calls=0;
 const requestedModels=[];
 const model=createServer(async(req,res)=>{
   try {
     let body='';for await(const chunk of req)body+=chunk;
-    const request=JSON.parse(body); calls++; requestedModels.push(request.model);
+    const request=JSON.parse(body);
+    const isGemini=req.url.includes(':generateContent');
+    if(isGemini){request.model=req.url.match(/models\/([^:]+)/)[1];request.response_format={json_schema:{name:'section_extraction_v2'}};}
+    calls++; requestedModels.push(request.model);
     const name=request.response_format?.json_schema?.name;
     const output=name==='extraction_intent_v2'?{tickers:[],fields:['revenue','net_income','eps_diluted'],fiscalYear:null,lastNQuarters:4,clarification:null}:name==='feedback_evaluation_v2'?{decision:'defer',reason:'Synthetic smoke evaluator does not activate rules.',kind:'preference',target:'both',scope:'team',lesson:null,factKey:null,evidence:null}:{schemaVersion:'2',blocks:[],facts};
     res.writeHead(200,{'Content-Type':'application/json','x-middleware-request-id':`fake-${calls}`});
+    if(isGemini){res.end(JSON.stringify({modelVersion:request.model,candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(output)}]}}],usageMetadata:{promptTokenCount:100,candidatesTokenCount:100,totalTokenCount:200}}));return;}
     res.end(JSON.stringify({id:`chatcmpl-${calls}`,object:'chat.completion',created:Math.floor(Date.now()/1000),model:request.model,choices:[{index:0,message:{role:'assistant',content:JSON.stringify(output)},finish_reason:'stop'}],usage:{prompt_tokens:100,completion_tokens:100,total_tokens:200}}));
   } catch {res.writeHead(400);res.end('{}');}
 });
@@ -41,7 +46,7 @@ const flow=createServer(async(req,res)=>{
 });
 flow.listen(0,'127.0.0.1');await once(flow,'listening');const flowPort=flow.address().port;
 async function start(worker){
-  child=spawn(process.execPath,['dist/main.js'],{cwd:root,env:{...process.env,PORT:String(apiPort),DATA_DIR:data,DATABASE_URL:'',TEAM_ID:'internal',RUN_MIGRATIONS:'1',RUN_LOCAL_WORKER:worker?'1':'0',SEC_USER_AGENT:'',MUBIT_API_KEY:'fake-local',MUBIT_BASE_URL:`http://127.0.0.1:${modelPort}/v1`,OPENROUTER_API_KEY:'',WORKFLOW_MODE:workflowMode?'langflow':'direct',LANGFLOW_URL:`http://127.0.0.1:${flowPort}`,LANGFLOW_API_KEY:'fake-flow-key',LANGFLOW_EXTRACTION_FLOW_ID:'fake-extraction',LANGFLOW_FEEDBACK_FLOW_ID:'fake-feedback',MODEL_GATEWAY_TOKEN:'fake-gateway-token',AGENT_MODEL:'openai/gpt-6-luna',EXTRACTOR_MODEL:'qwen/qwen3-30b-a3b-instruct-2507',FEEDBACK_MODEL:'openai/gpt-6-luna'},stdio:['ignore','pipe','pipe']});
+  child=spawn(process.execPath,['dist/main.js'],{cwd:root,env:{...process.env,PORT:String(apiPort),DATA_DIR:data,DATABASE_URL:'',TEAM_ID:'internal',RUN_MIGRATIONS:'1',RUN_LOCAL_WORKER:worker?'1':'0',SEC_USER_AGENT:'',INFERENCE_BACKEND:nativeMode?'mubit':'openrouter',MUBIT_AGENT_MODEL:'gpt-6-luna',MUBIT_EXTRACTOR_MODEL:'gemini-3.5-flash-lite',MUBIT_FEEDBACK_MODEL:'gpt-6-luna',MUBIT_OPENAI_BASE_URL:`http://127.0.0.1:${modelPort}/openai/v1`,MUBIT_GEMINI_BASE_URL:`http://127.0.0.1:${modelPort}/gemini`,MUBIT_API_KEY:'fake-local',MUBIT_BASE_URL:`http://127.0.0.1:${modelPort}/v1`,OPENROUTER_API_KEY:'',WORKFLOW_MODE:workflowMode?'langflow':'direct',LANGFLOW_URL:`http://127.0.0.1:${flowPort}`,LANGFLOW_API_KEY:'fake-flow-key',LANGFLOW_EXTRACTION_FLOW_ID:'fake-extraction',LANGFLOW_FEEDBACK_FLOW_ID:'fake-feedback',MODEL_GATEWAY_TOKEN:'fake-gateway-token',AGENT_MODEL:'openai/gpt-6-luna',EXTRACTOR_MODEL:'qwen/qwen3-30b-a3b-instruct-2507',FEEDBACK_MODEL:'openai/gpt-6-luna'},stdio:['ignore','pipe','pipe']});
   child.stdout.on('data',d=>{logs+=d});child.stderr.on('data',d=>{logs+=d});
   for(let i=0;i<120;i++){if(child.exitCode!==null)throw new Error(logs);try{if((await fetch(`${base}/health`)).ok)return;}catch{}await new Promise(r=>setTimeout(r,250));}throw new Error(`API did not start: ${logs}`);
 }
@@ -62,6 +67,6 @@ try{
   assert.equal(reused.runs[0].id,receipt.runId);assert.equal(calls,2,'Reused extraction should only add an intent call');
   const feedback=await api('/v1/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId,runId:receipt.runId,text:'Please show units explicitly.'})});
   await waitFor(async()=>{const data=await api(`/v1/data?projectId=${projectId}&feedbackId=${feedback.feedbackId}`);return data.feedback[0]?.state==='deferred';});
-  assert.deepEqual(requestedModels,['qwen/qwen3-30b-a3b-instruct-2507','openai/gpt-6-luna','openai/gpt-6-luna']);
-  console.log(JSON.stringify({status:'passed',mode:workflowMode?'local-fake-model-and-workflow':'local-fake-model',checks:['upload','idempotency','restart recovery','extraction/evidence','durable progress','intent run reuse','feedback evaluation'],modelCalls:calls}));
+  assert.deepEqual(requestedModels,nativeMode?['gemini-3.5-flash-lite','gpt-6-luna','gpt-6-luna']:['qwen/qwen3-30b-a3b-instruct-2507','openai/gpt-6-luna','openai/gpt-6-luna']);
+  console.log(JSON.stringify({status:'passed',backend:nativeMode?'mubit':'openrouter',mode:workflowMode?'local-fake-model-and-workflow':'local-fake-model',checks:['upload','idempotency','restart recovery','extraction/evidence','durable progress','intent run reuse','feedback evaluation'],modelCalls:calls}));
 }finally{await stop();await new Promise(r=>model.close(r));await new Promise(r=>flow.close(r));await rm(data,{recursive:true,force:true});}

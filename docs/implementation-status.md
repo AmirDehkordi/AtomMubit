@@ -22,7 +22,7 @@ production deployment or a measured extraction-quality result.
 - Scoped feedback decisions and development replay before rule activation;
   stage-specific planner/extractor context; automatic historical reprocessing.
   Missing/ambiguous regression evidence can defer a proposed update.
-- Mubit → OpenRouter Chat Completions transport, structured outputs, parallel
+- Selectable Mubit → OpenRouter or native Mubit OpenAI/Gemini transport, structured outputs, parallel
   tool-call conversion, session IDs, per-attempt usage and request telemetry.
   Extractor default `qwen/qwen3-30b-a3b-instruct-2507`; planner and feedback
   evaluator default `openai/gpt-6-luna`. Each model remains configurable.
@@ -37,7 +37,7 @@ production deployment or a measured extraction-quality result.
 
 | Check | Result |
 | --- | --- |
-| API Vitest suite, including migrated PGlite queue/feedback/processor tests | 96 passed, 11 test files |
+| API Vitest suite, including migrated PGlite queue/feedback/processor tests | 123 passed, 14 test files |
 | Main database upgrade and clean database migration tests | 2 passed |
 | Shared/API/web TypeScript checks | Passed |
 | API production compilation | Passed |
@@ -76,6 +76,9 @@ was disabled. Existing approved build dependencies remain explicit.
 
 The application is configured for one trusted internal team on localhost.
 Public deployment and multi-team onboarding require authentication and further
-operational hardening. OCR remains out of scope. No deployment, SEC download, or paid model call was performed during this
-implementation. The pull request includes the latest main branch and preserves
+operational hardening. OCR remains out of scope. No deployment or SEC download was performed. A live synthetic native-Mubit
+Gemini extraction succeeded after the backend switch was added. The model
+returned the expected sample numbers, but its inferred period start failed
+evidence validation, leaving the result in needs_review. This is a connection
+check, not a model-quality benchmark. OpenRouter live calls returned HTTP 402. The pull request includes the latest main branch and preserves
 its existing database migrations; extraction is added in migration 0005.

@@ -160,7 +160,8 @@ export class ProcessorService {
     if (!document) throw new Error('Source document missing');
     const spec = run.specification as Specification;
     if (spec.taskFingerprint !== EXTRACTION_TASK_VERSION) throw new Error('Pinned extraction task changed; enqueue a new revision.');
-    if (spec.model !== (config.extractorModel)) throw new Error('Pinned model changed; enqueue a new revision rather than mutating this run');
+    if ((spec.inferenceBackend ?? 'openrouter') !== config.inferenceBackend) throw new Error('Pinned inference backend changed; submit a new extraction revision.');
+    if (spec.model !== config.extractorModel) throw new Error('Pinned model changed; enqueue a new revision rather than mutating this run');
     await this.jobs.withLease(job, async tx => {
       await tx.update(extractionRuns).set({state:'running', error: null}).where(eq(extractionRuns.id, runId));
       await event(tx, run.projectId, 'running', {documentId: document.id}, runId);

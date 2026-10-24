@@ -2,6 +2,42 @@
 
 Checked against OpenRouter's public model and pricing pages on **24 October 2026**. These are listed rates at that date, not a billing statement or a benchmark result; confirm them again before a paid run.
 
+## Switch the production backend
+
+Set `INFERENCE_BACKEND` in `apps/api/.env` for local runs, or root `.env` for Compose:
+
+```dotenv
+INFERENCE_BACKEND=mubit
+MUBIT_AGENT_MODEL=gpt-6-luna
+MUBIT_EXTRACTOR_MODEL=gemini-3.5-flash-lite
+MUBIT_FEEDBACK_MODEL=gpt-6-luna
+```
+
+The native extractor can also be `gemini-3.8-flash` or `gpt-6-luna`.
+Native GPT calls use `https://api.mubit.ai/openai/v1`; native Gemini calls use
+`https://api.mubit.ai/gemini/v1beta/models/{model}:generateContent`. Both use
+`MUBIT_API_KEY`. Native mode ignores the OpenRouter profile's `AGENT_MODEL`,
+`EXTRACTOR_MODEL`, `FEEDBACK_MODEL`, and `MUBIT_BASE_URL`, so switching back only
+requires `INFERENCE_BACKEND=openrouter`. Native endpoint overrides are
+`MUBIT_OPENAI_BASE_URL` and `MUBIT_GEMINI_BASE_URL`.
+
+Mubit starter credit is available only for the providers/models listed in your
+console; otherwise configure the corresponding provider key in Mubit. Native
+mode bypasses OpenRouter and does not use OpenRouter credits. It does not imply
+free or unlimited inference. Gemini uses its native API because Mubit's Gemini
+OpenAI-compatible route does not support starter credit.
+
+Restart API and worker after switching. Each backend has a separate transport
+lock, so switching profiles preserves the other backend's lock. Changing endpoint
+URLs within one backend requires `ALLOW_TRANSPORT_CHANGE=1`; changing the planner
+model may also require `ALLOW_TASK_CHANGE=1`. Prior extraction runs pin their model and backend;
+submit a new request after switching. Benchmark A/B remains direct OpenRouter
+versus Mubit→OpenRouter with the same model; native model changes are a separate
+comparison, not a like-for-like routing benchmark.
+
+Sources: [Mubit OpenAI starter example](https://docs.mubit.ai/quickstart),
+[Mubit native Gemini and starter-credit restrictions](https://docs.mubit.ai/guides/connect-gemini).
+
 ## Routes and models
 
 | Use | Endpoint | Model ID |

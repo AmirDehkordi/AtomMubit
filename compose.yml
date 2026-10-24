@@ -50,6 +50,12 @@ services:
       LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
       MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
       WORKFLOW_MODE: langflow
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-openrouter}
+      MUBIT_AGENT_MODEL: ${MUBIT_AGENT_MODEL:-gpt-6-luna}
+      MUBIT_EXTRACTOR_MODEL: ${MUBIT_EXTRACTOR_MODEL:-gemini-3.5-flash-lite}
+      MUBIT_FEEDBACK_MODEL: ${MUBIT_FEEDBACK_MODEL:-gpt-6-luna}
+      MUBIT_OPENAI_BASE_URL: ${MUBIT_OPENAI_BASE_URL:-https://api.mubit.ai/openai/v1}
+      MUBIT_GEMINI_BASE_URL: ${MUBIT_GEMINI_BASE_URL:-https://api.mubit.ai/gemini}
       AGENT_MODEL: ${AGENT_MODEL:-openai/gpt-6-luna}
       EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen/qwen3-30b-a3b-instruct-2507}
       FEEDBACK_MODEL: ${FEEDBACK_MODEL:-openai/gpt-6-luna}
@@ -85,6 +91,12 @@ services:
       LANGFLOW_FEEDBACK_FLOW_ID: ${LANGFLOW_FEEDBACK_FLOW_ID:-}
       MODEL_GATEWAY_TOKEN: ${MODEL_GATEWAY_TOKEN:-local-development-token}
       WORKFLOW_MODE: langflow
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-openrouter}
+      MUBIT_AGENT_MODEL: ${MUBIT_AGENT_MODEL:-gpt-6-luna}
+      MUBIT_EXTRACTOR_MODEL: ${MUBIT_EXTRACTOR_MODEL:-gemini-3.5-flash-lite}
+      MUBIT_FEEDBACK_MODEL: ${MUBIT_FEEDBACK_MODEL:-gpt-6-luna}
+      MUBIT_OPENAI_BASE_URL: ${MUBIT_OPENAI_BASE_URL:-https://api.mubit.ai/openai/v1}
+      MUBIT_GEMINI_BASE_URL: ${MUBIT_GEMINI_BASE_URL:-https://api.mubit.ai/gemini}
       AGENT_MODEL: ${AGENT_MODEL:-openai/gpt-6-luna}
       EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen/qwen3-30b-a3b-instruct-2507}
       FEEDBACK_MODEL: ${FEEDBACK_MODEL:-openai/gpt-6-luna}

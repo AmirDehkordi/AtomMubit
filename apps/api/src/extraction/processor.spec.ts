@@ -55,6 +55,13 @@ describe('real extraction processor acceptance and restart integration', () => {
     expect(run.state).toBe('completed');expect(run.accepted).toBe(true);expect(workflow).toHaveBeenCalledTimes(1);
     expect(run.output?.missingFields).toEqual([]);
   });
+  it('rejects a queued run when the inference backend changes before execution', async () => {
+    const run = await upload();
+    await db.update(extractionRuns).set({specification:{...run.specification,inferenceBackend:run.specification.inferenceBackend === 'mubit' ? 'openrouter' : 'mubit'}}).where(eq(extractionRuns.id,run.id));
+    const job = (await jobs.claim())!;
+    await expect(processor.extract(job)).rejects.toThrow('Pinned inference backend changed');
+    expect(workflow).not.toHaveBeenCalled();
+  });
   it('never accepts a result missing requested defaults',async()=>{
     workflow.mockResolvedValue({output:{schemaVersion:'2',blocks:[],facts:[facts()[0]]},requestId:'offline-model'});
     await upload();const run=await finishNext();expect(run.state).toBe('needs_review');expect(run.accepted).toBe(false);

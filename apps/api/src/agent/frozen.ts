@@ -85,11 +85,11 @@ export function assertAgentFrozen(): void {
 /** Transport changes are versioned independently from the frozen task. This
  * migration leaves data/desk_agent.lock byte-for-byte intact. */
 export const TRANSPORT_FINGERPRINT = createHash('sha256')
-  .update(JSON.stringify({ version: 2, protocol: 'responses-to-chat-completions', retries: 0, baseURL: config.mubitBaseUrl }))
+  .update(JSON.stringify({ version: 2, protocol: 'responses-to-chat-completions', retries: 0, baseURL: config.mubitBaseUrl, ...(config.inferenceBackend === 'mubit' ? {native: true, geminiBaseURL: config.mubitGeminiBaseUrl} : {}) }))
   .digest('hex').slice(0, 16);
 
 export function assertTransportFrozen(): void {
-  const lockPath = join(config.dataDir, 'mubit_transport.lock');
+  const lockPath = join(config.dataDir, config.inferenceBackend === 'mubit' ? 'mubit_native_transport.lock' : 'mubit_transport.lock');
   mkdirSync(config.dataDir, { recursive: true });
   if (!existsSync(lockPath)) { writeFileSync(lockPath, TRANSPORT_FINGERPRINT + '\n'); return; }
   const locked = readFileSync(lockPath, 'utf8').trim();

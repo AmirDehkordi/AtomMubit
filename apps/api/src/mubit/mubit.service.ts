@@ -7,6 +7,7 @@ import { config } from '../core/config';
 import { DbService } from '../db/db.service';
 import { inferenceAttempts, llmCalls } from '../db/schema';
 import { assertTransportFrozen } from '../agent/frozen';
+import { executeGemini } from './gemini-transport';
 
 export type MubitTask = 'desk_agent' | 'section_extractor' | 'feedback_evaluator';
 export interface MubitCall {
@@ -39,8 +40,8 @@ export interface JsonResult<T> {
 export const DEFAULT_JSON_MAX_OUTPUT_TOKENS = 8_000;
 
 /**
- * Production inference gateway. Mubit only exposes OpenAI-compatible Chat
- * Completions, while the desk agent's stable internal contract is Responses.
+ * Production inference gateway for OpenRouter, native OpenAI, and native Gemini
+ * through Mubit. The desk agent retains its internal Responses contract.
  * This adapter intentionally translates the supported subset in both
  * directions and disables SDK retries so attempts remain observable.
  */
@@ -52,6 +53,15 @@ export class MubitService {
 
   constructor(private readonly dbs: DbService) { assertTransportFrozen(); }
   get configured(): boolean { return Boolean(config.mubitApiKey); }
+
+  private productionCompletion(body: any, headers: Record<string, string>) {
+    if (config.inferenceBackend === 'openrouter') return this.client.chat.completions.create(body, {headers}).withResponse();
+    const { ['x-openrouter-metadata']: _ignored, ...nativeHeaders } = headers;
+    if (body.model.startsWith('gemini-')) {
+      return executeGemini({baseURL: config.mubitGeminiBaseUrl, apiKey: config.mubitApiKey, body, headers: nativeHeaders});
+    }
+    return this.client.chat.completions.create(nativeOpenAIRequest(body), {headers: nativeHeaders}).withResponse();
+  }
 
   async respond(params: ResponseCreateParamsNonStreaming, call: MubitCall): Promise<MubitResult> {
     if (!this.configured) throw new Error('MUBIT_API_KEY is not set (apps/api/.env).');
@@ -68,7 +78,7 @@ export class MubitService {
       ...(!['desk_agent', 'section_extractor'].includes(call.task) ? { 'x-middleware-record': 'off' } : {}),
     };
     try {
-      const result = await this.client.chat.completions.create(toChatCompletion(params, call.promptCacheKey) as any, { headers }).withResponse();
+      const result = await this.productionCompletion(toChatCompletion(params, call.promptCacheKey), headers);
       const reqId = result.response.headers.get('x-middleware-request-id') ?? result.response.headers.get('x-openrouter-request-id') ?? requestId;
       requestId = reqId;
       inputTokens = result.data.usage?.prompt_tokens ?? null;
@@ -93,7 +103,6 @@ export class MubitService {
     if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 16 || maxOutputTokens > 128_000) throw new Error('maxOutputTokens must be an integer from 16 through 128000.');
     if (route === 'mubit' && !this.configured) throw new Error('MUBIT_API_KEY is not set (apps/api/.env).');
     if (route === 'openrouter' && !config.openrouterApiKey) throw new Error('OPENROUTER_API_KEY is not set (apps/api/.env).');
-    const client = route === 'mubit' ? this.client : this.directClient;
     let requestId = call.requestId ?? randomUUID();
     const start = performance.now();
     let inputTokens: number | null = null;
@@ -101,14 +110,16 @@ export class MubitService {
     let usageDetails: Record<string, unknown> = {};
     let serving: { provider?: string | null; model?: string | null } = {};
     try {
-      const { data, response } = await client.chat.completions.create({
+      const body = {
         model: args.model ?? config.extractorModel,
         messages: [{ role: 'system', content: args.system }, { role: 'user', content: args.input }],
         response_format: { type: 'json_schema', json_schema: { name: args.jsonSchema.name, strict: true, schema: args.jsonSchema.schema } },
         max_tokens: maxOutputTokens,
         provider: { require_parameters: true, allow_fallbacks: false },
         session_id: stableSessionId(args.sessionKey),
-      } as any, { headers: route === 'mubit' ? { 'x-middleware-request-id': requestId, 'x-openrouter-metadata': 'enabled', ...(!['desk_agent', 'section_extractor'].includes(call.task) ? { 'x-middleware-record': 'off' } : {}) } : { 'x-openrouter-metadata': 'enabled' } }).withResponse();
+      };
+      const headers = { 'x-middleware-request-id': requestId, 'x-openrouter-metadata': 'enabled', ...(!['desk_agent', 'section_extractor'].includes(call.task) ? { 'x-middleware-record': 'off' } : {}) };
+      const {data, response} = await (route === 'mubit' ? this.productionCompletion(body, headers) : this.directClient.chat.completions.create(body as any, {headers: {'x-openrouter-metadata': 'enabled'}}).withResponse());
       const reqId = response.headers.get('x-middleware-request-id') ?? response.headers.get('x-openrouter-request-id') ?? requestId;
       requestId = reqId;
       inputTokens = data.usage?.prompt_tokens ?? null;
@@ -129,13 +140,22 @@ export class MubitService {
   private async log(call: MubitCall, model: string, latency: number, requestId: string | null, input: number | null, output: number | null, error: string | null, route: 'mubit' | 'openrouter', usageDetails: Record<string, unknown> = {}, serving: { provider?: string | null; model?: string | null } = {}): Promise<void> {
     try {
       const task = call.task;
-      await this.dbs.db.insert(inferenceAttempts).values({ id: randomUUID(), teamId: config.teamId, runId: call.runId ?? null, task, route, model, requestId, provider: serving.provider ?? null, latencyMs: latency, tokensIn: input, tokensOut: output, costUsd: null, ok: error === null, error, details: { sessionKey: call.promptCacheKey, requestedProvider: model.includes('/') ? model.split('/')[0] : null, servedModel: serving.model ?? null, ...usageDetails } });
+      await this.dbs.db.insert(inferenceAttempts).values({ id: randomUUID(), teamId: config.teamId, runId: call.runId ?? null, task, route, model, requestId, provider: serving.provider ?? null, latencyMs: latency, tokensIn: input, tokensOut: output, costUsd: null, ok: error === null, error, details: { inferenceBackend: route === 'mubit' ? config.inferenceBackend : 'direct-openrouter', sessionKey: call.promptCacheKey, requestedProvider: model.includes('/') ? model.split('/')[0] : null, servedModel: serving.model ?? null, ...usageDetails } });
       // Keep legacy desk call analytics during transition; rich route/task telemetry is in inference_attempts.
       if (route === 'mubit' && (task === 'desk_agent' || task === 'section_extractor' || task === 'unrecorded')) {
         await this.dbs.db.insert(llmCalls).values({ id: randomUUID(), task, mubitRequestId: requestId, recorded: task !== 'unrecorded', promptCacheKey: call.promptCacheKey, model, latencyMs: Math.round(latency), tokensIn: input, tokensOut: output, ok: error === null, error });
       }
     } catch (err) { this.logger.warn(`Could not log inference attempt (${requestId ?? 'no request id'}): ${err instanceof Error ? err.name : 'database error'}`); }
   }
+}
+
+/** OpenRouter routing controls are not valid native OpenAI parameters. */
+export function nativeOpenAIRequest(body: any) {
+  const {provider, session_id, max_tokens, ...request} = body;
+  return {...request,
+    ...(session_id ? {metadata: {...request.metadata, session_id}} : {}),
+    ...(max_tokens !== undefined ? {max_completion_tokens: max_tokens} : {}),
+  };
 }
 
 export function toChatCompletion(params: ResponseCreateParamsNonStreaming, sessionKey?: string) {

@@ -4,7 +4,8 @@ A model that learns your house rules from reality.
 
 A research desk for SEC filings, with a conversational planner, automated
 filing ingestion, evidence-linked extraction, and scoped house rules learned
-from feedback. Production AI requests go through **Mubit → OpenRouter**. The
+from feedback. `INFERENCE_BACKEND=openrouter` routes AI through **Mubit → OpenRouter**;
+`INFERENCE_BACKEND=mubit` uses native Mubit OpenAI/Gemini routes. In OpenRouter mode the
 extractor defaults to `qwen/qwen3-30b-a3b-instruct-2507`; the planner and feedback
 evaluator use `openai/gpt-6-luna`. Each model is configurable.
 

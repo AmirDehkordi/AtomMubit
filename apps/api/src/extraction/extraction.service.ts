@@ -12,7 +12,7 @@ import { prepareUpload } from './upload';
 export const teamId = () => process.env.TEAM_ID?.trim() || 'internal';
 export const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
-export type Specification = { fields: string[]; rules: string[]; workflowVersion: string; schemaVersion: string; model: string; taskFingerprint: string; correctionId?: string };
+export type Specification = { fields: string[]; rules: string[]; workflowVersion: string; schemaVersion: string; model: string; inferenceBackend?: 'openrouter' | 'mubit'; taskFingerprint: string; correctionId?: string };
 export async function event(tx: Transaction, projectId: string, type: string, data: Record<string, unknown>, runId: string | null = null) {
   await tx.insert(extractionEvents).values({ teamId: teamId(), projectId, type, data, runId });
 }
@@ -38,7 +38,7 @@ export class ExtractionService {
   }
   async specification(ticker?: string | null, fields: string[] = [...DEFAULT_EXTRACTION_FIELDS], database: Pick<Db, 'select'> = this.dbs.db) {
     const bundle = await this.rules(ticker, undefined, database);
-    return { version: bundle.version, spec: { fields: [...new Set(fields)].sort(), rules: bundle.rules, workflowVersion: 'section-v2', taskFingerprint: EXTRACTION_TASK_VERSION, schemaVersion: '2', model: config.extractorModel } satisfies Specification };
+    return { version: bundle.version, spec: { fields: [...new Set(fields)].sort(), rules: bundle.rules, workflowVersion: 'section-v2', taskFingerprint: EXTRACTION_TASK_VERSION, schemaVersion: '2', model: config.extractorModel, inferenceBackend: config.inferenceBackend } satisfies Specification };
   }
   async submitRequest(input: {projectId: string; request: string; parentRequestId?: string; documentIds?: string[]}, idempotencyKey?: string) {
     await this.assertProject(input.projectId);

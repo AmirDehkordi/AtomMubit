@@ -63,6 +63,9 @@ configured, the worker processes queued work; a configured SEC watchlist can
 therefore trigger paid inference automatically. Leave `SEC_USER_AGENT` empty
 to disable automatic SEC ingestion while setting up the flows.
 
+Select `INFERENCE_BACKEND=openrouter` (default) or `mubit` for native Mubit
+models. Native mode uses `MUBIT_AGENT_MODEL`, `MUBIT_EXTRACTOR_MODEL`, and
+`MUBIT_FEEDBACK_MODEL`; see [backend settings](openrouter.md#switch-the-production-backend).
 Model settings are shared by API and worker. Extraction defaults to
 `qwen/qwen3-30b-a3b-instruct-2507` (`EXTRACTOR_MODEL`); the planner (`AGENT_MODEL`)
 and feedback evaluator (`FEEDBACK_MODEL`) default to `openai/gpt-6-luna`.

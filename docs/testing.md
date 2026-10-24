@@ -10,6 +10,7 @@ pnpm typecheck
 pnpm build
 node apps/api/scripts/smoke-extraction.mjs
 node apps/api/scripts/smoke-extraction.mjs --workflow
+node apps/api/scripts/smoke-extraction.mjs --native
 ```
 
 Run `pnpm build` before the smoke commands: they require the compiled API.
@@ -26,7 +27,7 @@ pnpm --filter @desk/api fake-llm
 ```
 
 ```sh
-MUBIT_BASE_URL=http://localhost:4099/v1 MUBIT_API_KEY=fake SEC_USER_AGENT= WORKFLOW_MODE=direct pnpm dev
+INFERENCE_BACKEND=openrouter MUBIT_BASE_URL=http://localhost:4099/v1 MUBIT_API_KEY=fake SEC_USER_AGENT= WORKFLOW_MODE=direct pnpm dev
 ```
 
 Open <http://localhost:3100> and start a desk. Chat requests for real companies
