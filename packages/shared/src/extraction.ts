@@ -1,4 +1,4 @@
-// The boundary between the desk and the extraction module (built separately).
+// Filing ingestion types shared by the desk and the integrated extraction worker.
 // See docs/extraction-contract.md.
 
 /** One HTML document of a filing, exactly as the SEC serves it. */
@@ -55,12 +55,8 @@ export interface RereadRequest {
 
 /** The service the extraction module provides to the rest of the API. */
 export interface ExtractionApi {
-  /** Reads one filing. Idempotent: a finished filing returns its summary without new LLM calls. */
-  extractFiling(job: ExtractionJob): Promise<ExtractionSummary>;
-  /**
-   * Re-runs section_extractor on already-read sections with the current active rules (always,
-   * even if they were read before), replaces their blocks and checks, and streams `block` and
-   * `extraction` events. Each re-run call is a corrected example Mubit can keep.
-   */
+  /** Durably queue SEC document retrieval and extraction; completion is polled via /v1/data. */
+  submitFiling(accession: string, projectId: string, requestId?: string, fields?: string[]): Promise<{accession: string; state: string}>;
+  /** Queue new immutable runs with current rules for documents containing these sections. */
   rereadSections(request: RereadRequest): Promise<void>;
 }

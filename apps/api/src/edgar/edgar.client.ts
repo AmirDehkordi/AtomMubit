@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createHash } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, stat, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
+import { eq } from 'drizzle-orm';
+import { DbService } from '../db/db.service';
+import { serviceLocks } from '../db/schema';
 import { config } from '../core/config';
 
 const MIN_GAP_MS = 125; // SEC allows 10 requests a second; stay at 8.
@@ -28,10 +31,9 @@ export class EdgarError extends Error {
  */
 @Injectable()
 export class EdgarClient {
+  constructor(private readonly dbs: DbService) {}
   private readonly logger = new Logger(EdgarClient.name);
   private readonly cacheDir = join(config.dataDir, 'edgar-cache');
-  private queue: Promise<void> = Promise.resolve();
-  private lastRequestAt = 0;
 
   async json<T>(url: string, maxAgeMs: number): Promise<T> {
     return JSON.parse(await this.text(url, maxAgeMs)) as T;
@@ -43,7 +45,9 @@ export class EdgarClient {
     if (cached !== null) return cached;
     const body = await this.fetchWithRetry(url);
     await mkdir(this.cacheDir, { recursive: true });
-    await writeFile(file, body);
+    const temporary = `${file}.${randomUUID()}.tmp`;
+    await writeFile(temporary, body);
+    await rename(temporary,file);
     return body;
   }
 
@@ -56,6 +60,7 @@ export class EdgarClient {
       const started = Date.now();
       const res = await fetch(url, {
         headers: { 'User-Agent': config.secUserAgent, Accept: 'application/json, text/html, */*' },
+        signal: AbortSignal.timeout(30_000),
       });
       this.logger.debug(`${res.status} ${url} ${Date.now() - started}ms`);
       if (res.ok) return res.text();
@@ -68,14 +73,15 @@ export class EdgarClient {
   }
 
   /** Serialises requests so they start at least MIN_GAP_MS apart. */
-  private throttle(): Promise<void> {
-    const turn = this.queue.then(async () => {
-      const wait = this.lastRequestAt + MIN_GAP_MS - Date.now();
-      if (wait > 0) await sleep(wait);
-      this.lastRequestAt = Date.now();
+  private async throttle(): Promise<void> {
+    const at = await this.dbs.db.transaction(async tx => {
+      await tx.insert(serviceLocks).values({id:'sec-rate-limit'}).onConflictDoNothing();
+      const [lock] = await tx.select().from(serviceLocks).where(eq(serviceLocks.id,'sec-rate-limit')).for('update');
+      const at = Math.max(Date.now(),lock!.nextAt.getTime());
+      await tx.update(serviceLocks).set({nextAt:new Date(at+MIN_GAP_MS)}).where(eq(serviceLocks.id,'sec-rate-limit'));
+      return at;
     });
-    this.queue = turn.catch(() => undefined);
-    return turn;
+    if (at > Date.now()) await sleep(at-Date.now());
   }
 
   private cachePath(url: string): string {

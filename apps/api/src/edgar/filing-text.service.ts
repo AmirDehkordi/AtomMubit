@@ -151,4 +151,3 @@ function toPassage(f: FilingText, line: FilingText['lines'][number], index: numb
     text: line.text,
   };
 }
-

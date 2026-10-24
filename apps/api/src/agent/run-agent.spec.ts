@@ -64,6 +64,24 @@ describe('runAgent', () => {
     expect(events.some((e) => e.type === 'view')).toBe(true);
   });
 
+  it('stores parallel calls as a batch and keeps later rounds separate', async () => {
+    const { deps: d, inputs } = deps([
+      reply([call('get_metrics', { ticker: 'A' }, 'a'), call('get_metrics', { ticker: 'B' }, 'b')]),
+      reply([call('search_blocks', { ticker: 'A' }, 'c')]),
+      reply([{ type: 'message' }], 'Done.'),
+    ], { get_metrics: okResult('metrics'), search_blocks: okResult('passages') });
+    await runAgent([], 'compare', d as never);
+    expect(inputs[1]!.slice(-4)).toEqual([
+      { type: 'function_call', call_id: 'a', name: 'get_metrics', arguments: '{"ticker":"A"}' },
+      { type: 'function_call', call_id: 'b', name: 'get_metrics', arguments: '{"ticker":"B"}' },
+      { type: 'function_call_output', call_id: 'a', output: '{"summary":"metrics"}' },
+      { type: 'function_call_output', call_id: 'b', output: '{"summary":"metrics"}' },
+    ]);
+    expect(inputs[2]!.slice(-6).map((item: any) => item.type)).toEqual([
+      'function_call', 'function_call', 'function_call_output', 'function_call_output', 'function_call', 'function_call_output',
+    ]);
+  });
+
   it('stops after ask_user and emits the choice', async () => {
     const choice = { id: 'c1', question: 'Add these?', options: ['Add all', 'Pick'] };
     const { deps: d, events } = deps([reply([call('ask_user', { question: 'Add these?', options: choice.options })])], {

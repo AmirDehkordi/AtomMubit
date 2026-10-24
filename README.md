@@ -43,7 +43,7 @@ MuTick is a chat-first research desk. You ask in plain language; one agent finds
 on SEC EDGAR, reads the numbers from the SEC's XBRL data, quotes the filings' own text, and lays it
 all out on a live dashboard beside the chat, with every figure and statement linked to its source.
 Corrections become house rules, and every LLM call goes through [Mubit](https://mubit.ai), which
-trains a small model of the desk's own from them.
+can train a task-specific model from examples its reviewer accepts.
 
 ## Screenshots
 
@@ -86,7 +86,7 @@ trains a small model of the desk's own from them.
    against XBRL, arithmetic and the source text ([extraction contract](docs/extraction-contract.md)).
 5. **Corrections become rules.** A failed check, or a person flagging a number in the filing reader,
    becomes a house rule. The affected sections are re-read with it; those re-read calls are the
-   corrected examples Mubit keeps.
+   corrected calls available for Mubit to review; acceptance is not guaranteed.
 6. **A model of its own.** Mubit trains a Qwen3 adapter per task on the kept examples, tests it
    against the provider model, and routes traffic to it once it passes.
 
@@ -124,17 +124,25 @@ task per day, so the replay script feeds each task just after the 00:00 UTC rese
 
 | Component | Location | Notes |
 | :-- | :-- | :-- |
-| Agent | [`agent/`](apps/api/src/agent) | Frozen prompt and tools (`frozen.ts`), the tool loop on the Responses API (`run-agent.ts`), streamed to the browser over SSE. |
-| Mubit client | [`mubit/mubit.service.ts`](apps/api/src/mubit/mubit.service.ts) | Every LLM call: `prompt_cache_key` as the session, request ids logged in `llm_calls`, unrecorded calls only when asked. |
+| Agent | [`agent/`](apps/api/src/agent) | Frozen prompt and tools (`frozen.ts`), the tool loop with a Responses-shaped interface (`run-agent.ts`), streamed to the browser over SSE. |
+| Mubit client | [`mubit/mubit.service.ts`](apps/api/src/mubit/mubit.service.ts) | Selectable Mubit/OpenRouter and native Mubit routes; request IDs, sessions and inference attempts logged locally. |
 | SEC EDGAR | [`edgar/`](apps/api/src/edgar) | Rate-limited, cached client; filing search on fiscal calendars; raw documents; text passages and ranking. |
 | XBRL figures | [`xbrl/`](apps/api/src/xbrl) | Quarterly values from companyfacts: reported, derived (Q4 = FY − 9M) or computed. |
 | Dashboard data | [`dashboard/`](apps/api/src/dashboard) | Series with margins, cross-company comparison, view history (the tabs). |
 | Corrections | [`rules/`](apps/api/src/rules) | House rules R1–R8, correction → rule → re-read. |
-| Extraction | [`extraction-stub/`](apps/api/src/extraction-stub) | Stand-in until the extraction module lands ([contract](docs/extraction-contract.md)). |
+| Extraction | [`extraction/`](apps/api/src/extraction) | Durable jobs, evidence checks, immutable revisions and feedback ([v2 contract](docs/extraction-contract-v2.md)). |
 | Web app | [`apps/web`](apps/web) | Next.js 15, Tailwind CSS 4, Motion and Recharts. |
 | Shared schemas | [`packages/shared`](packages/shared/src) | Zod schemas for tools, views, blocks and stream events, used by both sides. |
 
 ## Getting started
+
+A research desk for SEC filings, with a conversational planner, automated
+filing ingestion, evidence-linked extraction, and scoped house rules learned
+from feedback. `INFERENCE_BACKEND=mubit` (the default) uses native Mubit OpenAI/Gemini routes;
+`INFERENCE_BACKEND=openrouter` routes AI through **Mubit → OpenRouter**. In OpenRouter mode the
+extractor defaults to `qwen/qwen3-30b-a3b-instruct-2507`; the planner and feedback
+evaluator use `openai/gpt-6-luna`. Each model is configurable.
+
 
 Requires Node.js 24 and pnpm 10. No Docker needed: without `DATABASE_URL` the API runs embedded
 Postgres (PGlite).
@@ -144,6 +152,26 @@ pnpm install
 cp apps/api/.env.example apps/api/.env   # set MUBIT_API_KEY and SEC_USER_AGENT
 pnpm dev                                  # API on :4000, web on :3100
 ```
+
+Set `MUBIT_API_KEY`. Native Mubit (`INFERENCE_BACKEND=mubit`) is the default. For OpenRouter mode, set `INFERENCE_BACKEND=openrouter` and connect an OpenRouter provider key in Mubit. In native mode, use the configured native model profile. The desk is
+at <http://localhost:3100>, API at <http://localhost:4000>. With no `DATABASE_URL`,
+the API and local worker share one PGlite instance. Model work stays queued
+until credentials are configured. Text-based PDF uploads need Poppler's
+`pdftotext`; the Docker image includes it.
+
+Set `SEC_USER_AGENT` to your real name and contact email to enable monitoring.
+The default watchlist is AAPL, MSFT, NVDA, WMT, JPM; override
+`WATCHLIST_TICKERS`. Monitoring backfills four reported quarters and scans every
+five minutes with a shared SEC request limiter. New requested companies are
+added persistently. With credentials configured, monitoring incurs model calls.
+The seeded monitoring desk is `/p/monitoring-internal` for the default team.
+
+For separate API/worker processes and Langflow, follow
+[the Docker setup](docs/local-development.md). It includes migrations,
+PostgreSQL, the web app, Langflow components, and flow provisioning. Docker and
+live provider validation have not been run in this workspace; see
+[implementation status](docs/implementation-status.md).
+
 
 Open http://localhost:3100 and ask *"Get NVIDIA's last four quarters"*.
 
@@ -179,3 +207,66 @@ scripts          Screenshot tooling
 <br />
 
 <p align="center"><sub>Built for Night Shift London, October 2026.</sub></p>
+
+## Extraction API
+
+Existing chat, project, SEC, and XBRL routes remain available.
+
+| Operation | Route | Behavior |
+| --- | --- | --- |
+| Read results/progress | `GET /v1/data?projectId=…` | Requests, runs, revisions, facts/evidence, feedback, durable event cursor |
+| Upload | `POST /v1/files` | Multipart `projectId`, `file`, optional `ticker`; automatically queues extraction |
+| Feedback | `POST /v1/feedback` | JSON `projectId`, `runId`, `text`; evaluates and reprocesses supported changes |
+| Request extraction | `POST /v1/extractions` | JSON `projectId`, `request`, optional `documentIds`/`parentRequestId` |
+
+POST operations accept `Idempotency-Key`. Extraction/feedback return `202`;
+upload returns `201`. Poll the returned `location`. Ambiguous requests expose
+`needs_clarification` and a question; answer with another extraction request
+referencing `parentRequestId`. Progress also streams through
+`GET /events/:projectId`, with `Last-Event-ID` replay.
+
+The extraction panel supports uploads, requests, clarification, feedback, and
+review of printed and normalized facts. Old source citations remain available.
+Dashboard headline calculations remain a separate XBRL data path.
+
+## Validate without paid calls
+
+```sh
+pnpm test
+pnpm typecheck
+pnpm build
+node apps/api/scripts/smoke-extraction.mjs
+node apps/api/scripts/smoke-extraction.mjs --workflow
+node benchmarks/run.test.mjs
+```
+
+The HTTP smoke test requires a built API. It starts a fake local model and a
+temporary database, queues an upload, restarts the API, verifies extraction and
+request reuse, and evaluates feedback. It makes no SEC or paid model calls.
+For interactive UI rehearsals, `pnpm --filter @desk/api fake-llm` serves a
+scripted model on port 4099; point `MUBIT_BASE_URL` at
+`http://localhost:4099/v1` and set `MUBIT_API_KEY=fake`.
+
+The [benchmark harness](benchmarks/README.md) compares direct OpenRouter with
+Mubit → OpenRouter. Its offline fixture is synthetic. A live paired comparison of latency, accuracy and billed cost is **not measured yet**. Recorded extraction development results are in [the development report](docs/mubit-development-report.md); the agent benchmark above measures a different task. See the
+[test plan](docs/test-and-benchmark-plan.md), [report](docs/benchmark-report.md),
+and [model selection notes](docs/openrouter.md). For interactive fake-model and
+Mubit rehearsals, see the [testing guide](docs/testing.md).
+
+## Layout
+
+| Component | Location |
+| --- | --- |
+| Shared schemas, v2 extraction contracts | `packages/shared/src` |
+| API, planner, extraction, feedback, workers | `apps/api/src` |
+| Additive database migrations | `apps/api/drizzle` |
+| Next.js desk and extraction panel | `apps/web` |
+| Langflow gateway component and flow provisioning | `workflows/langflow` |
+| Paired benchmark runner | `benchmarks` |
+
+The [integrated plan](docs/extraction-service-plan.md) describes the design.
+The [v2 contract](docs/extraction-contract-v2.md) documents implemented semantics.
+Changes to model prompts/schemas are versioned; queued runs pin their extraction
+task fingerprint, model, rule bundle, and source checksum. Runtime feedback
+rules stay outside frozen system prompts. Local policy learning and Mubit model
+training are separate: no adapter training or promotion is assumed.

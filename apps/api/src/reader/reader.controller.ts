@@ -1,7 +1,8 @@
 import { BadRequestException, Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { blocks, checks, companies, corrections, filings, rules, sections } from '../db/schema';
+import { blocks, checks, companies, corrections, filings, projectFilings, projects, rules, sections } from '../db/schema';
+import { teamId } from '../extraction/extraction.service';
 import { fiscalLabel, quarterName, releaseLabel } from '../edgar/fiscal';
 import { FilingTextService } from '../edgar/filing-text.service';
 
@@ -15,7 +16,8 @@ export class ReaderController {
 
   // GET /filings/:accession/sections: the filing's outline, with block counts per section
   @Get('filings/:accession/sections')
-  async sections(@Param('accession') accession: string) {
+  async sections(@Param('accession') accession: string, @Query('projectId') projectId?: string) {
+    if (projectId) await this.assertFilingProject(accession, projectId);
     const [row] = await this.dbs.db
       .select()
       .from(filings)
@@ -37,7 +39,7 @@ export class ReaderController {
         review: sql<number>`(select count(*)::int from blocks b where b.section_id = "sections"."id" and b.status = 'review')`,
       })
       .from(sections)
-      .where(eq(sections.accession, accession))
+      .where(and(eq(sections.accession, accession), this.revisionScope(projectId)))
       .orderBy(asc(sections.ordinal));
     return {
       filing: {
@@ -55,9 +57,10 @@ export class ReaderController {
 
   // GET /sections/:id: the section's text and every block extracted from it, with checks
   @Get('sections/:id')
-  async section(@Param('id') id: string) {
-    const [section] = await this.dbs.db.select().from(sections).where(eq(sections.id, id));
+  async section(@Param('id') id: string, @Query('projectId') projectId?: string) {
+    const [section] = await this.dbs.db.select().from(sections).where(and(eq(sections.id, id), projectId ? this.revisionScope(projectId, false) : undefined));
     if (!section) throw new NotFoundException(`No section ${id}`);
+    if (projectId) await this.assertFilingProject(section.accession, projectId);
     const rows = await this.dbs.db.select().from(blocks).where(eq(blocks.sectionId, id)).orderBy(asc(blocks.spanStart));
     return { section, blocks: await this.withChecks(rows) };
   }
@@ -79,6 +82,32 @@ export class ReaderController {
       url: p.url,
     }));
     return [...(await this.withChecks(rows)), ...passages];
+  }
+
+  /**
+   * Legacy IDs have no run prefix. Current outlines show one revision per document: the accepted
+   * one, or, when none is accepted yet, the latest finished run (completed or needs_review), so
+   * the desk shows what was read with its review flags instead of nothing.
+   */
+  private revisionScope(projectId?: string, acceptedOnly = true) {
+    const legacy = sql`not exists (select 1 from extraction_runs r where starts_with(${sections.id}, r.id || ':'))`;
+    // Older callers retain the unversioned reader without mixing project-specific revisions.
+    if (!projectId) return legacy;
+    const shown = acceptedOnly
+      ? sql`and (r.accepted = true or (
+          r.state in ('completed', 'needs_review')
+          and not exists (select 1 from extraction_runs a where a.document_id = r.document_id and a.project_id = r.project_id and a.team_id = r.team_id and a.accepted = true)
+          and not exists (select 1 from extraction_runs n where n.document_id = r.document_id and n.project_id = r.project_id and n.team_id = r.team_id
+            and n.state in ('completed', 'needs_review') and (n.created_at > r.created_at or (n.created_at = r.created_at and n.id > r.id)))))`
+      : sql``;
+    return sql`(${legacy} or exists (select 1 from extraction_runs r where starts_with(${sections.id}, r.id || ':') and r.project_id = ${projectId} and r.team_id = ${teamId()} ${shown}))`;
+  }
+
+  private async assertFilingProject(accession: string, projectId: string) {
+    const [membership] = await this.dbs.db.select({id: projectFilings.projectId}).from(projectFilings)
+      .innerJoin(projects, eq(projects.id, projectFilings.projectId))
+      .where(and(eq(projectFilings.projectId, projectId), eq(projectFilings.accession, accession), eq(projects.teamId, teamId())));
+    if (!membership) throw new NotFoundException('Filing is not in this project');
   }
 
   private async withChecks(rows: (typeof blocks.$inferSelect)[]) {

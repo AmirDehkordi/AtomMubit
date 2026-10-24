@@ -35,7 +35,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
     if (config.databaseUrl) {
       this.pool = new Pool({ connectionString: config.databaseUrl });
       const db = drizzlePg(this.pool, { schema });
-      await migratePg(db, { migrationsFolder });
+      if (process.env.RUN_MIGRATIONS !== '0') await migratePg(db, { migrationsFolder });
       this._db = db as unknown as Db;
       this.logger.log('Postgres connected (DATABASE_URL)');
     } else {
@@ -43,7 +43,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
       mkdirSync(dir, { recursive: true });
       this.lite = new PGlite(dir);
       const db = drizzlePglite(this.lite, { schema });
-      await migratePglite(db, { migrationsFolder });
+      if (process.env.RUN_MIGRATIONS !== '0') await migratePglite(db, { migrationsFolder });
       this._db = db as unknown as Db;
       this.logger.log(`Embedded Postgres (PGlite) at ${dir}`);
     }

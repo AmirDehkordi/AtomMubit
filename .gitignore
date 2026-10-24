@@ -10,4 +10,11 @@ apps/web/next-env.d.ts
 .DS_Store
 !apps/api/data/*.lock
 samples
+
+.pnpm-store/
+__pycache__/
+*.pyc
+benchmarks/results/
 apps/api/data/* 2.*
+# Transport locks depend on each machine's base URLs; only task locks are shared.
+apps/api/data/*transport.lock

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { ExtractionApi } from '@desk/shared';
@@ -28,8 +28,6 @@ export interface CorrectionInput {
  */
 @Injectable()
 export class CorrectionsService {
-  private readonly logger = new Logger(CorrectionsService.name);
-
   constructor(
     private readonly dbs: DbService,
     private readonly rulesService: RulesService,
@@ -87,20 +85,18 @@ export class CorrectionsService {
     if (!row) throw new NotFoundException(`No correction ${id}`);
     if (row.correction.status !== 'proposed') return { ...row, alreadyDone: true };
 
+    const sectionIds = row.correction.rereadSections;
+    if (!row.correction.projectId) throw new BadRequestException('A correction needs a project before it can be applied');
     await this.rulesService.activate(row.rule.id);
+    // Await the durable receipt: a queue failure must leave the proposal retryable.
+    // Repeated confirmation converges on the same correction-specific immutable runs.
+    await this.extraction.rereadSections({ projectId: row.correction.projectId, sectionIds, correctionId: id, ruleCode: row.rule.code });
     await this.dbs.db
       .update(corrections)
       .set({ status: 'applied', appliedAt: new Date() })
       .where(eq(corrections.id, id));
-    const sectionIds = row.correction.rereadSections;
-    if (row.correction.projectId) {
-      for (const blockId of await this.blockIds(sectionIds)) {
-        this.events.emit(row.correction.projectId, { type: 'block', id: blockId, status: 'unchecked' });
-      }
-      // Not awaited: re-reading streams its progress.
-      this.extraction
-        .rereadSections({ projectId: row.correction.projectId, sectionIds, correctionId: id, ruleCode: row.rule.code })
-        .catch((err) => this.logger.warn(`Re-read for correction ${id} failed: ${String(err)}`));
+    for (const blockId of await this.blockIds(sectionIds)) {
+      this.events.emit(row.correction.projectId, { type: 'block', id: blockId, status: 'unchecked' });
     }
     return { correction: { ...row.correction, status: 'applied' as const }, rule: { ...row.rule, active: true }, sectionIds };
   }

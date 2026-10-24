@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, CheckCircle2, ExternalLink, FileText, GitCompare, LayoutGrid, Loader2, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, BarChart3, CheckCircle2, ExternalLink, FileText, GitCompare, LayoutGrid, Loader2, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DESK_METRIC_KEYS, metricInfo, type DeskMetricKey, type ViewSpec } from '@desk/shared';
 import type { DeskFiling } from '@/lib/api';
@@ -14,12 +14,13 @@ import { QuarterOverview } from './quarter-overview';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: string }) {
+export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]; title: string; projectId: string }) {
   const tabs = useDesk((s) => s.tabs);
   const activeTab = useDesk((s) => s.activeTab);
   const active = tabs.find((t) => t.id === activeTab) ?? tabs[0];
   const ticker = filings[0]?.ticker ?? (active?.spec && 'ticker' in active.spec ? active.spec.ticker : null);
-  const reading = filings.filter((f) => f.status !== 'ready').length;
+  const reading = filings.filter((f) => f.status !== 'ready' && f.status !== 'failed').length;
+  const failed = filings.filter((f) => f.status === 'failed').length;
 
   return (
     <div className="relative flex h-full flex-col">
@@ -47,6 +48,14 @@ export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: st
                   <span className="inline-flex items-center gap-1.5">
                     <ShieldCheck className="text-up size-3.5" /> Numbers checked against SEC XBRL
                   </span>
+                  {failed > 0 && (
+                    <>
+                      <span className="text-subtle">·</span>
+                      <span className="text-down inline-flex items-center gap-1.5">
+                        <AlertTriangle className="size-3" /> {failed} couldn&apos;t be read
+                      </span>
+                    </>
+                  )}
                   {reading > 0 && (
                     <>
                       <span className="text-subtle">·</span>
@@ -73,7 +82,7 @@ export function Dashboard({ filings, title }: { filings: DeskFiling[]; title: st
               exit={{ opacity: 0 }}
               transition={{ duration: 0.28, ease }}
             >
-              <View view={active.spec} />
+              <View view={active.spec} projectId={projectId} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -98,6 +107,8 @@ function FilingStrip({ filings }: { filings: DeskFiling[] }) {
           >
             {f.status === 'ready' ? (
               <CheckCircle2 className="text-up size-3.5" />
+            ) : f.status === 'failed' ? (
+              <AlertTriangle className="text-down size-3.5" aria-label="Couldn't be read" />
             ) : (
               <Loader2 className="text-accent size-3.5 animate-spin" />
             )}
@@ -186,14 +197,14 @@ function describe(spec: ViewSpec, filings: DeskFiling[]): { icon: typeof LayoutG
   }
 }
 
-function View({ view }: { view: ViewSpec }) {
+function View({ view, projectId }: { view: ViewSpec; projectId: string }) {
   switch (view.view) {
     case 'quarter_overview':
       return <QuarterOverview ticker={view.ticker} periods={view.periods} />;
     case 'metric_detail':
       return <MetricDetail ticker={view.ticker} metric={view.metric} periods={view.periods} />;
     case 'filing_reader':
-      return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} />;
+      return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} projectId={projectId} />;
     case 'compare':
       return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} />;
     default:

@@ -1,0 +1,15 @@
+{
+  "id": "offline-smoke-1",
+  "split": "synthetic",
+  "model": "openai/gpt-6-luna",
+  "provider": "openai",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "facts": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "value": { "type": "string" }, "evidence": { "type": "string" } }, "required": ["name", "value", "evidence"], "additionalProperties": false } }
+    },
+    "required": ["facts"], "additionalProperties": false
+  },
+  "input": "Extract the stated fact. Text: Acme reported revenue of $12 million. Use the exact supporting quote as evidence.",
+  "gold": [{ "name": "revenue", "value": "$12 million", "evidence": "Acme reported revenue of $12 million." }]
+}

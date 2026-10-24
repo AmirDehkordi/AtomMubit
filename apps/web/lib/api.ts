@@ -165,10 +165,11 @@ export const api = {
     if (!res.ok) throw new Error(`Could not start a desk (${res.status})`);
     return res.json();
   },
-  outline: (accession: string) => get<FilingOutline>(`/filings/${accession}/sections`),
-  section: (id: string) => get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}`),
-  blocks: (ids: string[]) =>
-    get<(ReaderBlock | PassageRef)[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
+  outline: (accession: string, projectId?: string) =>
+    get<FilingOutline>(`/filings/${encodeURIComponent(accession)}/sections${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
+  section: (id: string, projectId?: string) =>
+    get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
+  blocks: (ids: string[]) => get<(ReaderBlock | PassageRef)[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
   rules: () => get<Rule[]>('/rules'),
   proposeCorrection: (input: { blockId: string; projectId: string | null; note: string; ruleCode: string | null; ruleText: string | null }) =>
     post<ProposedCorrection>('/corrections', input),

@@ -170,7 +170,7 @@ export class EdgarService {
   }
 
   private submissions(cik: number): Promise<Submissions> {
-    return this.edgar.json<Submissions>(SUBMISSIONS_URL(cik), 6 * HOUR);
+    return this.edgar.json<Submissions>(SUBMISSIONS_URL(cik), 5 * 60 * 1000);
   }
 
   private async tickerMap() {
