@@ -14,6 +14,24 @@ cp apps/api/.env.example apps/api/.env   # set MUBIT_API_KEY and SEC_USER_AGENT
 pnpm dev                                  # API on :4000, web on :3100
 ```
 
+Open http://localhost:3100 and try "Get NVIDIA's last four quarters".
+
+**Without a Mubit key** (UI work, rehearsals): run the scripted fake model and point the API at it.
+It walks the find → add → dashboard flow and compare, nothing else.
+
+```bash
+pnpm --filter @desk/api fake-llm                     # port 4099
+MUBIT_BASE_URL=http://localhost:4099/v1 MUBIT_API_KEY=fake pnpm dev
+```
+
+**Giving Mubit volume:** with the API running on a real key, replay templated questions about 25 large
+US companies. Replayed conversations don't start extraction. Mubit's reviewer reads at most 200 new
+calls per task per day, so start early.
+
+```bash
+pnpm --filter @desk/api replay --count 120 --concurrency 4
+```
+
 No Docker needed: without `DATABASE_URL` the API runs embedded Postgres (PGlite) in
 `apps/api/data/pglite`. For a real server: `pnpm db:up`, then set
 `DATABASE_URL=postgres://desk:desk@localhost:5432/desk`. Migrations run on start;
@@ -47,6 +65,22 @@ The extraction module is built separately against [docs/extraction-contract.md](
 | Database schema (Drizzle) and migrations | `apps/api/src/db/schema.ts`, `apps/api/drizzle` |
 | Next.js web app | `apps/web` |
 
+## How the chat works
+
+One agent (`apps/api/src/agent`) with a fixed set of tools (`packages/shared/src/tools.ts`). Each
+user message runs up to 6 tool rounds on the Responses API; the turn streams to the browser as
+server-sent events: tool steps, a choice card (`ask_user`), dashboard views (`show_on_dashboard`)
+and the answer. The agent never computes numbers: tools return formatted values, changes and margins.
+
+| Tool | Status |
+|---|---|
+| `find_filings`, `ask_user`, `add_filings`, `get_metrics`, `compare`, `show_on_dashboard` | Working |
+| `search_blocks`, `get_blocks` | Working once extraction fills `blocks` |
+| `get_insider_activity`, `diff_risk_factors` | Answer "not available yet" |
+
+Dashboard views working now: `quarter_overview` and `compare`. Extraction is a stub
+(`apps/api/src/extraction-stub`) until the real module lands; see the contract.
+
 ## Mubit tasks
 
 Two tasks, each with a fixed model, system prompt, tools and output format:
@@ -55,4 +89,6 @@ Two tasks, each with a fixed model, system prompt, tools and output format:
 - **section_extractor**: reads one filing section and returns blocks (`packages/shared/src/blocks.ts`).
 
 Changing anything that is part of a task (the schemas above included) starts a new Mubit task and
-resets its examples.
+resets its examples. The API refuses to start when the desk_agent definition no longer matches
+`apps/api/data/desk_agent.lock`; delete the lock only when you mean to start a new task.
+All LLM calls go through `MubitService` (`apps/api/src/mubit`), which logs each one in `llm_calls`.

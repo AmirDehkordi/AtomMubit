@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "test": "vitest run",
-    "fake-llm": "node scripts/fake-llm.mjs"
+    "fake-llm": "node scripts/fake-llm.mjs",
+    "replay": "node scripts/replay-questions.mjs"
   },
   "dependencies": {
     "@desk/shared": "workspace:*",
