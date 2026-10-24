@@ -23,7 +23,6 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
 
   return (
     <div className="surface relative overflow-hidden rounded-3xl p-7">
-      <div className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--color-accent)_14%,transparent),transparent)]" />
       <div className="relative">
         <p className="text-muted text-xs font-medium tracking-wide">Comparison</p>
         <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">{data.label}</h2>
@@ -55,7 +54,7 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
                 </div>
                 <div className="bg-ink h-2.5 overflow-hidden rounded-full">
                   <motion.div
-                    className="from-accent to-accent-2 h-full rounded-full bg-gradient-to-r"
+                    className="bg-accent h-full rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${(Math.abs(r.value.value ?? 0) / max) * 100}%` }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease }}

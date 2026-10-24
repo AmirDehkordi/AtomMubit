@@ -33,7 +33,12 @@ export const StreamEvent = z.discriminatedUnion('type', [
     options: z.array(z.string()),
   }),
   z.object({ type: z.literal('view'), spec: ViewSpec }),
-  z.object({ type: z.literal('done'), messageId: z.string() }),
+  z.object({
+    type: z.literal('done'),
+    messageId: z.string(),
+    /** The Mubit calls this answer took (x-middleware-request-id and latency), for the answer's Mubit receipt. */
+    mubitCalls: z.array(z.object({ requestId: z.string().nullable(), ms: z.number().int() })).optional(),
+  }),
   z.object({ type: z.literal('error'), message: z.string() }),
   z.object({
     type: z.literal('extraction'),

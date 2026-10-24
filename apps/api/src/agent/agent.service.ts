@@ -38,21 +38,26 @@ export class AgentService implements OnModuleInit {
     if (!history.length) await this.titleFromQuestion(conversation.projectId, text);
 
     const ctx = { projectId: conversation.projectId, conversationId, replay: conversation.replay };
+    // Each model call's Mubit request id, sent with 'done' so the answer can show its receipt.
+    // The call itself (model, instructions, tools) is unchanged, so the Mubit task stays the same.
+    const mubitCalls: { requestId: string | null; ms: number }[] = [];
     const turn = await runAgent(history, text, {
-      respond: async (input) =>
-        (
-          await this.mubit.respond(
-            {
-              model: AGENT_MODEL,
-              instructions: SYSTEM_PROMPT,
-              tools: TOOLS,
-              input,
-              reasoning: { effort: config.agentReasoningEffort },
-              max_output_tokens: MAX_OUTPUT_TOKENS,
-            },
-            { task: 'desk_agent', promptCacheKey: conversationId },
-          )
-        ).response,
+      respond: async (input) => {
+        const started = Date.now();
+        const result = await this.mubit.respond(
+          {
+            model: AGENT_MODEL,
+            instructions: SYSTEM_PROMPT,
+            tools: TOOLS,
+            input,
+            reasoning: { effort: config.agentReasoningEffort },
+            max_output_tokens: MAX_OUTPUT_TOKENS,
+          },
+          { task: 'desk_agent', promptCacheKey: conversationId },
+        );
+        mubitCalls.push({ requestId: result.requestId, ms: Date.now() - started });
+        return result.response;
+      },
       runTool: (name, args) => this.tools.run(name, args, ctx),
       stepLabel: (name) => STEP_LABELS[name as ToolName] ?? name,
       emit,
@@ -60,7 +65,7 @@ export class AgentService implements OnModuleInit {
 
     if (turn.text) emit({ type: 'text', delta: turn.text });
     const id = await this.save(conversationId, 'assistant', turn.text, turn);
-    emit({ type: 'done', messageId: id });
+    emit({ type: 'done', messageId: id, mubitCalls });
   }
 
   private async history(conversationId: string): Promise<ResponseInputItem[]> {

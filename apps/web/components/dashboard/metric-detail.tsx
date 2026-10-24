@@ -52,7 +52,6 @@ export function MetricDetail({ ticker, metric, periods }: { ticker: string; metr
   return (
     <div className="space-y-4">
       <div className="surface relative overflow-hidden rounded-3xl p-7">
-        <div className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--color-accent)_16%,transparent),transparent)]" />
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-muted text-xs font-medium tracking-wide">
@@ -122,7 +121,7 @@ export function MetricDetail({ ticker, metric, periods }: { ticker: string; metr
                 <defs>
                   <linearGradient id={gradient} x1="0" x2="0" y1="0" y2="1">
                     <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={1} />
-                    <stop offset="100%" stopColor="var(--color-accent-2)" stopOpacity={0.55} />
+                    <stop offset="100%" stopColor="var(--color-accent-2)" stopOpacity={0.9} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} stroke="var(--color-line)" strokeDasharray="3 6" />

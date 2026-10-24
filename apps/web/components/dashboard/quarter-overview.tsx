@@ -34,7 +34,8 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <p className="text-muted text-xs">Change vs {data.quarters[last - 1]?.quarter ?? 'prior quarter'}</p>
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4">
         {KPIS.map((key, i) => {
           const r = row(key);
           if (!r) return null;
@@ -51,11 +52,10 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
                 <p className="text-muted text-[12px] font-medium">{r.label}</p>
                 <Delta value={delta(now, r.cells[last - 1], r.kind === 'margin')} points={r.kind === 'margin'} />
               </div>
-              <p className="mt-3 text-[30px] leading-none font-semibold tracking-[-0.03em]">
+              <p className="mt-3 text-[26px] leading-none font-semibold tracking-[-0.03em] @5xl:text-[30px]">
                 {now.value === null ? '—' : <AnimatedNumber value={now.value} format={(v) => formatValue(v, r.unit)} />}
               </p>
-              <div className="mt-4 flex items-end justify-between gap-3">
-                <span className="text-subtle text-[11px] whitespace-nowrap">vs {data.quarters[last - 1]?.quarter ?? 'prior'}</span>
+              <div className="mt-4 flex justify-end">
                 <Sparkline values={r.cells.map((c) => c.value)} className="h-8 w-20 shrink-0" />
               </div>
             </motion.div>
@@ -138,7 +138,7 @@ function Chart({ data }: { data: Overview }) {
             <span className="bg-accent size-2 rounded-full" /> Revenue
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="bg-up size-2 rounded-full" /> Net income
+            <span className="bg-series-2 size-2 rounded-full" /> Net income
           </span>
         </div>
       </div>
@@ -148,11 +148,11 @@ function Chart({ data }: { data: Overview }) {
             <defs>
               <linearGradient id={`${id}-r`} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-accent)" />
-                <stop offset="100%" stopColor="var(--color-accent-2)" stopOpacity={0.6} />
+                <stop offset="100%" stopColor="var(--color-accent-2)" stopOpacity={0.9} />
               </linearGradient>
               <linearGradient id={`${id}-n`} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-up)" />
-                <stop offset="100%" stopColor="var(--color-up)" stopOpacity={0.45} />
+                <stop offset="0%" stopColor="var(--color-series-2)" />
+                <stop offset="100%" stopColor="var(--color-series-2)" stopOpacity={0.7} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke="var(--color-line)" strokeDasharray="3 6" />
@@ -177,7 +177,7 @@ function delta(now: Cell, before: Cell | undefined, points: boolean): number | n
 function Skeleton() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4">
         {KPIS.map((k) => (
           <div key={k} className="surface h-[136px] animate-pulse rounded-2xl" />
         ))}

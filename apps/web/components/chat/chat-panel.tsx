@@ -9,6 +9,7 @@ import { useActiveView, useDesk, type ChatMessage, type Step } from '@/lib/desk-
 import { suggestions } from '@/lib/suggestions';
 import { Answer, plainAnswer, useReveal } from './answer';
 import { Composer } from './composer';
+import { MubitReceipt } from '../mubit/mubit-receipt';
 
 /** How far from the bottom (px) before the jump-to-latest button shows. */
 const STICK_THRESHOLD = 120;
@@ -81,13 +82,18 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="min-h-0 flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_32px)]"
+      >
         <div className={cn(column, 'pt-6 pb-8')}>
           <div className="space-y-7">
-            {earlier.map((m) => (
+            {earlier.map((m, i) => (
               <Message
                 key={m.id}
                 message={m}
+                reply={messages.slice(i + 1).find((x) => x.role === 'user')?.text}
                 filings={filings}
                 isLast={false}
                 animate={!m.restored}
@@ -161,6 +167,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
 
 function Message({
   message,
+  reply,
   filings,
   isLast,
   animate,
@@ -169,6 +176,8 @@ function Message({
   onRetry,
 }: {
   message: ChatMessage;
+  /** What you answered, once a choice has been answered. */
+  reply?: string;
   filings: DeskFiling[];
   isLast: boolean;
   animate: boolean;
@@ -182,7 +191,7 @@ function Message({
   if (message.role === 'user') {
     return (
       <motion.div {...(animate ? fade : {})} className="flex justify-end">
-        <div className="bg-raised border-line max-w-[85%] rounded-[20px] border px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">
+        <div className="bg-raised max-w-[85%] rounded-[20px] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">
           {message.text}
         </div>
       </motion.div>
@@ -205,7 +214,16 @@ function Message({
         </div>
       )}
 
-      {message.choice && !typing && (
+      {message.choice && !typing && reply !== undefined && (
+        <motion.div {...fade} className="border-line bg-panel text-muted flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm">
+          <Check className="text-up size-4 shrink-0" />
+          {found && reply === message.choice.options[0]
+            ? `${found.filings.length} filing${found.filings.length === 1 ? '' : 's'} added to the desk`
+            : reply}
+        </motion.div>
+      )}
+
+      {message.choice && !typing && reply === undefined && (
         <motion.div {...fade} className="border-line bg-panel overflow-hidden rounded-2xl border">
           <p className="px-4 pt-3.5 pb-3 text-[15px] leading-relaxed">{message.choice.question}</p>
           {found && <FilingCards filings={found.filings} />}
@@ -242,6 +260,7 @@ function Message({
       )}
 
       {message.text && !message.pending && !typing && <Actions text={message.text} canRetry={isLast} onRetry={onRetry} visible={isLast} />}
+      {!message.pending && !typing && message.mubitCalls && <MubitReceipt calls={message.mubitCalls} />}
     </motion.div>
   );
 }

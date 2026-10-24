@@ -46,8 +46,8 @@ export function Composer({
   return (
     <form
       className={cn(
-        'border-line bg-panel rounded-[20px] border transition-[border-color,box-shadow] duration-200',
-        'focus-within:border-[color-mix(in_oklab,var(--color-text)_22%,transparent)] focus-within:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]',
+        'edge rounded-[20px] transition-[box-shadow] duration-200',
+        'focus-within:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]',
         className,
       )}
       onSubmit={(e) => {
@@ -75,7 +75,7 @@ export function Composer({
         )}
       />
       <div className="flex items-center justify-between px-3 pt-1 pb-2.5">
-        <span className="text-subtle pl-1 text-[11px]">{busy ? 'Esc to stop' : 'Shift + Enter for a new line'}</span>
+        <span className="text-subtle pl-1 text-[11px]">{busy ? 'Esc to stop' : ''}</span>
         {busy ? (
           <button
             type="button"
