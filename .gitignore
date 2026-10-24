@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+*.tsbuildinfo
+.env
+apps/api/.env
+apps/api/data/*
+!apps/api/data/.gitkeep
+apps/web/next-env.d.ts
+.DS_Store

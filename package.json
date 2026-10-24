@@ -1,0 +1,17 @@
+{
+  "name": "earnings-desk",
+  "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "build:shared": "pnpm --filter @desk/shared build",
+    "dev": "pnpm build:shared && pnpm --parallel --filter @desk/api --filter @desk/web dev",
+    "dev:api": "pnpm build:shared && pnpm --filter @desk/api dev",
+    "dev:web": "pnpm --filter @desk/web dev",
+    "build": "pnpm build:shared && pnpm --filter @desk/api build && pnpm --filter @desk/web build",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "db:generate": "pnpm --filter @desk/api db:generate",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "reset": "rm -rf apps/api/data/pglite && echo 'Local database cleared (task locks kept).'"
+  }
+}

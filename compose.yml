@@ -1,0 +1,15 @@
+# Optional: real Postgres. Without DATABASE_URL the API uses embedded Postgres (PGlite)
+# in apps/api/data/pglite, so Docker is not needed to develop.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: desk
+      POSTGRES_PASSWORD: desk
+      POSTGRES_DB: desk
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
