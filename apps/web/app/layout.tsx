@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono-face' });
 
 export const metadata: Metadata = {
-  title: 'Earnings Desk',
+  title: 'MuTick',
   description: 'Ask about any US company. The desk finds the filings, reads them and shows its work.',
 };
 

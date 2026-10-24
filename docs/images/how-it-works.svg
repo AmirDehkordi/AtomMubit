@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 720" width="1600" height="720" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2a541"/>
+      <stop offset="1" stop-color="#ff7a59"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#171a21"/>
+      <stop offset="1" stop-color="#111318"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5d6472"/>
+    </marker>
+    <marker id="arrowA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f2a541"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="720" rx="28" fill="#0a0b0e"/>
+
+  <!-- Row 1: the desk -->
+  <text x="64" y="76" fill="#8a91a0" font-size="15" font-weight="600" letter-spacing="2">THE DESK</text>
+
+  <g>
+    <rect x="64" y="104" width="300" height="180" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="92" y="146" fill="#eceef3" font-size="22" font-weight="600">1 · You ask</text>
+    <text x="92" y="182" fill="#8a91a0" font-size="16">“Get NVIDIA's last four quarters”</text>
+    <text x="92" y="208" fill="#8a91a0" font-size="16">“What drove revenue growth?”</text>
+    <text x="92" y="234" fill="#8a91a0" font-size="16">“Compare margins with AMD”</text>
+  </g>
+
+  <g>
+    <rect x="430" y="104" width="360" height="180" rx="18" fill="url(#card)" stroke="#f2a541" stroke-opacity="0.5"/>
+    <text x="458" y="146" fill="#eceef3" font-size="22" font-weight="600">2 · One agent, ten tools</text>
+    <text x="458" y="182" fill="#8a91a0" font-size="16">desk_agent through Mubit</text>
+    <text x="458" y="208" fill="#8a91a0" font-size="16">find_filings · add_filings · get_metrics</text>
+    <text x="458" y="234" fill="#8a91a0" font-size="16">compare · search_blocks · dashboard</text>
+    <text x="458" y="260" fill="#5d6472" font-size="14">Never computes a number itself</text>
+  </g>
+
+  <g>
+    <rect x="856" y="104" width="330" height="180" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="884" y="146" fill="#eceef3" font-size="22" font-weight="600">3 · SEC EDGAR</text>
+    <text x="884" y="182" fill="#8a91a0" font-size="16">10-Q / 10-K / 8-K filings</text>
+    <text x="884" y="208" fill="#8a91a0" font-size="16">XBRL figures (Q4 = FY − 9M)</text>
+    <text x="884" y="234" fill="#8a91a0" font-size="16">Filing text and earnings releases</text>
+  </g>
+
+  <g>
+    <rect x="1252" y="104" width="284" height="180" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="1280" y="146" fill="#eceef3" font-size="22" font-weight="600">4 · You see</text>
+    <text x="1280" y="182" fill="#8a91a0" font-size="16">Dashboard tabs (first pinned)</text>
+    <text x="1280" y="208" fill="#8a91a0" font-size="16">Answers with numbered</text>
+    <text x="1280" y="234" fill="#8a91a0" font-size="16">sources you can open</text>
+  </g>
+
+  <line x1="368" y1="194" x2="424" y2="194" stroke="#5d6472" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="794" y1="194" x2="850" y2="194" stroke="#5d6472" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1190" y1="194" x2="1246" y2="194" stroke="#5d6472" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Row 2: learning -->
+  <text x="250" y="384" fill="#8a91a0" font-size="15" font-weight="600" letter-spacing="2">HOW IT LEARNS</text>
+
+  <g>
+    <rect x="64" y="412" width="300" height="200" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="92" y="454" fill="#eceef3" font-size="22" font-weight="600">Read and check</text>
+    <text x="92" y="490" fill="#8a91a0" font-size="16">section_extractor turns each</text>
+    <text x="92" y="516" fill="#8a91a0" font-size="16">filing section into blocks;</text>
+    <text x="92" y="542" fill="#8a91a0" font-size="16">verifiers check them against</text>
+    <text x="92" y="568" fill="#8a91a0" font-size="16">XBRL, arithmetic and the text</text>
+  </g>
+
+  <g>
+    <rect x="430" y="412" width="360" height="200" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="458" y="454" fill="#eceef3" font-size="22" font-weight="600">Correct</text>
+    <text x="458" y="490" fill="#8a91a0" font-size="16">A failed check, or a person's flag,</text>
+    <text x="458" y="516" fill="#8a91a0" font-size="16">becomes a house rule (R1–R8 + yours)</text>
+    <text x="458" y="542" fill="#8a91a0" font-size="16">and the affected sections are re-read</text>
+    <text x="458" y="568" fill="#8a91a0" font-size="16">with it</text>
+  </g>
+
+  <g>
+    <rect x="856" y="412" width="330" height="200" rx="18" fill="url(#card)" stroke="#22262e"/>
+    <text x="884" y="454" fill="#eceef3" font-size="22" font-weight="600">Mubit records</text>
+    <text x="884" y="490" fill="#8a91a0" font-size="16">Two frozen tasks; the re-read</text>
+    <text x="884" y="516" fill="#8a91a0" font-size="16">calls carry the rule, so they are</text>
+    <text x="884" y="542" fill="#8a91a0" font-size="16">the corrected examples Mubit</text>
+    <text x="884" y="568" fill="#8a91a0" font-size="16">keeps (≤ 200 reviewed / task / day)</text>
+  </g>
+
+  <g>
+    <rect x="1252" y="412" width="284" height="200" rx="18" fill="url(#card)" stroke="#f2a541" stroke-opacity="0.5"/>
+    <text x="1280" y="454" fill="#eceef3" font-size="22" font-weight="600">A model of its own</text>
+    <text x="1280" y="490" fill="#8a91a0" font-size="16">Qwen3 adapter per task,</text>
+    <text x="1280" y="516" fill="#8a91a0" font-size="16">silent test, then live</text>
+    <text x="1280" y="542" fill="#8a91a0" font-size="16">once it matches the</text>
+    <text x="1280" y="568" fill="#8a91a0" font-size="16">provider model</text>
+  </g>
+
+  <line x1="368" y1="512" x2="424" y2="512" stroke="#f2a541" stroke-width="2" marker-end="url(#arrowA)"/>
+  <line x1="794" y1="512" x2="850" y2="512" stroke="#f2a541" stroke-width="2" marker-end="url(#arrowA)"/>
+  <line x1="1190" y1="512" x2="1246" y2="512" stroke="#f2a541" stroke-width="2" marker-end="url(#arrowA)"/>
+
+  <path d="M 610 288 L 610 330 L 214 330 L 214 404" fill="none" stroke="#5d6472" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#arrow)"/>
+  <text x="628" y="316" fill="#5d6472" font-size="14">add_filings hands each filing (raw HTML) to extraction</text>
+
+  <text x="64" y="672" fill="#5d6472" font-size="14">Every LLM call goes through Mubit. Replays and benchmarks are labelled; benchmark baselines are sent unrecorded.</text>
+  <rect x="1436" y="652" width="100" height="28" rx="14" fill="url(#accent)"/>
+  <text x="1486" y="671" fill="#0a0b0e" font-size="13" font-weight="700" text-anchor="middle">MuTick</text>
+</svg>

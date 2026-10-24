@@ -13,7 +13,8 @@
     "replay": "node scripts/replay-questions.mjs",
     "dump-filings": "node scripts/dump-filings.mjs",
     "worker": "node dist/worker.js",
-    "migrate": "node dist/migrate.js"
+    "migrate": "node dist/migrate.js",
+    "benchmark": "node scripts/benchmark.mjs"
   },
   "dependencies": {
     "@desk/shared": "workspace:*",

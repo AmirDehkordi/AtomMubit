@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
@@ -7,16 +7,19 @@ import { eq, sql } from 'drizzle-orm';
 import * as schema from '../db/schema';
 import type { Db, DbService } from '../db/db.service';
 import { ReaderController } from './reader.controller';
+import type { FilingTextService } from '../edgar/filing-text.service';
 
 describe('reader revision and project isolation', () => {
   let client: PGlite; let db: PgliteDatabase<typeof schema>; let reader: ReaderController;
+  const passages = vi.fn().mockResolvedValue([]);
   beforeAll(async () => {
     client = new PGlite(); db = drizzle(client, {schema});
     await migrate(db, {migrationsFolder: resolve(__dirname, '../../drizzle')});
-    reader = new ReaderController({db: db as unknown as Db} as DbService);
+    reader = new ReaderController({db: db as unknown as Db} as DbService, {passages} as unknown as FilingTextService);
   }, 60_000);
   afterAll(async () => { await client?.close(); });
   beforeEach(async () => {
+    passages.mockReset().mockResolvedValue([]);
     await db.execute(sql`TRUNCATE projects, companies, source_documents RESTART IDENTITY CASCADE`);
     await db.insert(schema.projects).values([{id: 'a', title: 'A'}, {id: 'b', title: 'B'}, {id: 'empty', title: 'Empty'}, {id: 'foreign', title: 'Foreign', teamId: 'another-team'}]);
     await db.insert(schema.companies).values({cik: 1, ticker: 'TEST', name: 'Test', fiscalYearEnd: '12-31'});
@@ -62,5 +65,14 @@ describe('reader revision and project isolation', () => {
   it('keeps unscoped legacy readers working without leaking project revision outlines', async () => {
     expect((await reader.sections('filing')).sections.map(s => s.id)).toEqual(['legacy-section']);
     expect((await reader.section('legacy-section')).section.id).toBe('legacy-section');
+  });
+  it('returns filing passage citations alongside historical extraction block citations', async () => {
+    passages.mockResolvedValue([{id: 'p:filing:0', accession: 'filing', ticker: 'TEST', form: '10-Q', quarter: 'Q2 FY2026', text: 'Revenue grew.', url: 'https://example.com/filing'}]);
+    const result = await reader.blocks('old-a:doc:0-block,p:filing:0');
+    expect(passages).toHaveBeenCalledWith(['p:filing:0']);
+    expect(result).toEqual(expect.arrayContaining([
+      expect.objectContaining({id: 'old-a:doc:0-block', sectionId: 'old-a:doc:0'}),
+      expect.objectContaining({id: 'p:filing:0', sectionId: null, quote: 'Revenue grew.', url: 'https://example.com/filing'}),
+    ]));
   });
 });

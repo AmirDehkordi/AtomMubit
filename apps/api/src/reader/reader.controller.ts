@@ -4,11 +4,15 @@ import { DbService } from '../db/db.service';
 import { blocks, checks, companies, corrections, filings, projectFilings, projects, rules, sections } from '../db/schema';
 import { teamId } from '../extraction/extraction.service';
 import { fiscalLabel, quarterName, releaseLabel } from '../edgar/fiscal';
+import { FilingTextService } from '../edgar/filing-text.service';
 
 /** What the filing reader shows: a filing's sections, a section's text with its blocks, and block lookups. */
 @Controller()
 export class ReaderController {
-  constructor(private readonly dbs: DbService) {}
+  constructor(
+    private readonly dbs: DbService,
+    private readonly filingText: FilingTextService,
+  ) {}
 
   // GET /filings/:accession/sections: the filing's outline, with block counts per section
   @Get('filings/:accession/sections')
@@ -66,8 +70,18 @@ export class ReaderController {
   async blocks(@Query('ids') ids?: string) {
     const list = (ids ?? '').split(',').map((s) => s.trim()).filter(Boolean);
     if (!list.length || list.length > 50) throw new BadRequestException('Pass 1–50 block ids');
-    const rows = await this.dbs.db.select().from(blocks).where(inArray(blocks.id, list));
-    return this.withChecks(rows);
+    const blockIds = list.filter((id) => !id.startsWith('p:'));
+    const rows = blockIds.length ? await this.dbs.db.select().from(blocks).where(inArray(blocks.id, blockIds)) : [];
+    // Passages straight from the filing text (before extraction): no section, a link to the document instead.
+    const passages = (await this.filingText.passages(list.filter((id) => id.startsWith('p:')))).map((p) => ({
+      id: p.id,
+      accession: p.accession,
+      sectionId: null,
+      label: `${p.ticker} ${p.form} · ${p.quarter}`,
+      quote: p.text,
+      url: p.url,
+    }));
+    return [...(await this.withChecks(rows)), ...passages];
   }
 
   /** Legacy IDs have no run prefix; current outlines show only accepted revisions. */

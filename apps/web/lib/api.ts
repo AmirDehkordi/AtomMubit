@@ -108,6 +108,16 @@ export interface ReaderBlock {
   corrections: { id: string; note: string; status: 'proposed' | 'applied'; ruleCode: string; ruleText: string }[];
 }
 
+/** A passage straight from a filing's text (before extraction): it links to the document. */
+export interface PassageRef {
+  id: string;
+  accession: string;
+  sectionId: null;
+  label: string;
+  quote: string;
+  url: string;
+}
+
 export interface Rule {
   id: string;
   code: string;
@@ -159,7 +169,7 @@ export const api = {
     get<FilingOutline>(`/filings/${encodeURIComponent(accession)}/sections${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
   section: (id: string, projectId?: string) =>
     get<SectionWithBlocks>(`/sections/${encodeURIComponent(id)}${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`),
-  blocks: (ids: string[]) => get<ReaderBlock[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
+  blocks: (ids: string[]) => get<(ReaderBlock | PassageRef)[]>(`/blocks?ids=${ids.map(encodeURIComponent).join(',')}`),
   rules: () => get<Rule[]>('/rules'),
   proposeCorrection: (input: { blockId: string; projectId: string | null; note: string; ruleCode: string | null; ruleText: string | null }) =>
     post<ProposedCorrection>('/corrections', input),
