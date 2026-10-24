@@ -40,7 +40,7 @@ export class ProcessorService {
     const p = job.payload as {accession: string; projectId: string; requestId?: string; fields?: string[]};
     const document = await this.documents.job(p.accession, p.projectId);
     await this.extraction.registerFiling(document, p.requestId, p.fields);
-    await this.addWatchlist(p.projectId,document.company.ticker);
+    if (monitoringEnabled()) await this.addWatchlist(p.projectId,document.company.ticker);
   }
 
   async plan(job: Job) {

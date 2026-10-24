@@ -42,7 +42,9 @@ function periodCheck(fact: ExtractionFactV2, content: string): FactCheckV2 {
   if (period.start) {
     const days = (Date.parse(period.end) - Date.parse(period.start)) / 86400000 + 1;
     if (Math.abs(days - period.months * 30.4375) > 17) return { verifier: 'period', outcome: 'fail', detail: 'Period start/end disagree with duration' };
-    if (!sourceHasDate(content, period.start)) return { verifier: 'period', outcome: 'fail', detail: 'Period start is not supported by source dates' };
+    // Statements print "Three Months Ended <end>", rarely the start date, so an implied start
+    // (consistent with the duration, checked above) is accepted; the end date and duration must
+    // still be printed (below).
   }
   const durations: Record<number, RegExp> = { 3: /(?:three|3)[ -]months?|(?:thirteen|13)[ -]weeks?|quarter(?:ly| ended)/i,
     6: /(?:six|6)[ -]months?|(?:twenty.six|26)[ -]weeks?/i,

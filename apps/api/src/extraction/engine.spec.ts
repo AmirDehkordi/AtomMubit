@@ -25,6 +25,14 @@ describe('document preparation', () => {
   });
 });
 describe('source and numerical verification', () => {
+  it('accepts a start date implied by the duration when the statement prints only the end', () => {
+    // Real 10-Q tables print "Three months ended July 26, 2026", never the start date.
+    const implied = revenue({ period: { start: '2026-04-27', end: '2026-07-26', months: 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } });
+    const period = verifyFact(implied, section()).checks.find((c) => c.verifier === 'period');
+    expect(period?.outcome).toBe('pass');
+    const wrong = revenue({ period: { start: '2026-01-26', end: '2026-07-26', months: 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } });
+    expect(verifyFact(wrong, section()).checks.find((c) => c.verifier === 'period')?.outcome).toBe('fail');
+  });
   it('indexes repeated quotes in UTF-16 code units', () => {
     const text = '😀 amount 10; amount 10';
     expect(evidenceSpan(text, 'amount 10')).toEqual({ start: 3, end: 12, offsetUnit: 'utf16' });
