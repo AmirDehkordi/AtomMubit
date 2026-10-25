@@ -18,3 +18,9 @@ benchmarks/results/
 apps/api/data/* 2.*
 # Transport locks depend on each machine's base URLs; only task locks are shared.
 apps/api/data/*transport.lock
+
+# Demo video work: recordings, narration and editing scripts stay out of the repo.
+media/
+*.mp4
+*.mov
+*.webm

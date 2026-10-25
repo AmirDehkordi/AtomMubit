@@ -18,6 +18,7 @@
 
 <p>
   <a href="#overview">Overview</a> ·
+  <a href="#demo">Demo</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#results">Results</a> ·
@@ -51,6 +52,30 @@ on SEC EDGAR, reads the numbers from the SEC's XBRL data, quotes the filings' ow
 all out on a live dashboard beside the chat, with every figure and statement linked to its source.
 Corrections become house rules, and every LLM call goes through [Mubit](https://mubit.ai), which
 can train a task-specific model from examples its reviewer accepts.
+
+## Demo
+
+https://github.com/user-attachments/assets/72e38737-ea00-44e6-9ae4-8cfd4088ab4a
+
+A results morning, recorded live in one run against SEC EDGAR and Mubit (nothing is mocked; slow
+waits are sped up):
+
+1. **The question.** An analyst asks why NVIDIA's gross margin moved quarter on quarter. MuTick finds
+   the last two 10-Qs and asks before adding them.
+2. **The answer.** Margin was flat (74.9% → 75.0%), with figures from SEC XBRL and quotes from the
+   10-Q. Where the filing doesn't explain the move, the answer says so. Under each answer, the Mubit
+   calls it took, with their request ids, all recorded for training.
+3. **A real problem, caught.** Reading the 10-Q, the extractor labels the six-month net income
+   ($118.0B) plainly "Net income", as if it were the quarter. The verifiers can't confirm its period,
+   so it waits for review instead of reaching the dashboard.
+4. **One correction.** The analyst flags it and writes the rule in plain words: a year-to-date figure
+   must name its period. It becomes house rule R13, and the desk re-reads its filings with it; every
+   re-read call goes through Mubit and is recorded under the `section_extractor` task.
+5. **The payoff.** The re-read labels the figure "Six Months Ended Jul 26, 2026 – Net income". Then
+   Apple's 10-Q is added with no correction at all: it is read with the rule from the first call,
+   and its year-to-date figure arrives as "Net income (nine months)".
+6. **Mubit, honestly.** The Mubit panel: about 2,600 calls recorded across the two tasks, the daily
+   review budget, and no adapter trained yet.
 
 ## Screenshots
 
