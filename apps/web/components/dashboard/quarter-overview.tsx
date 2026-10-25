@@ -69,7 +69,7 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
                   {/* The value the chip compares against, so the two read together. */}
                   {before?.value != null && (
                     <span className="text-subtle truncate text-[11px] tabular-nums" title={`In ${prior}`}>
-                      vs {formatValue(before.value, r.unit)} in {prior}
+                      vs {formatValue(before.value, r.unit)}
                     </span>
                   )}
                   <Sparkline values={r.cells.map((c) => c.value)} kind={margin ? 'margin' : 'amount'} className="ml-auto h-8 w-[88px] shrink-0" />

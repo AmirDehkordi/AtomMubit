@@ -17,7 +17,21 @@ function ended(periodEnd: string) {
   return y && m && d ? `${d} ${MONTHS[m - 1]} ${y}` : periodEnd;
 }
 
-export function CompareView({ metric, tickers, periodEnd }: { metric: string; tickers: string[]; periodEnd: string | null }) {
+/**
+ * Companies side by side on their latest quarter, each against the same quarter a year earlier.
+ * `subject` is the desk's own company, drawn in the accent; on a desk that only compares, all are.
+ */
+export function CompareView({
+  metric,
+  tickers,
+  periodEnd,
+  subject,
+}: {
+  metric: string;
+  tickers: string[];
+  periodEnd: string | null;
+  subject?: string;
+}) {
   const { data, error, isLoading } = useQuery({
     queryKey: ['compare', metric, tickers, periodEnd],
     queryFn: () => api.compare(metric, tickers, periodEnd),
@@ -26,31 +40,37 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
   if (error || !data) return <p className="text-down text-sm">Could not load the comparison: {String(error)}</p>;
   const max = Math.max(...data.rows.flatMap((r) => [Math.abs(r.value.value ?? 0), Math.abs(r.yearAgo.value ?? 0)]), 1);
   const rows = [...data.rows].sort((a, b) => (b.value.value ?? -Infinity) - (a.value.value ?? -Infinity));
-  const leader = rows[0];
-  const subject = tickers[0];
   const points = data.unit === 'percent';
+  // The question analysts ask of a comparison: who grew fastest, not who is biggest.
+  const fastest = [...rows].filter((r) => r.yoy !== null).sort((a, b) => b.yoy! - a.yoy!)[0];
+  const growth = (v: number) => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}${points ? 'pp' : '%'}`;
+  // Fiscal labels differ by company (Q2 FY2027, Q4 FY2026); the period ends show they line up.
+  const ends = rows.map((r) => r.periodEnd).sort();
+  const span = ends.length > 1 && ends[0] !== ends[ends.length - 1] ? `${ended(ends[0]!)} – ${ended(ends[ends.length - 1]!)}` : ends[0] ? ended(ends[0]) : null;
   const neutral = NEUTRAL_METRICS.has(metric);
   const share = (v: number | null) => `${(Math.abs(v ?? 0) / max) * 100}%`;
 
   return (
     <div className="surface relative overflow-hidden rounded-3xl p-7">
       <div className="relative">
-        <p className="text-muted text-xs font-medium tracking-wide">Comparison</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">{data.label}</h2>
-        <p className="text-subtle mt-1 text-[13px]">
+        {subject && <h2 className="mb-1 text-[15px] font-semibold">{data.label}</h2>}
+        <p className="text-subtle text-[13px]">
           Each company on its latest reported quarter, against the same quarter a year earlier.
-          {leader && (
+          {span && ` All ended ${span}.`}
+          {fastest && fastest.yoy !== null && (
             <>
               {' '}
-              <span className="text-muted">Highest: {leader.ticker}.</span>
+              <span className="text-muted">
+                Fastest Y/Y: {fastest.ticker} {growth(fastest.yoy)}.
+              </span>
             </>
           )}
         </p>
         <div className="text-muted mt-4 flex gap-4 text-[11px]" aria-hidden>
           <span className="flex items-center gap-1.5">
-            <span className="bg-accent size-2.5 rounded-[2px]" /> {subject}
+            <span className="bg-accent size-2.5 rounded-[2px]" /> {subject ?? 'Latest quarter'}
           </span>
-          {rows.length > 1 && (
+          {subject && rows.length > 1 && (
             <span className="flex items-center gap-1.5">
               <span className="bg-series-2 size-2.5 rounded-[2px]" /> Peers
             </span>
@@ -85,7 +105,7 @@ export function CompareView({ metric, tickers, periodEnd }: { metric: string; ti
                 >
                   <div className="absolute inset-x-0 top-[5px] h-1 rounded-[2px] bg-[color-mix(in_oklab,var(--color-raised)_80%,var(--color-ink))]" />
                   <motion.div
-                    className={`absolute top-[3px] left-0 h-2 rounded-r-[4px] ${r.ticker === subject ? 'bg-accent' : 'bg-series-2'}`}
+                    className={`absolute top-[3px] left-0 h-2 rounded-r-[4px] ${!subject || r.ticker === subject ? 'bg-accent' : 'bg-series-2'}`}
                     initial={{ width: 0 }}
                     animate={{ width: share(r.value.value) }}
                     transition={{ duration: 0.8, delay: i * 0.08, ease }}

@@ -22,7 +22,15 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
   const active = tabs.find((t) => t.id === activeTab) ?? tabs[0];
   const ticker = filings[0]?.ticker ?? (active?.spec && 'ticker' in active.spec ? active.spec.ticker : null);
   const oneCompany = filings.length > 0 && filings.every((f) => f.ticker === filings[0]!.ticker);
-  const heading = oneCompany ? companyName(filings[0]!.ticker, filings[0]!.company) : ticker && title.startsWith(`${ticker} · `) ? title.slice(ticker.length + 3) : title;
+  // A desk that only compares companies is titled by them, not by the question that opened it.
+  const compare = !oneCompany && active?.spec.view === 'compare' ? active.spec : null;
+  const heading = oneCompany
+    ? companyName(filings[0]!.ticker, filings[0]!.company)
+    : compare
+      ? compare.tickers.map((t) => companyName(t)).join(' · ')
+      : ticker && title.startsWith(`${ticker} · `)
+        ? title.slice(ticker.length + 3)
+        : title;
   const period = oneCompany ? [filings[0]!.quarter, filings[filings.length - 1]!.quarter].filter((q, i, a) => a.indexOf(q) === i).join(' – ') : null;
 
   return (
@@ -40,6 +48,11 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
             >
               {heading}
             </motion.h1>
+            {compare && filings.length === 0 && (
+              <p className="text-muted mt-0.5 text-xs">
+                <span className="text-text">{metricLabel(compare.metric)}</span> · latest quarter vs a year earlier
+              </p>
+            )}
             {filings.length > 0 && (
               <div className="text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                 {period && (
@@ -65,7 +78,7 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
               exit={{ opacity: 0 }}
               transition={{ duration: 0.28, ease }}
             >
-              <View view={active.spec} projectId={projectId} />
+              <View view={active.spec} projectId={projectId} subject={oneCompany ? filings[0]!.ticker : undefined} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -255,7 +268,11 @@ function describe(spec: ViewSpec, filings: DeskFiling[]): { icon: typeof LayoutG
   }
 }
 
-function View({ view, projectId }: { view: ViewSpec; projectId: string }) {
+function metricLabel(m: string): string {
+  return (DESK_METRIC_KEYS as string[]).includes(m) ? metricInfo(m as DeskMetricKey).label : m.replace(/_/g, ' ');
+}
+
+function View({ view, projectId, subject }: { view: ViewSpec; projectId: string; subject?: string }) {
   switch (view.view) {
     case 'quarter_overview':
       return <QuarterOverview ticker={view.ticker} periods={view.periods} />;
@@ -264,7 +281,7 @@ function View({ view, projectId }: { view: ViewSpec; projectId: string }) {
     case 'filing_reader':
       return <FilingReader accession={view.accession} sectionId={view.sectionId} highlight={view.highlight} projectId={projectId} />;
     case 'compare':
-      return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} />;
+      return <CompareView metric={view.metric} tickers={view.tickers} periodEnd={view.periodEnd} subject={subject} />;
     default:
       return (
         <div className="surface text-muted rounded-2xl p-10 text-center text-sm">
