@@ -21,13 +21,15 @@ const STATE_LABELS: Record<AdapterState, string> = {
   prompt_only: 'Prompt only',
 };
 
-/**
- * The only place the analyst sees Mubit: a quiet "Powered by Mubit" label. It opens what Mubit is
- * learning from. Everything else on screen is MuTick.
- */
 /** Shared by the Mubit and New buttons in the chat toolbar, so the two read as a pair. */
 export const toolbarButton =
   'border-line text-text hover:bg-raised grid size-8 shrink-0 place-items-center rounded-lg border transition-colors hover:border-[color-mix(in_oklab,var(--color-text)_20%,transparent)]';
+
+/** Plain names for the two Mubit tasks; the task ids stay in the code and the console. */
+const TASK_NAMES: Record<string, { name: string; hint: string }> = {
+  desk_agent: { name: 'Chat answers', hint: 'Every question the analyst asks' },
+  section_extractor: { name: 'Reading filings', hint: 'About 75 calls per filing: one instruction, JSON out' },
+};
 
 export function MubitButton({ className, projectId }: { className?: string; projectId?: string }) {
   const [open, setOpen] = useState(false);
@@ -36,10 +38,12 @@ export function MubitButton({ className, projectId }: { className?: string; proj
       <button
         onClick={() => setOpen(true)}
         title="What Mubit is learning from"
-        aria-label="What Mubit is learning from"
-        className={cn(toolbarButton, className)}
+        className={cn(
+          'border-line text-text hover:bg-raised inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors hover:border-[color-mix(in_oklab,var(--color-text)_20%,transparent)]',
+          className,
+        )}
       >
-        <MubitMark className="size-4" />
+        <MubitMark className="size-3.5" /> Mubit
       </button>
       <AnimatePresence>{open && <MubitPanel onClose={() => setOpen(false)} projectId={projectId} />}</AnimatePresence>
     </>
@@ -96,9 +100,9 @@ function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: s
             <h2 className="flex items-center gap-2 font-semibold">
               <MubitMark className="size-4" /> What Mubit is learning from
             </h2>
-            <p className="text-muted max-w-sm text-xs">
-              Every AI call MuTick makes goes through Mubit. It keeps the good answers and trains a small model of MuTick&apos;s
-              own from them.
+            <p className="text-muted max-w-sm text-xs leading-relaxed">
+              Every AI call goes through Mubit. Filings come with an answer key, the SEC&apos;s XBRL data, so MuTick knows which
+              answers are right. Mubit keeps examples and trains a small model MuTick owns.
             </p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-text" aria-label="Close">
@@ -107,14 +111,6 @@ function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: s
         </header>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {error && <p className="text-down text-sm">Could not load: {String(error)}</p>}
-          <Section title="Recorded for training">
-            <Recorded turns={recorded.data} error={recorded.error} />
-          </Section>
-          {projectId && (
-            <Section title="Extraction runs" defaultOpen={false}>
-              <ExtractionPanel projectId={projectId} />
-            </Section>
-          )}
           {data && (
             <Section title="How far it has got">
               <div className="space-y-3">
@@ -124,9 +120,17 @@ function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: s
               </div>
             </Section>
           )}
+          <Section title="Recorded conversations" count={recorded.data ? conversations(recorded.data).length : undefined} defaultOpen={false}>
+            <Recorded turns={recorded.data} error={recorded.error} />
+          </Section>
+          {projectId && (
+            <Section title="Extraction runs" defaultOpen={false}>
+              <ExtractionPanel projectId={projectId} />
+            </Section>
+          )}
           {active.length > 0 && (
-            <Section title={`Desk rules (${active.length})`}>
-              <p className="text-muted mb-2 text-xs">Every section_extractor call carries these. Corrections add new ones.</p>
+            <Section title="Desk rules" count={active.length} defaultOpen={false}>
+              <p className="text-muted mb-2 text-xs">Every filing read carries these rules. Corrections add new ones.</p>
               <ul className="border-line divide-line divide-y rounded-xl border">
                 {active.map((r) => (
                   <li key={r.id} className="flex gap-2 px-3 py-2 text-xs">
@@ -144,10 +148,7 @@ function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: s
           )}
         </div>
         <footer className="border-line space-y-2 border-t px-5 py-3">
-          <p className="text-subtle text-xs">
-            Mubit keeps the best of these calls and trains on them. Which ones it kept, and the kept count, come from the Mubit
-            console.
-          </p>
+          <p className="text-subtle text-xs">Kept examples and model status come from the Mubit console.</p>
           <a
             href={MUBIT_CONSOLE_URL}
             target="_blank"
@@ -163,17 +164,28 @@ function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: s
 }
 
 /** A panel section whose title opens and closes it. */
-function Section({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+function Section({
+  title,
+  count,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="text-muted hover:text-text flex w-full items-center gap-1.5 py-1 text-xs tracking-wide uppercase transition-colors"
+        className="text-muted hover:text-text flex w-full items-center gap-1.5 py-1.5 text-[13px] font-medium transition-colors"
       >
         <ChevronRight className={cn('size-3.5 transition-transform', open && 'rotate-90')} />
         {title}
+        {count !== undefined && <span className="text-subtle font-normal tabular-nums">· {count}</span>}
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -197,25 +209,30 @@ function Recorded({ turns, error }: { turns?: RecordedTurn[]; error: unknown }) 
   if (error) return <p className="text-down text-sm">Could not load: {String(error)}</p>;
   if (!turns) return <p className="text-subtle text-sm">Loading…</p>;
   if (!turns.length) return <p className="text-subtle text-sm">Nothing yet. Ask MuTick a question and it shows up here.</p>;
-  // Turns come newest first; group them by conversation, keeping that order between conversations.
+  return (
+    <div className="space-y-2">
+      {conversations(turns).map((g) => (
+        <Conversation key={g[0]!.conversationId} turns={g} />
+      ))}
+    </div>
+  );
+}
+
+/** Turns come newest first; group them by conversation (newest first), each one oldest turn first. */
+function conversations(turns: RecordedTurn[]): RecordedTurn[][] {
   const groups: RecordedTurn[][] = [];
   for (const t of turns) {
     const g = groups.find((x) => x[0]!.conversationId === t.conversationId);
     if (g) g.push(t);
     else groups.push([t]);
   }
-  return (
-    <div className="space-y-2">
-      {groups.map((g) => (
-        <Conversation key={g[0]!.conversationId} turns={[...g].reverse()} />
-      ))}
-    </div>
-  );
+  return groups.map((g) => [...g].reverse());
 }
 
 function Conversation({ turns }: { turns: RecordedTurn[] }) {
   const [open, setOpen] = useState(false);
   const asked = turns.filter((t) => !t.choiceReply).length;
+  const first = turns.find((t) => !t.choiceReply)?.question;
   return (
     <div className="bg-panel rounded-xl">
       <button
@@ -224,15 +241,15 @@ function Conversation({ turns }: { turns: RecordedTurn[] }) {
         className="hover:bg-raised/60 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors"
       >
         <ChevronRight className={cn('text-subtle size-3.5 shrink-0 transition-transform', open && 'rotate-90')} />
-        <span className="truncate text-sm font-medium">{deskName(turns[0]!.desk)}</span>
-        <span className="text-subtle shrink-0 text-xs tabular-nums">{time(turns[turns.length - 1]!.at)}</span>
-        {turns.some((t) => t.replay) && <span className="text-subtle shrink-0 text-xs">· replayed</span>}
-        {/* A conversation cut off by the list's limit can start mid-way, with only a button press left. */}
-        {asked > 0 && (
-          <span className="text-subtle ml-auto shrink-0 text-xs">
-            {asked} question{asked === 1 ? '' : 's'}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{first ?? deskName(turns[0]!.desk)}</span>
+          <span className="text-subtle block truncate text-xs">
+            {deskName(turns[0]!.desk)} · <span className="tabular-nums">{time(turns[turns.length - 1]!.at)}</span>
+            {turns.some((t) => t.replay) && ' · replayed'}
+            {/* A conversation cut off by the list's limit can start mid-way, with only a button press left. */}
+            {asked > 0 && ` · ${asked} question${asked === 1 ? '' : 's'}`}
           </span>
-        )}
+        </span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -266,7 +283,7 @@ function Turn({ turn }: { turn: RecordedTurn }) {
         </p>
       ) : (
         <div className="flex justify-end">
-          <p className="bg-raised max-w-[85%] rounded-[18px] px-3.5 py-2 text-sm leading-relaxed">{turn.question}</p>
+          <p className="bg-raised max-w-[85%] rounded-[18px] px-3.5 py-2 text-sm leading-relaxed [overflow-wrap:anywhere]">{turn.question}</p>
         </div>
       )}
       <p className="text-text/85 line-clamp-2 text-sm leading-relaxed">{turn.answer.replace(/\s*\[\[[^\]]*\]\]/g, '')}</p>
@@ -306,17 +323,16 @@ function TaskCard({ task, status }: { task: MubitStatus['tasks'][number]; status
 
   return (
     <section className="border-line bg-panel rounded-xl border p-4">
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-medium">{task.label}</h3>
-        <span className="text-muted font-mono text-xs">{task.task}</span>
+      <div title={task.task}>
+        <h3 className="font-medium">{TASK_NAMES[task.task]?.name ?? task.label}</h3>
+        {TASK_NAMES[task.task] && <p className="text-subtle text-xs">{TASK_NAMES[task.task]!.hint}</p>}
       </div>
 
       <LearningPath task={task} status={status} />
 
-      <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <Stat label="Calls recorded" value={task.calls.toLocaleString()} />
+      <dl className="mt-3 grid grid-cols-2 gap-2 text-center">
         <Stat label="Sessions" value={task.sessions.toLocaleString()} />
-        <Stat label="Avg call" value={task.avgLatencyMs ? `${(task.avgLatencyMs / 1000).toFixed(1)}s` : '—'} />
+        <Stat label="Avg call" value={task.avgLatencyMs && task.avgLatencyMs >= 100 ? `${(task.avgLatencyMs / 1000).toFixed(1)}s` : '—'} />
       </dl>
 
       <div className="mt-4">
@@ -335,7 +351,7 @@ function TaskCard({ task, status }: { task: MubitStatus['tasks'][number]; status
 
       <div className="border-line mt-4 border-t pt-3">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-muted text-xs tracking-wide uppercase">From the Mubit console</span>
+          <span className="text-muted text-xs font-medium">From the Mubit console</span>
           <button onClick={() => setEditing((v) => !v)} className="text-muted hover:text-text inline-flex items-center gap-1 text-xs">
             <Pencil className="size-3" /> {editing ? 'Cancel' : 'Update'}
           </button>
@@ -362,7 +378,7 @@ function TaskCard({ task, status }: { task: MubitStatus['tasks'][number]; status
             <p className="text-muted text-xs">Updated {time(c.updatedAt)}</p>
           </div>
         ) : (
-          <p className="text-muted text-sm">Not recorded yet. Copy kept examples and adapter status from the console.</p>
+          <p className="text-muted text-sm">Kept examples show here once they&apos;re read from the Mubit console.</p>
         )}
       </div>
     </section>
@@ -378,7 +394,7 @@ function LearningPath({ task, status }: { task: MubitStatus['tasks'][number]; st
   const reviewed = Math.min(task.callsToday, status.reviewLimit);
   const steps: { label: string; value: string; done: boolean; hint?: string }[] = [
     { label: 'Calls recorded', value: task.calls.toLocaleString(), done: task.calls > 0 },
-    { label: 'Sent for review', value: `${reviewed} today`, done: reviewed > 0, hint: `Mubit reviews up to ${status.reviewLimit} a day` },
+    { label: "In today's review window", value: `${reviewed} today`, done: reviewed > 0, hint: `Mubit reviews up to ${status.reviewLimit} a day` },
     {
       label: 'Examples kept',
       value: c?.kept != null ? `${c.kept} of ${status.firstTrainingAt}` : '—',

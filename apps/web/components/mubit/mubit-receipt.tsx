@@ -23,8 +23,13 @@ export function MubitReceipt({ calls }: { calls: { requestId: string | null; ms:
       >
         <MubitMark className="text-accent size-3" />
         <span>
-          Answered through Mubit · {calls.length} {calls.length === 1 ? 'call' : 'calls'} recorded for training ·{' '}
-          <span className="tabular-nums">{seconds.toFixed(1)}s</span>
+          Answered through Mubit · {calls.length} {calls.length === 1 ? 'call' : 'calls'} recorded for training
+          {seconds >= 0.1 && (
+            <>
+              {' · '}
+              <span className="tabular-nums">{seconds.toFixed(1)}s</span>
+            </>
+          )}
         </span>
         <ChevronRight className={cn('size-3 transition-transform', open && 'rotate-90')} />
       </button>
@@ -38,8 +43,8 @@ export function MubitReceipt({ calls }: { calls: { requestId: string | null; ms:
             className="overflow-hidden"
           >
             <p className="mt-2 mb-1.5 max-w-md">
-              Each call goes into the <span className="font-mono">desk_agent</span> task. Mubit reviews it, keeps the good
-              ones, and trains a small model of the desk&apos;s own from them.
+              Each call is recorded for Mubit. Mubit keeps some as examples and trains a small model MuTick owns to answer
+              the same way.
             </p>
             <ul className="space-y-1">
               {calls.map((c, i) => (
@@ -68,7 +73,7 @@ function CallRow({ requestId, ms }: { requestId: string | null; ms: number }) {
   return (
     <li className="flex items-center gap-2">
       <span className="truncate font-mono select-all">{requestId ?? 'no request id'}</span>
-      <span className="tabular-nums">{(ms / 1000).toFixed(1)}s</span>
+      {ms >= 100 && <span className="tabular-nums">{(ms / 1000).toFixed(1)}s</span>}
       {requestId && (
         <button onClick={copy} className="hover:text-text" aria-label="Copy the request id">
           {copied ? <Check className="text-up size-3" /> : <Copy className="size-3" />}
