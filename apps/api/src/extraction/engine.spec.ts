@@ -25,6 +25,18 @@ describe('document preparation', () => {
   });
 });
 describe('source and numerical verification', () => {
+  it('rejects mismatched monetary currencies for totals and per-share amounts, including zero', () => {
+    for (const currency of ['CAD', 'EUR', 'GBP']) {
+      const source = section(content.replace('USD', currency));
+      expect(verifyFact(revenue({currency,unit:'USD'}),source).supported).toBe(false);
+      expect(verifyFact(revenue({currency,unit:currency}),source).supported).toBe(true);
+      const eps = revenue({key:'eps_diluted',currency,unit:'USD/share',value:2.46,scale:'units',quote:'| Diluted earnings per share | 2.46 |'});
+      expect(verifyFact(eps,source).supported).toBe(false);
+      expect(verifyFact({...eps,unit:`${currency}/share`},source).supported).toBe(true);
+    }
+    const zero = revenue({currency:'CAD',unit:'USD',value:0,quote:'Revenue 0'});
+    expect(verifyFact(zero,section(content+' Revenue 0')).supported).toBe(false);
+  });
   it('accepts a start date implied by the duration when the statement prints only the end', () => {
     // Real 10-Q tables print "Three months ended July 26, 2026", never the start date.
     const implied = revenue({ period: { start: '2026-04-27', end: '2026-07-26', months: 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } });
@@ -88,6 +100,22 @@ describe('source and numerical verification', () => {
   });
 });
 describe('bounded extraction and audit', () => {
+  it('uses only one model call when repairs are disabled for a budgeted evaluation', async () => {
+    const callJson=vi.fn().mockResolvedValue({output:{invalid:true}});
+    const result=await new ExtractionEngine({callJson,maxAttempts:1}).run(input);
+    expect(callJson).toHaveBeenCalledTimes(1);
+    expect(result.attempts).toHaveLength(1);
+    expect(result.attempts[0]?.error).toBeTruthy();
+    expect(result.facts.every(f=>!f.supported)).toBe(true);
+  });
+  it('repairs a currency/unit contradiction instead of accepting the numeric value alone', async () => {
+    const bad = revenue({currency:'CAD',unit:'USD'}), good = {...bad,unit:'CAD'};
+    const callJson=vi.fn().mockResolvedValueOnce({output:output([bad])}).mockResolvedValueOnce({output:output([good])});
+    const result=await new ExtractionEngine({callJson}).run({...input,content:content.replace('USD','CAD'),requestedFields:['revenue']});
+    expect(result.attempts).toHaveLength(2);
+    expect(result.facts[0]?.status).toBe('fixed');
+    expect(result.attempts[0]?.checks.some(c=>c.outcome==='fail'&&c.detail.includes('currency'))).toBe(true);
+  });
   it('enforces strict model schema', () => {
     expect(SectionExtractionV2.safeParse({ ...output(), surprise: true }).success).toBe(false);
     expect(SectionExtractionV2.safeParse(output([revenue({ period: { start: null, end: '2026-07-26', months: 4 as 3, fiscalYear: 2027, fiscalPeriod: 'Q2' } })])).success).toBe(false);

@@ -29,6 +29,8 @@ export interface JsonCall<T = unknown> {
   jsonSchema: { name: string; schema: Record<string, unknown> };
   model?: string;
   maxOutputTokens?: number;
+  /** Disable hidden transport retries for externally budgeted evaluation runs. */
+  retryTransientErrors?: boolean;
   validation?: 'strict' | 'caller';
 }
 export interface JsonResult<T> {
@@ -57,7 +59,8 @@ export class MubitService {
   get configured(): boolean { return Boolean(config.mubitApiKey); }
 
   /** Transient gateway errors (429/5xx before anything reached the provider) are retried; see transient-retry.ts. */
-  private productionCompletion(body: any, headers: Record<string, string>) {
+  private productionCompletion(body: any, headers: Record<string, string>, retryTransientErrors = true) {
+    if (!retryTransientErrors) return this.productionAttempt(body, headers);
     return withTransientRetry(() => this.productionAttempt(body, headers));
   }
 
@@ -126,7 +129,7 @@ export class MubitService {
         session_id: stableSessionId(args.sessionKey),
       };
       const headers = { 'x-middleware-request-id': requestId, 'x-openrouter-metadata': 'enabled', ...(!['desk_agent', 'section_extractor'].includes(call.task) ? { 'x-middleware-record': 'off' } : {}) };
-      const {data, response} = await (route === 'mubit' ? this.productionCompletion(body, headers) : this.directClient.chat.completions.create(body as any, {headers: {'x-openrouter-metadata': 'enabled'}}).withResponse());
+      const {data, response} = await (route === 'mubit' ? this.productionCompletion(body, headers, args.retryTransientErrors) : this.directClient.chat.completions.create(body as any, {headers: {'x-openrouter-metadata': 'enabled'}}).withResponse());
       const reqId = response.headers.get('x-middleware-request-id') ?? response.headers.get('x-openrouter-request-id') ?? requestId;
       requestId = reqId;
       inputTokens = data.usage?.prompt_tokens ?? null;

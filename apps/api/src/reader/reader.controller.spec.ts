@@ -30,7 +30,7 @@ describe('reader revision and project isolation', () => {
       ['old-a', 'a', false, 'completed'], ['accepted-a', 'a', true, 'completed'],
       ['rejected-a', 'a', false, 'needs_review'], ['accepted-b', 'b', true, 'completed'],
     ] as const) {
-      await db.insert(schema.extractionRuns).values({id, identity: id, teamId: 'internal', projectId, documentId: 'doc', accepted, state, specification: {fields: ['revenue']}});
+      await db.insert(schema.extractionRuns).values({id, identity: id, teamId: 'internal', projectId, documentId: 'doc', accepted, state, createdAt: new Date('2026-01-01T00:00:00Z'), specification: {fields: ['revenue']}});
       await section(`${id}:doc:0`);
     }
     await section('legacy-section');

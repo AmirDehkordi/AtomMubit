@@ -19,6 +19,11 @@ beforeEach(() => {
   mocks.chat.mockReturnValue({withResponse:async()=>output()}); mocks.gemini.mockImplementation(async()=>output());
 });
 describe('backend transport routing', () => {
+  it('makes exactly one transport attempt when an evaluation disables retries', async () => {
+    mocks.gemini.mockRejectedValue(Object.assign(new Error('Unavailable'), {status:503}));
+    await expect(service().completeJson({...args,retryTransientErrors:false})).rejects.toMatchObject({status:503});
+    expect(mocks.gemini).toHaveBeenCalledTimes(1);
+  });
   it('routes Gemini extraction to native Gemini with Mubit credentials', async () => {
     expect((await service().completeJson(args)).value).toEqual({ok:true});
     expect(mocks.chat).not.toHaveBeenCalled();
