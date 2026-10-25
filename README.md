@@ -31,6 +31,13 @@
 
 </div>
 
+> **Status at code freeze (25 Oct 2026)**
+> - **Live:** the desk on SEC EDGAR and XBRL data; every LLM call goes through Mubit and is recorded for
+>   two tasks, `desk_agent` (the chat) and `section_extractor` (reading filings).
+> - **Measured:** on 13 NVIDIA questions, the agent passes 13 / 13; the same model with no tools passes 2 / 13.
+> - **Not measured yet:** cost and latency changes, and a model of our own. No Mubit adapter has been
+>   trained at the time of writing; the Mubit panel shows how far each task has got.
+
 ## Overview
 
 Every quarter, analysts re-key the same numbers out of the same SEC filings. A frontier model can
@@ -58,7 +65,7 @@ can train a task-specific model from examples its reviewer accepts.
   </tr>
   <tr>
     <td valign="top"><sub><strong>Across companies.</strong> Each on its own latest fiscal quarter, against the same quarter a year earlier. Answers cite their sources by number.</sub></td>
-    <td valign="top"><sub><strong>Mubit panel.</strong> Calls recorded per task, today's review budget, the desk's house rules, and the latest Mubit request ids.</sub></td>
+    <td valign="top"><sub><strong>Mubit panel.</strong> How far each task has got towards a model of its own, the recorded conversations, extraction runs and the desk's house rules.</sub></td>
   </tr>
 </table>
 
@@ -73,7 +80,8 @@ can train a task-specific model from examples its reviewer accepts.
 1. **One agent, a fixed set of tools.** The chat is a single Mubit task (`desk_agent`): the same
    model, system prompt and ten tools on every call. It finds filings, adds them to the desk, reads
    figures, compares companies, searches the filings' text and chooses what the dashboard shows. It
-   never does arithmetic: tools return formatted values, changes and margins.
+   never does arithmetic: tools return formatted values, changes and margins. Two of the ten tools,
+   `get_insider_activity` and `diff_risk_factors`, are declared but return "Not available yet".
 2. **Numbers from the SEC, labelled the company's way.** Figures come from XBRL companyfacts.
    Quarters are labelled on each company's fiscal calendar (NVIDIA's quarter ending 26 Jul 2026 is
    Q2 FY2027). There is no 10-Q for a fourth quarter, so Q4 is derived as full year − nine months and
@@ -110,6 +118,8 @@ advice and forecasts must be declined. Run with `pnpm --filter @desk/api benchma
 - Through the desk it returned every figure exactly (including the derived Q4 and computed margins),
   explained Q2 FY2027 growth and guidance from NVIDIA's earnings release with sources, and declined
   investment advice and forecasts.
+- The baseline is the same model with no tools, so the jump from 2 to 13 measures grounding in the
+  filings, not a better model.
 - Full answers and per-question results: [`docs/benchmark/latest.json`](docs/benchmark/latest.json).
   Measured on 24 Oct, when the product was still called Earnings Desk; the agent's prompt has changed
   only in the product's name since.
@@ -136,9 +146,7 @@ task per day, so the replay script feeds each task just after the 00:00 UTC rese
 
 ## Getting started
 
-A research desk for SEC filings, with a conversational planner, automated
-filing ingestion, evidence-linked extraction, and scoped house rules learned
-from feedback. `INFERENCE_BACKEND=mubit` (the default) uses native Mubit OpenAI/Gemini routes;
+**Inference backends.** `INFERENCE_BACKEND=mubit` (the default) uses native Mubit OpenAI/Gemini routes;
 `INFERENCE_BACKEND=openrouter` routes AI through **Mubit → OpenRouter**. In OpenRouter mode the
 extractor defaults to `qwen/qwen3-30b-a3b-instruct-2507`; the planner and feedback
 evaluator use `openai/gpt-6-luna`. Each model is configurable.
@@ -159,8 +167,9 @@ the API and local worker share one PGlite instance. Model work stays queued
 until credentials are configured. Text-based PDF uploads need Poppler's
 `pdftotext`; the Docker image includes it.
 
-Set `SEC_USER_AGENT` to your real name and contact email to enable monitoring.
-The default watchlist is AAPL, MSFT, NVDA, WMT, JPM; override
+Set `SEC_USER_AGENT` to your real name and contact email; the SEC requires it on every request.
+Automatic monitoring is off by default: it also needs `SEC_MONITORING=1`, because it spends model
+calls and Mubit's daily review budget. The default watchlist is AAPL, MSFT, NVDA, WMT, JPM; override
 `WATCHLIST_TICKERS`. Monitoring backfills four reported quarters and scans every
 five minutes with a shared SEC request limiter. New requested companies are
 added persistently. With credentials configured, monitoring incurs model calls.
@@ -204,10 +213,6 @@ scripts          Screenshot tooling
 
 </details>
 
-<br />
-
-<p align="center"><sub>Built for Night Shift London, October 2026.</sub></p>
-
 ## Extraction API
 
 Existing chat, project, SEC, and XBRL routes remain available.
@@ -244,8 +249,9 @@ The HTTP smoke test requires a built API. It starts a fake local model and a
 temporary database, queues an upload, restarts the API, verifies extraction and
 request reuse, and evaluates feedback. It makes no SEC or paid model calls.
 For interactive UI rehearsals, `pnpm --filter @desk/api fake-llm` serves a
-scripted model on port 4099; point `MUBIT_BASE_URL` at
-`http://localhost:4099/v1` and set `MUBIT_API_KEY=fake`.
+scripted model on port 4099; set `INFERENCE_BACKEND=openrouter`,
+point `MUBIT_BASE_URL` (and `MUBIT_OPENAI_BASE_URL`, `OPENROUTER_BASE_URL`) at `http://localhost:4099/v1`
+and set `MUBIT_API_KEY=fake`, so no call leaves the machine.
 
 The [benchmark harness](benchmarks/README.md) compares direct OpenRouter with
 Mubit → OpenRouter. Its offline fixture is synthetic. A live paired comparison of latency, accuracy and billed cost is **not measured yet**. Recorded extraction development results are in [the development report](docs/mubit-development-report.md); the agent benchmark above measures a different task. See the
@@ -253,20 +259,13 @@ Mubit → OpenRouter. Its offline fixture is synthetic. A live paired comparison
 and [model selection notes](docs/openrouter.md). For interactive fake-model and
 Mubit rehearsals, see the [testing guide](docs/testing.md).
 
-## Layout
-
-| Component | Location |
-| --- | --- |
-| Shared schemas, v2 extraction contracts | `packages/shared/src` |
-| API, planner, extraction, feedback, workers | `apps/api/src` |
-| Additive database migrations | `apps/api/drizzle` |
-| Next.js desk and extraction panel | `apps/web` |
-| Langflow gateway component and flow provisioning | `workflows/langflow` |
-| Paired benchmark runner | `benchmarks` |
-
 The [integrated plan](docs/extraction-service-plan.md) describes the design.
 The [v2 contract](docs/extraction-contract-v2.md) documents implemented semantics.
 Changes to model prompts/schemas are versioned; queued runs pin their extraction
 task fingerprint, model, rule bundle, and source checksum. Runtime feedback
 rules stay outside frozen system prompts. Local policy learning and Mubit model
 training are separate: no adapter training or promotion is assumed.
+
+<br />
+
+<p align="center"><sub>Built for Night Shift London, October 2026.</sub></p>

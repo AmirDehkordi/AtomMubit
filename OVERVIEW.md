@@ -1,6 +1,10 @@
-# Earnings Desk — Extraction Overview
+# MuTick: extraction design brief
 
 *A model that learns your house rules from reality.*
+
+This is the design brief for MuTick's extraction service, written while the product was called
+Earnings Desk. The service is now implemented (see [Implementation](#implementation) below); the
+[README](README.md) describes the product as it stands.
 
 ## Purpose
 
@@ -53,11 +57,11 @@ The first version runs locally with Docker Compose services for web, API, worker
 
 ## Remaining implementation work
 
-The [test and benchmark plan](docs/test-and-benchmark-plan.md) covers functional behavior and direct-LLM versus Mubit comparisons for latency, accuracy, and cost. A [benchmark report template](docs/benchmark-report.md) is ready for future measurements; no benchmark has been run.
+The [test and benchmark plan](docs/test-and-benchmark-plan.md) covers functional behavior and direct-LLM versus Mubit comparisons for latency, accuracy, and cost. A live paired comparison of latency, accuracy and cost is not measured yet ([report template](docs/benchmark-report.md)). The agent benchmark is in the README's [Results](README.md#results).
 
 The core product choices are settled. Remaining work includes the API contract and data schema, source/rule-conflict handling, automated feedback acceptance criteria, cost limits, and live Mubit/Langflow integration verification.
 
-Source: [Data Extraction Automation Plan — shared chat](https://chatgpt.com/share/6adcd18f-58d0-83ed-b632-6e1c43576814), subsequent product decisions, and the repository's [client extraction contract](docs/extraction-contract.md). The desk application exists; the integrated extraction changes described here remain planned.
+Source: [Data Extraction Automation Plan — shared chat](https://chatgpt.com/share/6adcd18f-58d0-83ed-b632-6e1c43576814), subsequent product decisions, and the repository's [client extraction contract](docs/extraction-contract.md).
 
 ## Implementation
 
