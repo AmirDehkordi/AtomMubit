@@ -7,7 +7,7 @@
 <p><strong>A model that learns your house rules from reality.</strong></p>
 
 <p>
-  <a href="https://mubit.ai"><img alt="Built on Mubit" src="https://img.shields.io/badge/built%20on-Mubit-f2a541?style=flat-square" /></a>
+  <a href="https://mubit.ai"><img alt="Built on Mubit" src="https://img.shields.io/badge/built%20on-Mubit-86b6e5?style=flat-square" /></a>
   <img alt="SEC EDGAR" src="https://img.shields.io/badge/data-SEC%20EDGAR%20%2B%20XBRL-1f2937?style=flat-square" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white" />
   <img alt="NestJS" src="https://img.shields.io/badge/NestJS-11-e0234e?style=flat-square&logo=nestjs&logoColor=white" />
@@ -65,9 +65,13 @@ can train a task-specific model from examples its reviewer accepts.
   </tr>
   <tr>
     <td valign="top"><sub><strong>Across companies.</strong> Each on its own latest fiscal quarter, against the same quarter a year earlier. Answers cite their sources by number.</sub></td>
-    <td valign="top"><sub><strong>Mubit panel.</strong> How far each task has got towards a model of its own, the recorded conversations, extraction runs and the desk's house rules.</sub></td>
+    <td valign="top"><sub><strong>Mubit panel.</strong> How far each task has got towards a model of its own (calls recorded, today's review budget, examples kept), plus the recorded conversations, extraction runs and the desk's house rules.</sub></td>
   </tr>
 </table>
+
+<img src="docs/images/reader.png" alt="Filing reader" width="100%" />
+
+<p align="center"><sub><strong>The filing reader.</strong> Open any filing from the sources menu: its sections on the left, the filing's own text in the middle, and the figures the extraction module read from that section on the right, each with its verifier results. Clicking a figure highlights the line it came from.</sub></p>
 
 <img src="docs/images/empty-desk.png" alt="Empty desk" width="100%" />
 
