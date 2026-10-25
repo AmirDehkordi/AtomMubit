@@ -7,7 +7,8 @@ import type { StreamEvent, ViewSpec } from '@desk/shared';
 import type { ToolTraceEntry } from '../db/schema';
 import type { ToolResult } from './tools.service';
 
-export const MAX_TOOL_ROUNDS = 6;
+// Adding filings, showing a view, then reading figures and text for two quarters takes 7 rounds.
+export const MAX_TOOL_ROUNDS = 8;
 
 export interface AgentDeps {
   /** One model call (through Mubit). */
