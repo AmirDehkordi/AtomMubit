@@ -78,7 +78,7 @@ export function Answer({ text, filings, showSources }: { text: string; filings: 
   const withLinks = text
     .replace(/(\[\[(?:f|b):[^\]]+\]\][ \t]*)+/g, (run) => {
       const ids = [...new Set([...run.matchAll(CITATION)].map((m) => `${m[1]}:${m[2]}`))];
-      return ids.map((k) => `[${k}](cite:${k})`).join('') + (run.endsWith(' ') ? ' ' : '');
+      return ids.map((k) => `[${k}](cite:${k})`).join('') + (/[ \t]$/.test(run) ? ' ' : '');
     });
   return (
     <div>

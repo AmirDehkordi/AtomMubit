@@ -51,7 +51,7 @@ export function FilingReader({
         </div>
         {sections.length === 0 && <p className="text-muted px-1 text-xs">Nothing read yet.</p>}
         <ul className="space-y-0.5">
-          {sections.map((s) => (
+          {sections.map((s, index) => (
             <li key={s.id}>
               <button
                 onClick={() => setChosen(s.id)}
@@ -61,8 +61,10 @@ export function FilingReader({
                 )}
               >
                 <span className="block truncate">
-                  {unnamed(s.item) ? (
-                    `Page ${s.ordinal + 1}`
+                  {untitled(s.title) ? (
+                    `Section ${index + 1}`
+                  ) : unnamed(s.item) ? (
+                    s.title
                   ) : (
                     <>
                       <span className="text-muted">{s.item}</span> {s.title}
@@ -131,7 +133,7 @@ function SectionView({
     if (!data || outlineSections.some((section) => section.id === sectionId)) return;
     // A re-read gives sections new ids; the same position in the filing is the same section.
     const replacement =
-      outlineSections.find((section) => ordinalOf(section.id) === ordinalOf(sectionId) && section.kind === data.section.kind) ??
+      outlineSections.find((section) => place(section.id) !== null && place(section.id) === place(sectionId) && section.kind === data.section.kind) ??
       outlineSections.find((section) => section.item === data.section.item && section.kind === data.section.kind) ??
       outlineSections[0];
     if (replacement) onSelectSection(replacement.id);
@@ -150,11 +152,13 @@ function SectionView({
     <>
       <div ref={textRef} className="min-w-0 flex-1 overflow-y-auto p-5">
         <h3 className="mb-3 font-semibold">
-          {unnamed(data.section.item) ? (
+          {untitled(data.section.title) ? (
             <>
-              Page {(ordinalOf(sectionId) ?? 0) + 1}
+              Section {Math.max(0, outlineSections.findIndex((x) => x.id === sectionId)) + 1}
               {firstLine(data.section.text) && <span className="text-muted font-normal"> · {firstLine(data.section.text)}</span>}
             </>
+          ) : unnamed(data.section.item) ? (
+            data.section.title
           ) : (
             <>
               <span className="text-muted">{data.section.item}</span> {data.section.title}
@@ -286,15 +290,24 @@ function segments(text: string, blocks: ReaderBlock[]): { text: string; block?: 
   return out;
 }
 
-/** Filings without headings are split by position; their sections are all called "Document". */
+/** Sections with no "Item" or "Note" number carry "Document" as their item. */
 function unnamed(item: string): boolean {
   return !item || item === 'Document';
 }
 
-/** Section ids end in their position in the filing: run:doc:ordinal. */
-function ordinalOf(id: string): number | null {
-  const m = /:(\d+)$/.exec(id);
-  return m ? Number(m[1]) : null;
+/** Filings without headings are split by position, and those sections have no title of their own either. */
+function untitled(title: string): boolean {
+  return !title || title === 'Document';
+}
+
+/**
+ * Where a section sits: its document and position, from ids shaped run:document:ordinal. Ordinals
+ * restart for each document (an 8-K's EX-99.1 and EX-99.2), so the document is part of it.
+ * Legacy ids have no place.
+ */
+function place(id: string): string | null {
+  const at = id.indexOf(':');
+  return at > 0 && /:\d+$/.test(id) ? id.slice(at + 1) : null;
 }
 
 /** The first line of real text, for a section that has no title of its own. */
@@ -303,7 +316,10 @@ function firstLine(text: string): string {
   return line.length > 70 ? `${line.slice(0, 69)}…` : line;
 }
 
-/** Layout tables in SEC filings leave rows of bare pipes ("| | |"); they carry no text. */
+/**
+ * Layout tables in SEC filings leave rows of bare pipes ("| | |"); they carry no text. Only whole
+ * lines inside a plain segment are dropped, never the partial lines that touch a highlighted figure.
+ */
 function withoutEmptyRows(text: string): string {
-  return text.replace(/^[ \t]*\|(?:[\s|-]*\|)?[ \t]*$/gm, '').replace(/\n{3,}/g, '\n\n');
+  return text.replace(/(?<=\n)[ \t]*\|(?:[ \t]*\|)*[ \t]*(?=\n)/g, '').replace(/\n{3,}/g, '\n\n');
 }

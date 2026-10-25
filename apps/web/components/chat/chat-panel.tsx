@@ -42,6 +42,9 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
     const m = messages[index];
     return m?.role === 'user' && !!messages[index - 1]?.choice?.options.includes(m.text);
   };
+  // After a card's button press: did the reply actually add the filings?
+  const added = (index: number) =>
+    !!messages[index + 2]?.steps.some((s) => s.tool === 'add_filings' && s.state === 'done');
 
   useEffect(() => {
     const el = scroller.current;
@@ -100,6 +103,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
                 message={m}
                 reply={messages.slice(i + 1).find((x) => x.role === 'user')?.text}
                 pressed={pressed(i)}
+                added={added(i)}
                 filings={filings}
                 isLast={false}
                 animate={!m.restored}
@@ -176,6 +180,7 @@ function Message({
   message,
   reply,
   pressed = false,
+  added = false,
   filings,
   isLast,
   animate,
@@ -188,6 +193,8 @@ function Message({
   reply?: string;
   /** A user message that was a button press on the card before it. */
   pressed?: boolean;
+  /** The reply to this card's button press added the filings. */
+  added?: boolean;
   filings: DeskFiling[];
   isLast: boolean;
   animate: boolean;
@@ -225,12 +232,17 @@ function Message({
         </div>
       )}
 
-      {message.choice && !typing && reply !== undefined && (
+      {/* Answered by a button press: say what happened. A typed reply drops the card, as before. */}
+      {message.choice && !typing && reply !== undefined && message.choice.options.includes(reply) && (
         <motion.div {...fade} className="border-line bg-panel text-muted flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm">
-          <Check className="text-up size-4 shrink-0" />
-          {found && reply === message.choice.options[0]
-            ? `${found.filings.length} filing${found.filings.length === 1 ? '' : 's'} added to the desk`
-            : reply}
+          {added && found ? (
+            <>
+              <Check className="text-up size-4 shrink-0" />
+              {`${found.filings.length} filing${found.filings.length === 1 ? '' : 's'} added to the desk`}
+            </>
+          ) : (
+            <>You chose: {reply}</>
+          )}
         </motion.div>
       )}
 

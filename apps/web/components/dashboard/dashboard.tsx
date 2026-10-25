@@ -48,7 +48,7 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
             >
               {heading}
             </motion.h1>
-            {compare && filings.length === 0 && (
+            {compare && (
               <p className="text-muted mt-0.5 text-xs">
                 <span className="text-text">{metricLabel(compare.metric)}</span> · latest quarter vs a year earlier
               </p>
