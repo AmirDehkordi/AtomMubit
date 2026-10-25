@@ -77,6 +77,7 @@ export class ProjectsService {
         url: filings.url,
         status: filings.status,
         ticker: companies.ticker,
+        company: companies.name,
         fiscalYearEnd: companies.fiscalYearEnd,
       })
       .from(projectFilings)

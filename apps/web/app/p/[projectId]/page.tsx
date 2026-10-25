@@ -10,8 +10,7 @@ import type { StreamEvent } from '@desk/shared';
 import { BrandMark } from '@/components/brand';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { Dashboard } from '@/components/dashboard/dashboard';
-import { ExtractionPanel } from '@/components/extraction-panel';
-import { MubitButton } from '@/components/mubit/mubit-panel';
+import { MubitButton, toolbarButton } from '@/components/mubit/mubit-panel';
 import { API_URL, api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
 
@@ -64,46 +63,41 @@ export default function DeskPage() {
   const title = project.data?.project.title ?? '';
 
   return (
-      <main className="bg-ink flex h-dvh overflow-hidden">
-        {hasTabs && (
-          <motion.section
-            key="dashboard"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease }}
-            className="min-w-0 flex-1"
-          >
-            <Dashboard filings={filings} title={title} projectId={projectId} />
-          </motion.section>
-        )}
-        <aside
-          className={
-            hasTabs
-              ? 'border-line flex h-full w-[460px] shrink-0 flex-col border-l bg-[color-mix(in_oklab,var(--color-panel)_55%,var(--color-ink))]'
-              : 'flex h-full w-full flex-col'
-          }
+    <main className="bg-ink relative flex h-dvh overflow-hidden">
+      {hasTabs && (
+        <motion.section
+          key="dashboard"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, ease }}
+          className="min-w-0 flex-1"
         >
-          <header className="border-line flex items-center gap-3 border-b px-5 py-3.5">
-            <BrandMark />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">MuTick</p>
-              <p className="text-subtle truncate text-xs">{title && title !== 'New desk' ? title : 'SEC filings, read and checked'}</p>
-            </div>
-            <MubitButton />
-            <Link
-              href="/"
-              title="New desk"
-              aria-label="New desk"
-              className="border-line text-muted hover:text-text hover:border-accent/40 grid size-7 place-items-center rounded-lg border transition-colors"
-            >
-              <Plus className="size-3.5" />
-            </Link>
-          </header>
-          <ExtractionPanel projectId={projectId} />
-          <div className="min-h-0 flex-1">
-            <ChatPanel filings={filings} wide={!hasTabs} />
-          </div>
-        </aside>
-      </main>
+          <Dashboard filings={filings} title={title} projectId={projectId} />
+        </motion.section>
+      )}
+      <aside
+        className={
+          hasTabs
+            ? 'edge my-4 mr-4 flex w-[clamp(340px,34vw,460px)] shrink-0 flex-col overflow-hidden rounded-2xl shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.3)]'
+            : 'flex h-full w-full flex-col'
+        }
+      >
+        {/* The chat's own toolbar: who you are talking to, what trains on it, and a fresh desk. */}
+        <header className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-4">
+          <span className="text-muted mr-auto flex items-center gap-2 text-sm font-medium">
+            <BrandMark className="size-6" /> MuTick
+          </span>
+          <MubitButton projectId={projectId} />
+          <Link href="/" title="New desk" aria-label="New desk" className={toolbarButton}>
+            <Plus className="size-4" />
+          </Link>
+        </header>
+        <div className="min-h-0 flex-1">
+          <ChatPanel filings={filings} wide={!hasTabs} />
+        </div>
+      </aside>
+      {/* Fine grain over the whole desk, so the dark panels read as frosted rather than flat. */}
+      <div aria-hidden className="grain pointer-events-none absolute inset-0 z-10" />
+    </main>
   );
 }

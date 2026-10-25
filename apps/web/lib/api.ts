@@ -11,6 +11,8 @@ export interface DeskFiling {
   url: string;
   status: string;
   ticker: string;
+  /** The SEC's name for the company, e.g. NVIDIA CORP. */
+  company: string;
 }
 
 export interface StoredMessage {
@@ -159,6 +161,21 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** A question and answer the chat sent through Mubit, with the calls' request ids. */
+export interface RecordedTurn {
+  question: string;
+  answer: string;
+  at: string;
+  conversationId: string;
+  /** The desk's title, e.g. "NVDA · Q3 FY2026 → Q2 FY2027". */
+  desk: string;
+  /** A replayed public-data question, sent to give Mubit volume. */
+  replay: boolean;
+  /** The question was a button press on the card before it (e.g. "Add all"). */
+  choiceReply: boolean;
+  requestIds: string[];
+}
+
 export const api = {
   createDesk: async (): Promise<{ projectId: string; conversationId: string }> => {
     const res = await fetch(`${API_URL}/conversations`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
@@ -176,6 +193,7 @@ export const api = {
   applyCorrection: (id: string) => post<{ sectionIds: string[] }>(`/corrections/${id}/apply`),
   dismissCorrection: (id: string) => post<{ ok: true }>(`/corrections/${id}/dismiss`),
   mubitStatus: () => get<MubitStatus>('/mubit/status'),
+  mubitRecorded: () => get<RecordedTurn[]>('/mubit/recorded?limit=20'),
   saveConsoleStatus: async (status: Omit<ConsoleStatus, 'updatedAt'>) => {
     const res = await fetch(`${API_URL}/mubit/console-status`, {
       method: 'POST',

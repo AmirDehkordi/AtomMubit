@@ -1,17 +1,20 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-ink: #0a0b0e;
-  --color-panel: #111318;
-  --color-raised: #171a21;
-  --color-line: #22262e;
-  --color-muted: #8a91a0;
-  --color-subtle: #5d6472;
-  --color-text: #eceef3;
-  --color-accent: #f2a541;
-  --color-accent-2: #ff7a59;
-  --color-up: #34c38f;
-  --color-down: #ef6161;
+  --color-ink: #12100f;
+  --color-panel: #181715;
+  --color-raised: #21201d;
+  --color-line: #302d2b;
+  --color-muted: #b4b0ac;
+  --color-subtle: #8f8c88;
+  --color-text: #f0eeeb;
+  --color-accent: #86b6e5;
+  --color-accent-2: #4e77a5;
+  --color-up: #6ad6b0;
+  --color-down: #e87556;
+  --color-series-2: #77716b;
+  --color-baseline: #4a4642;
+  --color-glow: #202f3f;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-face), ui-monospace, monospace;
   --animate-shimmer: shimmer 1.8s linear infinite;
@@ -126,4 +129,39 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 1px 2px rgba(0, 0, 0, 0.3),
     0 12px 32px -18px rgba(0, 0, 0, 0.6);
+}
+
+/* The two gradients. Light comes from above; both stay in one hue. */
+:root {
+  --gradient-hero: radial-gradient(
+    140% 75% at 50% -12%,
+    var(--color-glow) 0%,
+    color-mix(in oklab, var(--color-glow) 40%, var(--color-ink)) 38%,
+    var(--color-ink) 72%
+  );
+  --gradient-edge: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-text) 22%, var(--color-line)) 0%,
+    var(--color-line) 55%,
+    color-mix(in oklab, var(--color-line) 60%, var(--color-ink)) 100%
+  );
+}
+
+/* A 1px border lit from above. Use instead of border-line + bg-panel. */
+.edge {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-panel), var(--color-panel)) padding-box,
+    var(--gradient-edge) border-box;
+}
+form.edge:focus-within {
+  background:
+    linear-gradient(var(--color-panel), var(--color-panel)) padding-box,
+    linear-gradient(180deg, color-mix(in oklab, var(--color-text) 36%, var(--color-line)), color-mix(in oklab, var(--color-text) 14%, var(--color-line))) border-box;
+}
+
+/* Fine grain over the start-screen wash, so the long dark gradient doesn't band. */
+.grain {
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

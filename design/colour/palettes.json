@@ -1,0 +1,254 @@
+[
+  {
+    "id": "current",
+    "name": "Current",
+    "blurb": "What ships today: blue-black, amber accent, amber→orange gradient.",
+    "hex": {
+      "ink": "#0a0b0e",
+      "panel": "#111318",
+      "raised": "#171a21",
+      "line": "#22262e",
+      "muted": "#8a91a0",
+      "subtle": "#5d6472",
+      "text": "#eceef3",
+      "accent": "#f2a541",
+      "accent-2": "#ff7a59",
+      "up": "#34c38f",
+      "down": "#ef6161",
+      "series-2": "#34c38f"
+    },
+    "checks": {
+      "text / panel": 16.006935372568538,
+      "muted / panel": 5.873817019303993,
+      "subtle / panel": 3.124549847119904,
+      "accent / panel": 9.0551060979993,
+      "up / panel": 8.271912765442831,
+      "down / panel": 5.797906735936676,
+      "up / its chip": 6.856940811470482,
+      "down / its chip": 5.059336234910198,
+      "ink / accent (button)": 9.590178321897373,
+      "line / panel": 1.2252224426054636
+    },
+    "cvd": {
+      "normal vision": 30.462542475098363,
+      "deuteranopia": 6.754788402159077,
+      "protanopia": 18.292260967606445,
+      "tritanopia": 35.30339667238312
+    },
+    "cvdHex": {
+      "deuteranopia": [
+        "#ada892",
+        "#a89b5e"
+      ],
+      "protanopia": [
+        "#bfb58c",
+        "#857d60"
+      ],
+      "tritanopia": [
+        "#00c3b5",
+        "#ff4662"
+      ]
+    }
+  },
+  {
+    "id": "ink",
+    "name": "A · Ink",
+    "blurb": "Warm graphite greys and one ink-blue accent: the colour of a pen tick on a printout.",
+    "oklch": {
+      "ink": "0.175 0.004 75",
+      "panel": "0.205 0.004 75",
+      "raised": "0.243 0.005 75",
+      "line": "0.300 0.006 75",
+      "subtle": "0.640 0.007 75",
+      "muted": "0.760 0.007 75",
+      "text": "0.950 0.004 75",
+      "accent": "0.760 0.085 248",
+      "accent-2": "0.560 0.085 252",
+      "up": "0.800 0.115 168",
+      "down": "0.690 0.150 36",
+      "series-2": "0.660 0.012 75",
+      "glow": "0.300 0.035 248"
+    },
+    "hex": {
+      "ink": "#12100f",
+      "panel": "#181715",
+      "raised": "#21201d",
+      "line": "#302d2b",
+      "subtle": "#8f8c88",
+      "muted": "#b4b0ac",
+      "text": "#f0eeeb",
+      "accent": "#86b6e5",
+      "accent-2": "#4e77a5",
+      "up": "#6ad6b0",
+      "down": "#e87556",
+      "series-2": "#97918a",
+      "glow": "#202f3f"
+    },
+    "checks": {
+      "text / panel": 15.470150855935938,
+      "muted / panel": 8.314533539780498,
+      "subtle / panel": 5.352791125499641,
+      "accent / panel": 8.391114103521055,
+      "up / panel": 10.116127986021656,
+      "down / panel": 6.065434115555027,
+      "up / its chip": 7.961558296515483,
+      "down / its chip": 5.162889661051865,
+      "ink / accent (button)": 8.887659281911375,
+      "line / panel": 1.3102549451106456
+    },
+    "cvd": {
+      "normal vision": 26.695534004221226,
+      "deuteranopia": 12.847144017572502,
+      "protanopia": 21.857491911557684,
+      "tritanopia": 33.10863544562012
+    },
+    "cvdHex": {
+      "deuteranopia": [
+        "#c1beb2",
+        "#afa054"
+      ],
+      "protanopia": [
+        "#d1caae",
+        "#938753"
+      ],
+      "tritanopia": [
+        "#40d7cb",
+        "#fd606e"
+      ]
+    }
+  },
+  {
+    "id": "brass",
+    "name": "B · Brass",
+    "blurb": "Keeps a warm accent, but as aged brass on warm stone instead of bright amber on black.",
+    "oklch": {
+      "ink": "0.170 0.006 70",
+      "panel": "0.200 0.006 70",
+      "raised": "0.238 0.007 70",
+      "line": "0.295 0.008 70",
+      "subtle": "0.640 0.010 70",
+      "muted": "0.760 0.010 75",
+      "text": "0.945 0.008 85",
+      "accent": "0.800 0.085 82",
+      "accent-2": "0.620 0.080 70",
+      "up": "0.800 0.115 168",
+      "down": "0.690 0.150 36",
+      "series-2": "0.650 0.014 70",
+      "glow": "0.290 0.030 70"
+    },
+    "hex": {
+      "ink": "#110f0d",
+      "panel": "#181613",
+      "raised": "#211e1b",
+      "line": "#2f2c28",
+      "subtle": "#908b86",
+      "muted": "#b5b0aa",
+      "text": "#efece7",
+      "accent": "#d9b97e",
+      "accent-2": "#a57e4f",
+      "up": "#6ad6b0",
+      "down": "#e87556",
+      "series-2": "#958e86",
+      "glow": "#35291b"
+    },
+    "checks": {
+      "text / panel": 15.324290417824812,
+      "muted / panel": 8.388045628496288,
+      "subtle / panel": 5.350923518653357,
+      "accent / panel": 9.622655884409822,
+      "up / panel": 10.196324770025056,
+      "down / panel": 6.113518551647982,
+      "up / its chip": 8.059474665654706,
+      "down / its chip": 5.2127927960218425,
+      "ink / accent (button)": 10.192577655606636,
+      "line / panel": 1.299891499323139
+    },
+    "cvd": {
+      "normal vision": 26.695534004221226,
+      "deuteranopia": 12.847144017572502,
+      "protanopia": 21.857491911557684,
+      "tritanopia": 33.10863544562012
+    },
+    "cvdHex": {
+      "deuteranopia": [
+        "#c1beb2",
+        "#afa054"
+      ],
+      "protanopia": [
+        "#d1caae",
+        "#938753"
+      ],
+      "tritanopia": [
+        "#40d7cb",
+        "#fd606e"
+      ]
+    }
+  },
+  {
+    "id": "mono",
+    "name": "C · Mono",
+    "blurb": "Near-monochrome cool greys. Colour is kept for data only: up, down and the revenue series.",
+    "oklch": {
+      "ink": "0.165 0.003 255",
+      "panel": "0.195 0.003 255",
+      "raised": "0.233 0.004 255",
+      "line": "0.290 0.005 255",
+      "subtle": "0.640 0.006 255",
+      "muted": "0.760 0.006 255",
+      "text": "0.955 0.003 255",
+      "accent": "0.840 0.025 235",
+      "accent-2": "0.620 0.020 240",
+      "up": "0.800 0.115 168",
+      "down": "0.690 0.150 36",
+      "series-2": "0.580 0.008 255",
+      "glow": "0.270 0.012 255"
+    },
+    "hex": {
+      "ink": "#0d0e10",
+      "panel": "#141516",
+      "raised": "#1c1e1f",
+      "line": "#2a2b2e",
+      "subtle": "#8a8c90",
+      "muted": "#aeb1b5",
+      "text": "#eff0f2",
+      "accent": "#bcced9",
+      "accent-2": "#7c8891",
+      "up": "#6ad6b0",
+      "down": "#e87556",
+      "series-2": "#777b7f",
+      "glow": "#23272c"
+    },
+    "checks": {
+      "text / panel": 16.033782684555952,
+      "muted / panel": 8.493698774923097,
+      "subtle / panel": 5.428027544863476,
+      "accent / panel": 11.290954568595767,
+      "up / panel": 10.324237323343558,
+      "down / panel": 6.190212437468511,
+      "up / its chip": 8.200152186884232,
+      "down / its chip": 5.275038272619209,
+      "ink / accent (button)": 11.92626701551245,
+      "line / panel": 1.2915333923149583
+    },
+    "cvd": {
+      "normal vision": 26.695534004221226,
+      "deuteranopia": 12.847144017572502,
+      "protanopia": 21.857491911557684,
+      "tritanopia": 33.10863544562012
+    },
+    "cvdHex": {
+      "deuteranopia": [
+        "#c1beb2",
+        "#afa054"
+      ],
+      "protanopia": [
+        "#d1caae",
+        "#938753"
+      ],
+      "tritanopia": [
+        "#40d7cb",
+        "#fd606e"
+      ]
+    }
+  }
+]

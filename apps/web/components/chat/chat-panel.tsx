@@ -9,6 +9,7 @@ import { useActiveView, useDesk, type ChatMessage, type Step } from '@/lib/desk-
 import { suggestions } from '@/lib/suggestions';
 import { Answer, plainAnswer, useReveal } from './answer';
 import { Composer } from './composer';
+import { MubitReceipt } from '../mubit/mubit-receipt';
 
 /** How far from the bottom (px) before the jump-to-latest button shows. */
 const STICK_THRESHOLD = 120;
@@ -36,6 +37,14 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
   const earlier = lastUser > 0 ? messages.slice(0, lastUser) : lastUser === 0 ? [] : messages;
   const turn = lastUser >= 0 ? messages.slice(lastUser) : [];
   const live = turn.length > 0 && !turn[0]!.restored;
+  // A button press on a card ("Add all") isn't shown as a bubble: the card above shows the answer.
+  const pressed = (index: number) => {
+    const m = messages[index];
+    return m?.role === 'user' && !!messages[index - 1]?.choice?.options.includes(m.text);
+  };
+  // After a card's button press: did the reply actually add the filings?
+  const added = (index: number) =>
+    !!messages[index + 2]?.steps.some((s) => s.tool === 'add_filings' && s.state === 'done');
 
   useEffect(() => {
     const el = scroller.current;
@@ -81,13 +90,20 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="min-h-0 flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_32px)]"
+      >
         <div className={cn(column, 'pt-6 pb-8')}>
           <div className="space-y-7">
-            {earlier.map((m) => (
+            {earlier.map((m, i) => (
               <Message
                 key={m.id}
                 message={m}
+                reply={messages.slice(i + 1).find((x) => x.role === 'user')?.text}
+                pressed={pressed(i)}
+                added={added(i)}
                 filings={filings}
                 isLast={false}
                 animate={!m.restored}
@@ -107,6 +123,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
                 <Message
                   key={m.id}
                   message={m}
+                  pressed={pressed(lastUser + i)}
                   filings={filings}
                   isLast={i === turn.length - 1}
                   animate={!m.restored}
@@ -161,6 +178,9 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
 
 function Message({
   message,
+  reply,
+  pressed = false,
+  added = false,
   filings,
   isLast,
   animate,
@@ -169,6 +189,12 @@ function Message({
   onRetry,
 }: {
   message: ChatMessage;
+  /** What you answered, once a choice has been answered. */
+  reply?: string;
+  /** A user message that was a button press on the card before it. */
+  pressed?: boolean;
+  /** The reply to this card's button press added the filings. */
+  added?: boolean;
   filings: DeskFiling[];
   isLast: boolean;
   animate: boolean;
@@ -180,9 +206,10 @@ function Message({
   const typing = text.length < message.text.length;
 
   if (message.role === 'user') {
+    if (pressed) return null;
     return (
       <motion.div {...(animate ? fade : {})} className="flex justify-end">
-        <div className="bg-raised border-line max-w-[85%] rounded-[20px] border px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">
+        <div className="bg-raised max-w-[85%] rounded-[20px] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
           {message.text}
         </div>
       </motion.div>
@@ -205,7 +232,21 @@ function Message({
         </div>
       )}
 
-      {message.choice && !typing && (
+      {/* Answered by a button press: say what happened. A typed reply drops the card, as before. */}
+      {message.choice && !typing && reply !== undefined && message.choice.options.includes(reply) && (
+        <motion.div {...fade} className="border-line bg-panel text-muted flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm">
+          {added && found ? (
+            <>
+              <Check className="text-up size-4 shrink-0" />
+              {`${found.filings.length} filing${found.filings.length === 1 ? '' : 's'} added to the desk`}
+            </>
+          ) : (
+            <>You chose: {reply}</>
+          )}
+        </motion.div>
+      )}
+
+      {message.choice && !typing && reply === undefined && (
         <motion.div {...fade} className="border-line bg-panel overflow-hidden rounded-2xl border">
           <p className="px-4 pt-3.5 pb-3 text-[15px] leading-relaxed">{message.choice.question}</p>
           {found && <FilingCards filings={found.filings} />}
@@ -242,6 +283,7 @@ function Message({
       )}
 
       {message.text && !message.pending && !typing && <Actions text={message.text} canRetry={isLast} onRetry={onRetry} visible={isLast} />}
+      {!message.pending && !typing && message.mubitCalls && <MubitReceipt calls={message.mubitCalls} />}
     </motion.div>
   );
 }

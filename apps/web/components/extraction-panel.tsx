@@ -35,6 +35,16 @@ function isActive(data: DataResponse) {
   return states.some((state) => ['queued', 'running', 'processing', 'evaluating'].includes(state));
 }
 
+/** "needs_review" → "Needs review". */
+const stateLabel = (state: string) => state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, ' ');
+
+const field = 'bg-raised placeholder:text-subtle min-w-0 rounded-lg px-3 py-2 text-xs outline-none focus-visible:ring-1 focus-visible:ring-[color-mix(in_oklab,var(--color-text)_25%,transparent)]';
+const quietButton = 'bg-raised hover:text-text text-muted rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-50';
+
+/**
+ * Extraction runs for this desk: upload a filing or ask for facts, see what each run found, and
+ * correct it. Corrections become desk rules, which is what Mubit learns from. Shown in the Mubit panel.
+ */
 export function ExtractionPanel({ projectId }: { projectId: string }) {
   const [data, setData] = useState<DataResponse>({});
   const [prompt, setPrompt] = useState('');
@@ -133,49 +143,50 @@ export function ExtractionPanel({ projectId }: { projectId: string }) {
   }), 'Feedback submitted');
 
   return (
-    <section className="border-line border-b px-4 py-3">
-      <details>
-        <summary className="cursor-pointer select-none text-sm font-medium">Document extraction <span className="text-muted ml-1 text-xs">{data.requests?.length ?? 0} requests · {data.runs?.length ?? 0} runs</span></summary>
-        <div className="mt-3 space-y-3 text-sm">
+    <div>
+        <p className="text-muted mb-3 text-xs">
+          {data.requests?.length ?? 0} request{data.requests?.length === 1 ? '' : 's'} · {data.runs?.length ?? 0} run{data.runs?.length === 1 ? '' : 's'} on this desk
+        </p>
+        <div className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-2">
-            <input aria-label="Company ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="Ticker (optional)" className="border-line bg-panel min-w-0 rounded border px-2 py-2 text-xs" />
-            <label className="border-line bg-panel flex cursor-pointer items-center overflow-hidden rounded border px-2 py-2 text-xs">
+            <input aria-label="Company ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="Ticker (optional)" className={field} />
+            <label className="bg-raised hover:text-text flex cursor-pointer items-center overflow-hidden rounded-lg px-3 py-2 text-xs transition-colors">
               <span className="text-muted truncate">{file?.name ?? 'Choose HTML / TXT / PDF'}</span>
               <input aria-label="Upload source document" type="file" accept=".html,.htm,.txt,.pdf,text/html,text/plain,application/pdf" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             </label>
           </div>
-          <button disabled={busy || !file} onClick={() => void upload()} className="border-line hover:bg-panel rounded border px-3 py-2 text-xs disabled:opacity-50">Upload and extract</button>
-          <textarea aria-label="Extraction request" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Ask for facts, e.g. extract revenue and diluted EPS for the latest quarter" rows={2} className="border-line bg-panel w-full resize-y rounded border px-3 py-2 text-xs" />
-          <button disabled={busy || !prompt.trim()} onClick={() => void submitRequest()} className="bg-accent rounded px-3 py-2 text-xs font-medium text-black disabled:opacity-50">Submit extraction request</button>
-          <p className="text-muted text-[11px]">PDF support is for text-based documents. Scanned PDFs need OCR and are reported as unsupported.</p>
+          <button disabled={busy || !file} onClick={() => void upload()} className={quietButton}>Upload and extract</button>
+          <textarea aria-label="Extraction request" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Ask for facts, e.g. extract revenue and diluted EPS for the latest quarter" rows={2} className={`${field} w-full resize-y`} />
+          <button disabled={busy || !prompt.trim()} onClick={() => void submitRequest()} className="bg-accent text-ink rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50">Submit extraction request</button>
+          <p className="text-subtle text-[11px]">Text-based PDFs only. Scanned PDFs need OCR and show as unsupported.</p>
           {(notice || error) && <p role="status" className={error ? 'text-down break-words text-xs' : 'text-up break-words text-xs'}>{error || notice}</p>}
 
           <div className="space-y-2">
-            {(data.requests ?? []).map((item) => {
+            {(data.requests ?? []).map((item, i) => {
               const state = item.state ?? item.status ?? 'submitted';
               const alreadyAnswered = (data.requests ?? []).some((candidate) => candidate.parentId === item.id);
-              return <article key={item.id} className="border-line bg-panel rounded border p-3">
-                <div className="flex justify-between gap-2 text-xs"><span>Request {item.id.slice(0, 8)}</span><span className="text-muted">{state}</span></div>
+              return <article key={item.id} title={item.id} className="bg-panel rounded-xl p-3">
+                <div className="flex justify-between gap-2 text-xs"><span>Request {i + 1}</span><span className="text-muted">{stateLabel(state)}</span></div>
                 {item.text && <p className="mt-1 text-xs">{item.text}</p>}
                 {item.error && <p className="text-down mt-1 break-words text-xs">{item.error}</p>}
                 {state === 'needs_clarification' && item.question && <div className="mt-2">
                   <p className="text-accent text-xs">{item.question}</p>
                   {alreadyAnswered ? <p className="text-muted mt-2 text-xs">A clarification response is already being processed.</p> : <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); submitClarification(item.id); }}>
-                    <input aria-label="Clarification answer" value={answerRequest === item.id ? clarificationAnswer : ''} onFocus={() => setAnswerRequest(item.id)} onChange={(e) => { setAnswerRequest(item.id); setClarificationAnswer(e.target.value); }} placeholder="Answer the clarification" className="border-line bg-ink min-w-0 flex-1 rounded border px-2 py-2 text-xs" />
-                    <button disabled={busy || answerRequest !== item.id || !clarificationAnswer.trim()} className="border-line rounded border px-2 py-1 text-xs disabled:opacity-50">Send</button>
+                    <input aria-label="Clarification answer" value={answerRequest === item.id ? clarificationAnswer : ''} onFocus={() => setAnswerRequest(item.id)} onChange={(e) => { setAnswerRequest(item.id); setClarificationAnswer(e.target.value); }} placeholder="Answer the clarification" className={`${field} flex-1`} />
+                    <button disabled={busy || answerRequest !== item.id || !clarificationAnswer.trim()} className={quietButton}>Send</button>
                   </form>}
                 </div>}
               </article>;
             })}
-            {(data.feedback ?? []).map((item) => <article key={item.id} className="border-line bg-panel rounded border p-3 text-xs">
-              <div className="flex justify-between gap-2"><span>Feedback {item.id.slice(0, 8)}</span><span className="text-muted">{item.state ?? item.status ?? 'submitted'}</span></div>
+            {(data.feedback ?? []).map((item, i) => <article key={item.id} title={item.id} className="bg-panel rounded-xl p-3 text-xs">
+              <div className="flex justify-between gap-2"><span>Correction {i + 1}</span><span className="text-muted">{stateLabel(item.state ?? item.status ?? 'submitted')}</span></div>
               {item.text && <p className="mt-1">{item.text}</p>}
               {item.decision?.reason && <p className="text-muted mt-1">{item.decision.reason}</p>}
               {item.decision?.ruleVersion != null && <p className="text-muted mt-1">Rule version {item.decision.ruleVersion}</p>}
             </article>)}
-            {(data.runs ?? []).map((run) => (
-              <article key={run.id} className="border-line bg-panel rounded border p-3">
-                <div className="flex items-center justify-between gap-2"><strong className="text-xs">Run {run.id.slice(0, 8)}</strong><span className="text-muted text-[11px]">{run.state}</span></div>
+            {(data.runs ?? []).map((run, i) => (
+              <article key={run.id} title={run.id} className="bg-panel rounded-xl p-3">
+                <div className="flex items-center justify-between gap-2"><strong className="text-xs font-medium">Run {i + 1}</strong><span className="text-muted text-[11px]">{stateLabel(run.state)}</span></div>
                 {run.error && <p className="text-down mt-2 break-words text-xs">{run.error}</p>}
                 {!!run.output?.facts?.length && <ul className="mt-2 space-y-2">
                   {run.output.facts.map((entry) => {
@@ -184,28 +195,27 @@ export function ExtractionPanel({ projectId }: { projectId: string }) {
                       ? `${fact.range.low.toLocaleString()}–${fact.range.high.toLocaleString()}`
                       : fact.value?.toLocaleString() ?? 'Missing';
                     const printed = `${fact.currency ? `${fact.currency} ` : ''}${printedValue}${fact.unit ? ` ${fact.unit}` : ''}${fact.scale && fact.scale !== 'units' ? ` (${fact.scale})` : ''}`;
-                    return <li key={entry.id} className="border-line border-t pt-2">
+                    return <li key={entry.id} className="pt-2 first:pt-0">
                       <div className="flex justify-between gap-2"><span>{fact.label || fact.key}</span><span className="font-medium">{printed}</span></div>
-                      <div className="text-muted mt-1 text-[11px]">{entry.supported ? entry.status : 'Needs review · unsupported'}{fact.period ? ` · ${fact.period.months} months to ${fact.period.end}` : ''}</div>
+                      <div className="text-muted mt-1 text-[11px]">{entry.supported ? stateLabel(entry.status) : 'Needs review · unsupported'}{fact.period ? ` · ${fact.period.months} months to ${fact.period.end}` : ''}</div>
                       {entry.normalized?.value != null && <p className="text-muted mt-1 text-xs">Normalized: {entry.normalized.currency} {entry.normalized.value.toLocaleString()} {entry.normalized.scale}</p>}
                       {fact.missingReason && <p className="text-muted mt-1 text-xs">{fact.missingReason}</p>}
-                      {fact.quote && <blockquote className="text-muted mt-1 border-l-2 border-line pl-2 text-xs">“{fact.quote}”</blockquote>}
-                      {entry.span && <p className="text-muted mt-1 text-[10px]">Evidence offsets: {entry.span.start}–{entry.span.end} ({entry.span.offsetUnit})</p>}
+                      {fact.quote && <blockquote className="text-muted bg-raised/60 mt-1 rounded-md px-2 py-1 text-xs">“{fact.quote}”</blockquote>}
+                      {entry.span && <p className="text-subtle mt-1 text-[10px]" title={`Characters ${entry.span.start}–${entry.span.end} (${entry.span.offsetUnit})`}>Quoted from the filing</p>}
                       {!entry.supported && entry.checks.length > 0 && <ul className="text-muted mt-1 list-disc pl-4 text-[10px]">{entry.checks.filter((check) => check.outcome !== 'pass').map((check, i) => <li key={`${check.verifier}-${i}`}>{check.verifier}: {check.detail}</li>)}</ul>}
                     </li>;
                   })}
                 </ul>}
                 {run.output?.missingFields?.length ? <p className="text-muted mt-2 text-xs">Missing fields: {run.output.missingFields.join(', ')}</p> : null}
-                <details className="text-muted mt-2"><summary className="cursor-pointer text-xs">Provide feedback on this run</summary>
-                  <textarea value={feedbackRun === run.id ? feedbackText : ''} onFocus={() => setFeedbackRun(run.id)} onChange={(e) => { setFeedbackRun(run.id); setFeedbackText(e.target.value); }} rows={2} placeholder="What should be corrected?" className="border-line bg-ink mt-2 w-full rounded border px-2 py-2 text-xs" />
-                  <button disabled={busy || feedbackRun !== run.id || !feedbackText.trim()} onClick={() => void submitFeedback()} className="border-line mt-2 rounded border px-2 py-1 text-xs disabled:opacity-50">Send feedback</button>
+                <details className="text-muted mt-2"><summary className="hover:text-text cursor-pointer text-xs transition-colors">Correct this run</summary>
+                  <textarea value={feedbackRun === run.id ? feedbackText : ''} onFocus={() => setFeedbackRun(run.id)} onChange={(e) => { setFeedbackRun(run.id); setFeedbackText(e.target.value); }} rows={2} placeholder="What should be corrected?" className={`${field} mt-2 w-full`} />
+                  <button disabled={busy || feedbackRun !== run.id || !feedbackText.trim()} onClick={() => void submitFeedback()} className={`${quietButton} mt-2`}>Send correction</button>
                 </details>
               </article>
             ))}
             {!(data.runs?.length) && <p className="text-muted text-xs">No extraction runs yet.</p>}
           </div>
         </div>
-      </details>
-    </section>
+    </div>
   );
 }

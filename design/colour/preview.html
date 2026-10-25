@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MuTick Colour Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{color-scheme:dark}
+[hidden]{display:none!important}
+body{background:#0b0b0c;color:#e8e8e8;font:14px/1.45 Inter,ui-sans-serif,system-ui,sans-serif;font-feature-settings:'cv11','ss01'}
+.page{padding:24px 16px 64px;max-width:1520px;margin:0 auto}
+.page>header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page h2{font-size:15px;font-weight:600}
+.page .note{color:#9a9a9a;font-size:12px;max-width:640px}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid #2a2a2c;border-radius:10px}
+.seg button{background:none;border:0;color:#9a9a9a;font:inherit;font-size:12px;padding:5px 10px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed=true]{background:#232325;color:#eee}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,720px),1fr));gap:28px 20px}
+.option h3{font-size:13px;font-weight:600;margin-bottom:2px}
+.option .blurb{color:#9a9a9a;font-size:12px;margin-bottom:10px}
+.viewport{width:100%;aspect-ratio:1440/900;overflow:hidden;border-radius:10px;border:1px solid #2a2a2c;position:relative}
+.frame{width:1440px;height:900px;transform-origin:0 0;position:absolute;top:0;left:0}
+.info{margin-top:10px;display:grid;gap:8px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:4px 8px}
+.sw{display:grid;grid-template-columns:14px 1fr;column-gap:6px;font-size:11px;align-items:center}
+.sw i{grid-row:span 2;width:14px;height:24px;border-radius:3px;border:1px solid #ffffff1a}
+.sw code{color:#8a8a8a;font-size:10px}
+.checks{border-collapse:collapse;font-size:11px;width:100%}
+.checks th{color:#8a8a8a;font-weight:500;text-align:left;padding:2px 6px 2px 0}
+.checks td{padding:2px 6px 2px 0;font-variant-numeric:tabular-nums}
+.ok{color:#8fd19e}.bad{color:#ff9a8a}
+body.bare{background:#000}
+body.bare .page{padding:0;max-width:none}
+body.bare .page>header,body.bare .option h3,body.bare .option .blurb,body.bare .info{display:none}
+body.bare .viewport{border:0;border-radius:0;width:1440px}
+
+/* ---- the mock: everything below reads only palette variables ---- */
+.frame{background:var(--ink);color:var(--text);font-size:14px}
+.ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ic.up{color:var(--up)}
+.mark{width:18px;height:18px}
+.muted{color:var(--muted)}.subtle{color:var(--subtle)}.text{color:var(--text)}.accent{color:var(--accent)}
+.small{font-size:12px;font-weight:500}.small13{font-size:13px}.strong{font-weight:600}.tiny{font-size:10px}.tiny-12{font-size:12px;margin-bottom:12px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.row{display:flex;align-items:center;justify-content:space-between}.row.end{justify-content:flex-end}
+.surface{background:linear-gradient(180deg,color-mix(in oklab,var(--raised) 70%,transparent),var(--panel));border:1px solid var(--line);border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 1px 2px rgba(0,0,0,.3),0 12px 32px -18px rgba(0,0,0,.6)}
+.edge{border:1px solid transparent;background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--edge) border-box}
+.delta{display:inline-flex;align-items:center;gap:2px;border-radius:999px;padding:2px 6px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.delta .ic{width:12px;height:12px;stroke-width:2.5}
+.delta.is-up{color:var(--up);background:color-mix(in oklab,var(--up) 12%,transparent)}
+.delta.is-down{color:var(--down);background:color-mix(in oklab,var(--down) 12%,transparent)}
+.neg{color:var(--down)}
+
+.desk{position:relative;height:100%;display:flex}
+.dash{position:relative;flex:1;padding:18px 448px 0 32px;overflow:hidden}
+.dash::before{content:'';position:absolute;inset:0 0 auto 0;height:256px;background:var(--dash-wash);pointer-events:none}
+.dash>*{position:relative}
+.title-row{display:flex;gap:16px;align-items:flex-start}
+.mono-tile{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--tile);color:var(--tile-text);font-size:12px;font-weight:700;letter-spacing:-.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);border:1px solid var(--line)}
+.dash h1{font-size:22px;line-height:1.2;font-weight:600;letter-spacing:-.02em}
+.period{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:4px}
+.inline{display:inline-flex;gap:6px;align-items:center}
+.strip{display:flex;gap:6px;margin:16px 0 22px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 6px;font-size:11px;background:color-mix(in oklab,var(--panel) 80%,transparent)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{padding:20px}
+.kpi-value{margin-top:12px;font-size:28px;line-height:1;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.spark{width:80px;height:32px;margin-top:14px}
+.card-chart{padding:20px;margin-bottom:16px}
+.legend{display:flex;gap:16px;font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:8px;height:8px;border-radius:99px}
+.chart{width:100%;height:auto;margin-top:14px;display:block}
+.axis{fill:var(--subtle);font-size:11px;font-family:inherit}
+.table-card{overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+thead tr{border-bottom:1px solid var(--line)}
+th{padding:12px 16px;text-align:right;font-weight:500}
+th.lbl{color:var(--subtle);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:left;padding-left:20px}th.lbl.r{text-align:right}
+td{padding:9px 16px}td:first-child{padding-left:20px}
+td.num{text-align:right}
+.latest{background:color-mix(in oklab,var(--accent) 6%,transparent)}
+td.group{color:var(--subtle);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding-top:14px;padding-bottom:4px}
+
+.chat{position:absolute;top:16px;right:16px;bottom:16px;width:400px;border-radius:20px;display:flex;flex-direction:column;box-shadow:0 24px 60px -24px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.3)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
+.brand{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;font-weight:500}
+.tools{display:flex;gap:6px}
+.sq{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted)}
+.thread{flex:1;padding:22px 20px;display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.bubble{align-self:flex-end;max-width:85%;background:var(--raised);color:var(--text);padding:9px 14px;border-radius:16px 16px 4px 16px}
+.answer{color:color-mix(in oklab,var(--text) 88%,var(--muted));line-height:1.6}
+.answer strong{color:var(--text);font-weight:600}
+.answer ul{list-style:none;margin-top:10px}
+.answer li{position:relative;padding-left:16px}.answer li+li{margin-top:5px}
+.answer li::before{content:'';position:absolute;left:3px;top:.65em;width:5px;height:5px;border-radius:99px;background:var(--accent)}
+.cite-row{display:flex;gap:10px;align-items:center;margin-top:12px}
+.cite{font-size:11px;border-radius:6px;padding:2px 7px;background:var(--raised);color:var(--muted)}
+.lbl.ask{color:var(--subtle);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:-12px}
+.next{display:flex;gap:8px;flex-wrap:wrap}.next span{border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:5px 12px;font-size:13px}
+.composer{margin:0 12px 12px;border-radius:16px;padding:14px 12px 12px 16px;display:flex;justify-content:space-between;align-items:flex-end;min-height:88px}
+.send{display:grid;place-items:center;width:32px;height:32px;border-radius:99px;background:var(--text);color:var(--ink)}
+.send .ic{width:16px;height:16px;stroke-width:2.5}
+
+.start{position:relative;height:100%;display:grid;place-items:center;background:var(--hero-bg);overflow:hidden}
+.grain{position:absolute;inset:0;opacity:var(--grain);pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.top{position:absolute;inset:0 0 auto 0;display:flex;justify-content:space-between;align-items:center;padding:16px 24px}
+.hero{position:relative;width:672px}
+.hero h1{text-align:center;font-size:44px;line-height:1.05;font-weight:600;letter-spacing:-.03em;margin-bottom:12px}
+.hero-2{background:var(--hero-2);-webkit-background-clip:text;background-clip:text;color:var(--hero-2-color)}
+.lead{text-align:center;font-size:15px;line-height:1.6;max-width:512px;margin:0 auto 36px}
+.composer.big{margin:0;min-height:112px;font-size:15px;padding:18px 14px 14px 20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.8)}
+.examples{display:flex;justify-content:center;gap:8px;margin-top:20px}
+.examples span{border:1px solid var(--line);background:color-mix(in oklab,var(--panel) 70%,transparent);color:var(--muted);border-radius:12px;padding:8px 14px;font-size:14px}
+</style></head>
+<body>
+<div class="page">
+  <header>
+    <div><h2>MuTick colour options</h2><p class="note">Static mock. Same layout in every frame; only colour tokens and the gradient rules change. Figures are illustrative. Contrast is WCAG 2.x against <code>panel</code>; green numbers pass AA. "Deutan ΔE" is how far apart up and down stay for deuteranopia (higher is better; today is 6.8).</p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="seg" id="view"><button data-v="desk" aria-pressed="true">Desk</button><button data-v="start" aria-pressed="false">Start screen</button></div>
+      <div class="seg" id="pick"><button data-p="all" aria-pressed="true">All</button><button data-p="current" aria-pressed="false">Current</button><button data-p="ink" aria-pressed="false">A · Ink</button><button data-p="brass" aria-pressed="false">B · Brass</button><button data-p="mono" aria-pressed="false">C · Mono</button></div>
+    </div>
+  </header>
+  <div class="grid" id="desk">
+  <section class="option" data-id="current">
+    <h3>Current</h3><p class="blurb">What ships today: blue-black, amber accent, amber→orange gradient.</p>
+    <div class="viewport"><div class="frame" style="--ink:#0a0b0e;--panel:#111318;--raised:#171a21;--line:#22262e;--muted:#8a91a0;--subtle:#5d6472;--text:#eceef3;--accent:#f2a541;--accent-2:#ff7a59;--up:#34c38f;--down:#ef6161;--bar-1-top:#f2a541;--bar-1-bottom:color-mix(in oklab, #ff7a59 60%, transparent);--bar-2-top:#34c38f;--bar-2-bottom:color-mix(in oklab, #34c38f 45%, transparent);--edge:linear-gradient(#22262e, #22262e);--hero-bg:radial-gradient(410px 260px at 50% 4%, color-mix(in oklab, #f2a541 22%, transparent), transparent 70%), linear-gradient(color-mix(in oklab, #22262e 40%, #0a0b0e) 1px, transparent 1px) 0 0/48px 48px, linear-gradient(90deg, color-mix(in oklab, #22262e 40%, #0a0b0e) 1px, transparent 1px) 0 0/48px 48px, #0a0b0e;--hero-2:linear-gradient(90deg, #f2a541, #ff7a59);--hero-2-color:transparent;--dash-wash:radial-gradient(ellipse at top left, color-mix(in oklab, #f2a541 9%, transparent), transparent 60%);--tile:linear-gradient(135deg, #76b900, #3d7a00);--tile-text:#fff;--grain:0;">
+  <div class="desk">
+    <div class="dash">
+      <header>
+        <div class="title-row">
+          <span class="mono-tile">NVDA</span>
+          <div>
+            <h1>NVIDIA</h1>
+            <p class="muted period"><span class="text">Q3 FY25 – Q3 FY26</span><span class="subtle">·</span><span class="inline"><svg viewBox="0 0 24 24" class="ic up"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg> Checked against SEC XBRL</span></p>
+          </div>
+        </div>
+        <div class="strip"><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q4 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q1 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q2 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY26</span></span></div>
+      </header>
+      <p class="muted tiny-12">Change vs Q2 FY26</p>
+      <div class="kpis">
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Revenue</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></div>
+      <p class="kpi-value">$57.0B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="current-s0" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0 L100,32 L0,32 Z" fill="url(#current-s0)"/><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Net income</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></div>
+      <p class="kpi-value">$31.9B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="current-s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0 L100,32 L0,32 Z" fill="url(#current-s1)"/><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Gross margin</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></div>
+      <p class="kpi-value">73.4%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="current-s2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2 L100,32 L0,32 Z" fill="url(#current-s2)"/><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Operating margin</p><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.4pp</span></div>
+      <p class="kpi-value">63.2%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="current-s3" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7 L100,32 L0,32 Z" fill="url(#current-s3)"/><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div></div>
+      <div class="surface card-chart">
+        <div class="row"><p class="strong small13">Revenue and net income</p>
+          <div class="legend muted"><span><i style="background:var(--bar-1-top)"></i>Revenue</span><span><i style="background:var(--bar-2-top)"></i>Net income</span></div></div>
+        <svg viewBox="0 0 880 230" class="chart"><defs>
+    <linearGradient id="current-c-r" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-1-top)"/><stop offset="100%" style="stop-color:var(--bar-1-bottom)"/></linearGradient>
+    <linearGradient id="current-c-n" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-2-top)"/><stop offset="100%" style="stop-color:var(--bar-2-bottom)"/></linearGradient></defs><line x1="56" x2="880" y1="206" y2="206" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="210" text-anchor="end" class="axis">$0B</text><line x1="56" x2="880" y1="156" y2="156" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="160" text-anchor="end" class="axis">$15B</text><line x1="56" x2="880" y1="106" y2="106" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="110" text-anchor="end" class="axis">$30B</text><line x1="56" x2="880" y1="56" y2="56" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="60" text-anchor="end" class="axis">$45B</text><line x1="56" x2="880" y1="6" y2="6" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="10" text-anchor="end" class="axis">$60B</text><path d="M91.4,206 V95.99999999999999 Q91.4,88.99999999999999 98.4,88.99999999999999 H128.4 Q135.4,88.99999999999999 135.4,95.99999999999999 V206 Z" fill="url(#current-c-r)"/><path d="M141.4,206 V148.66666666666669 Q141.4,141.66666666666669 148.4,141.66666666666669 H178.4 Q185.4,141.66666666666669 185.4,148.66666666666669 V206 Z" fill="url(#current-c-n)"/><text x="138.4" y="226" text-anchor="middle" class="axis">Q3 FY25</text><path d="M256.20000000000005,206 V82.00000000000003 Q256.20000000000005,75.00000000000003 263.20000000000005,75.00000000000003 H293.20000000000005 Q300.20000000000005,75.00000000000003 300.20000000000005,82.00000000000003 V206 Z" fill="url(#current-c-r)"/><path d="M306.20000000000005,206 V139.33333333333331 Q306.20000000000005,132.33333333333331 313.20000000000005,132.33333333333331 H343.20000000000005 Q350.20000000000005,132.33333333333331 350.20000000000005,139.33333333333331 V206 Z" fill="url(#current-c-n)"/><text x="303.20000000000005" y="226" text-anchor="middle" class="axis">Q4 FY25</text><path d="M421,206 V66 Q421,59 428,59 H458 Q465,59 465,66 V206 Z" fill="url(#current-c-r)"/><path d="M471,206 V150.33333333333331 Q471,143.33333333333331 478,143.33333333333331 H508 Q515,143.33333333333331 515,150.33333333333331 V206 Z" fill="url(#current-c-n)"/><text x="468" y="226" text-anchor="middle" class="axis">Q1 FY26</text><path d="M585.8000000000001,206 V57.333333333333314 Q585.8000000000001,50.333333333333314 592.8000000000001,50.333333333333314 H622.8000000000001 Q629.8000000000001,50.333333333333314 629.8000000000001,57.333333333333314 V206 Z" fill="url(#current-c-r)"/><path d="M635.8000000000001,206 V125 Q635.8000000000001,118 642.8000000000001,118 H672.8000000000001 Q679.8000000000001,118 679.8000000000001,125 V206 Z" fill="url(#current-c-n)"/><text x="632.8000000000001" y="226" text-anchor="middle" class="axis">Q2 FY26</text><path d="M750.6,206 V23 Q750.6,16 757.6,16 H787.6 Q794.6,16 794.6,23 V206 Z" fill="url(#current-c-r)"/><path d="M800.6,206 V106.66666666666667 Q800.6,99.66666666666667 807.6,99.66666666666667 H837.6 Q844.6,99.66666666666667 844.6,106.66666666666667 V206 Z" fill="url(#current-c-n)"/><text x="797.6" y="226" text-anchor="middle" class="axis">Q3 FY26</text></svg>
+      </div>
+      <div class="surface table-card">
+        <table><thead><tr><th class="lbl">Metric</th><th class=""><div class="">Q3 FY25</div><div class="mono subtle tiny">2024-10-27</div></th><th class=""><div class="">Q4 FY25</div><div class="mono subtle tiny">2025-01-26</div></th><th class=""><div class="">Q1 FY26</div><div class="mono subtle tiny">2025-04-27</div></th><th class=""><div class="">Q2 FY26</div><div class="mono subtle tiny">2025-07-27</div></th><th class="latest"><div class="accent">Q3 FY26</div><div class="mono subtle tiny">2025-10-26</div></th><th class="lbl r">Q/Q</th></tr></thead><tbody><tr><td colspan="7" class="group">Income statement</td></tr><tr><td class="muted">Revenue</td><td class="num ">$35.1B</td><td class="num ">$39.3B</td><td class="num ">$44.1B</td><td class="num ">$46.7B</td><td class="num latest strong">$57.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></td></tr><tr><td class="muted">Gross profit</td><td class="num ">$26.2B</td><td class="num ">$28.7B</td><td class="num ">$26.7B</td><td class="num ">$33.9B</td><td class="num latest strong">$41.8B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+23.6%</span></td></tr><tr><td class="muted">Operating income</td><td class="num ">$21.9B</td><td class="num ">$24.0B</td><td class="num ">$21.6B</td><td class="num ">$28.4B</td><td class="num latest strong">$36.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+26.6%</span></td></tr><tr><td class="muted">Net income</td><td class="num ">$19.3B</td><td class="num ">$22.1B</td><td class="num ">$18.8B</td><td class="num ">$26.4B</td><td class="num latest strong">$31.9B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></td></tr><tr><td class="muted">Diluted shares</td><td class="num ">24.77B</td><td class="num ">24.71B</td><td class="num ">24.61B</td><td class="num ">24.53B</td><td class="num latest strong">24.46B</td><td class="num"><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.3%</span></td></tr><tr><td colspan="7" class="group">Margins</td></tr><tr><td class="muted">Gross margin</td><td class="num ">74.6%</td><td class="num ">73.0%</td><td class="num ">60.5%</td><td class="num ">72.4%</td><td class="num latest strong">73.4%</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></td></tr></tbody></table>
+      </div>
+    </div>
+    <aside class="chat edge">
+      <div class="toolbar">
+        <span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="current-m1"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#current-m1)"/></svg>MuTick</span>
+        <span class="tools"><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button><button class="sq" aria-label="New"><svg viewBox="0 0 24 24" class="ic"><path d="M12 5v14M5 12h14"/></svg></button></span>
+      </div>
+      <div class="thread">
+        <div class="bubble">How did revenue move last quarter?</div>
+        <div class="answer">
+          <p>Revenue rose <strong>22.0%</strong> to <strong>$57.0B</strong> in Q3 FY26, a record quarter.</p>
+          <ul><li>Data centre was $51.2B of it, up 25%.</li><li>Gross margin rose 1.0pp to 73.4%.</li><li>Net income grew a little slower, <span class="neg">−1.2pp</span> behind revenue.</li></ul>
+          <p class="cite-row"><span class="cite">10-Q · Q3 FY26 · p.4</span><span class="subtle tiny">via Mubit · checked</span></p>
+        </div>
+        <p class="lbl ask">Ask next</p>
+        <div class="next"><span>Compare with AMD</span><span>Show margins</span></div>
+      </div>
+      <div class="composer edge"><span class="subtle">Ask a follow-up…</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+    </aside>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#0a0b0e"></i><b>ink</b><code>#0a0b0e</code></div><div class="sw"><i style="background:#111318"></i><b>panel</b><code>#111318</code></div><div class="sw"><i style="background:#171a21"></i><b>raised</b><code>#171a21</code></div><div class="sw"><i style="background:#22262e"></i><b>line</b><code>#22262e</code></div><div class="sw"><i style="background:#5d6472"></i><b>subtle</b><code>#5d6472</code></div><div class="sw"><i style="background:#8a91a0"></i><b>muted</b><code>#8a91a0</code></div><div class="sw"><i style="background:#eceef3"></i><b>text</b><code>#eceef3</code></div><div class="sw"><i style="background:#f2a541"></i><b>accent</b><code>#f2a541</code></div><div class="sw"><i style="background:#ff7a59"></i><b>accent-2</b><code>#ff7a59</code></div><div class="sw"><i style="background:#34c38f"></i><b>series-2</b><code>#34c38f</code></div><div class="sw"><i style="background:#34c38f"></i><b>up</b><code>#34c38f</code></div><div class="sw"><i style="background:#ef6161"></i><b>down</b><code>#ef6161</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">16.01</span></td><td><span class="ok">5.87</span></td><td><span class="bad">3.12</span></td><td><span class="ok">9.06</span></td><td><span class="ok">8.27</span></td><td><span class="ok">5.80</span></td><td><span class="ok">5.06</span></td><td>6.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="ink">
+    <h3>A · Ink</h3><p class="blurb">Warm graphite greys and one ink-blue accent: the colour of a pen tick on a printout.</p>
+    <div class="viewport"><div class="frame" style="--ink:#12100f;--panel:#181715;--raised:#21201d;--line:#302d2b;--muted:#b4b0ac;--subtle:#8f8c88;--text:#f0eeeb;--accent:#86b6e5;--accent-2:#4e77a5;--up:#6ad6b0;--down:#e87556;--bar-1-top:#86b6e5;--bar-1-bottom:color-mix(in oklab, #4e77a5 85%, #181715);--bar-2-top:#97918a;--bar-2-bottom:color-mix(in oklab, #97918a 70%, #181715);--edge:linear-gradient(180deg, color-mix(in oklab, #f0eeeb 22%, #302d2b) 0%, #302d2b 55%, color-mix(in oklab, #302d2b 60%, #12100f) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #202f3f 0%, color-mix(in oklab, #202f3f 40%, #12100f) 38%, #12100f 72%);--hero-2:none;--hero-2-color:#b4b0ac;--dash-wash:none;--tile:#21201d;--tile-text:#b4b0ac;--grain:0.05;">
+  <div class="desk">
+    <div class="dash">
+      <header>
+        <div class="title-row">
+          <span class="mono-tile">NVDA</span>
+          <div>
+            <h1>NVIDIA</h1>
+            <p class="muted period"><span class="text">Q3 FY25 – Q3 FY26</span><span class="subtle">·</span><span class="inline"><svg viewBox="0 0 24 24" class="ic up"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg> Checked against SEC XBRL</span></p>
+          </div>
+        </div>
+        <div class="strip"><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q4 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q1 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q2 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY26</span></span></div>
+      </header>
+      <p class="muted tiny-12">Change vs Q2 FY26</p>
+      <div class="kpis">
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Revenue</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></div>
+      <p class="kpi-value">$57.0B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="ink-s0" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0 L100,32 L0,32 Z" fill="url(#ink-s0)"/><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Net income</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></div>
+      <p class="kpi-value">$31.9B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="ink-s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0 L100,32 L0,32 Z" fill="url(#ink-s1)"/><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Gross margin</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></div>
+      <p class="kpi-value">73.4%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="ink-s2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2 L100,32 L0,32 Z" fill="url(#ink-s2)"/><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Operating margin</p><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.4pp</span></div>
+      <p class="kpi-value">63.2%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="ink-s3" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7 L100,32 L0,32 Z" fill="url(#ink-s3)"/><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div></div>
+      <div class="surface card-chart">
+        <div class="row"><p class="strong small13">Revenue and net income</p>
+          <div class="legend muted"><span><i style="background:var(--bar-1-top)"></i>Revenue</span><span><i style="background:var(--bar-2-top)"></i>Net income</span></div></div>
+        <svg viewBox="0 0 880 230" class="chart"><defs>
+    <linearGradient id="ink-c-r" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-1-top)"/><stop offset="100%" style="stop-color:var(--bar-1-bottom)"/></linearGradient>
+    <linearGradient id="ink-c-n" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-2-top)"/><stop offset="100%" style="stop-color:var(--bar-2-bottom)"/></linearGradient></defs><line x1="56" x2="880" y1="206" y2="206" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="210" text-anchor="end" class="axis">$0B</text><line x1="56" x2="880" y1="156" y2="156" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="160" text-anchor="end" class="axis">$15B</text><line x1="56" x2="880" y1="106" y2="106" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="110" text-anchor="end" class="axis">$30B</text><line x1="56" x2="880" y1="56" y2="56" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="60" text-anchor="end" class="axis">$45B</text><line x1="56" x2="880" y1="6" y2="6" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="10" text-anchor="end" class="axis">$60B</text><path d="M91.4,206 V95.99999999999999 Q91.4,88.99999999999999 98.4,88.99999999999999 H128.4 Q135.4,88.99999999999999 135.4,95.99999999999999 V206 Z" fill="url(#ink-c-r)"/><path d="M141.4,206 V148.66666666666669 Q141.4,141.66666666666669 148.4,141.66666666666669 H178.4 Q185.4,141.66666666666669 185.4,148.66666666666669 V206 Z" fill="url(#ink-c-n)"/><text x="138.4" y="226" text-anchor="middle" class="axis">Q3 FY25</text><path d="M256.20000000000005,206 V82.00000000000003 Q256.20000000000005,75.00000000000003 263.20000000000005,75.00000000000003 H293.20000000000005 Q300.20000000000005,75.00000000000003 300.20000000000005,82.00000000000003 V206 Z" fill="url(#ink-c-r)"/><path d="M306.20000000000005,206 V139.33333333333331 Q306.20000000000005,132.33333333333331 313.20000000000005,132.33333333333331 H343.20000000000005 Q350.20000000000005,132.33333333333331 350.20000000000005,139.33333333333331 V206 Z" fill="url(#ink-c-n)"/><text x="303.20000000000005" y="226" text-anchor="middle" class="axis">Q4 FY25</text><path d="M421,206 V66 Q421,59 428,59 H458 Q465,59 465,66 V206 Z" fill="url(#ink-c-r)"/><path d="M471,206 V150.33333333333331 Q471,143.33333333333331 478,143.33333333333331 H508 Q515,143.33333333333331 515,150.33333333333331 V206 Z" fill="url(#ink-c-n)"/><text x="468" y="226" text-anchor="middle" class="axis">Q1 FY26</text><path d="M585.8000000000001,206 V57.333333333333314 Q585.8000000000001,50.333333333333314 592.8000000000001,50.333333333333314 H622.8000000000001 Q629.8000000000001,50.333333333333314 629.8000000000001,57.333333333333314 V206 Z" fill="url(#ink-c-r)"/><path d="M635.8000000000001,206 V125 Q635.8000000000001,118 642.8000000000001,118 H672.8000000000001 Q679.8000000000001,118 679.8000000000001,125 V206 Z" fill="url(#ink-c-n)"/><text x="632.8000000000001" y="226" text-anchor="middle" class="axis">Q2 FY26</text><path d="M750.6,206 V23 Q750.6,16 757.6,16 H787.6 Q794.6,16 794.6,23 V206 Z" fill="url(#ink-c-r)"/><path d="M800.6,206 V106.66666666666667 Q800.6,99.66666666666667 807.6,99.66666666666667 H837.6 Q844.6,99.66666666666667 844.6,106.66666666666667 V206 Z" fill="url(#ink-c-n)"/><text x="797.6" y="226" text-anchor="middle" class="axis">Q3 FY26</text></svg>
+      </div>
+      <div class="surface table-card">
+        <table><thead><tr><th class="lbl">Metric</th><th class=""><div class="">Q3 FY25</div><div class="mono subtle tiny">2024-10-27</div></th><th class=""><div class="">Q4 FY25</div><div class="mono subtle tiny">2025-01-26</div></th><th class=""><div class="">Q1 FY26</div><div class="mono subtle tiny">2025-04-27</div></th><th class=""><div class="">Q2 FY26</div><div class="mono subtle tiny">2025-07-27</div></th><th class="latest"><div class="accent">Q3 FY26</div><div class="mono subtle tiny">2025-10-26</div></th><th class="lbl r">Q/Q</th></tr></thead><tbody><tr><td colspan="7" class="group">Income statement</td></tr><tr><td class="muted">Revenue</td><td class="num ">$35.1B</td><td class="num ">$39.3B</td><td class="num ">$44.1B</td><td class="num ">$46.7B</td><td class="num latest strong">$57.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></td></tr><tr><td class="muted">Gross profit</td><td class="num ">$26.2B</td><td class="num ">$28.7B</td><td class="num ">$26.7B</td><td class="num ">$33.9B</td><td class="num latest strong">$41.8B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+23.6%</span></td></tr><tr><td class="muted">Operating income</td><td class="num ">$21.9B</td><td class="num ">$24.0B</td><td class="num ">$21.6B</td><td class="num ">$28.4B</td><td class="num latest strong">$36.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+26.6%</span></td></tr><tr><td class="muted">Net income</td><td class="num ">$19.3B</td><td class="num ">$22.1B</td><td class="num ">$18.8B</td><td class="num ">$26.4B</td><td class="num latest strong">$31.9B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></td></tr><tr><td class="muted">Diluted shares</td><td class="num ">24.77B</td><td class="num ">24.71B</td><td class="num ">24.61B</td><td class="num ">24.53B</td><td class="num latest strong">24.46B</td><td class="num"><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.3%</span></td></tr><tr><td colspan="7" class="group">Margins</td></tr><tr><td class="muted">Gross margin</td><td class="num ">74.6%</td><td class="num ">73.0%</td><td class="num ">60.5%</td><td class="num ">72.4%</td><td class="num latest strong">73.4%</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></td></tr></tbody></table>
+      </div>
+    </div>
+    <aside class="chat edge">
+      <div class="toolbar">
+        <span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="ink-m1"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#ink-m1)"/></svg>MuTick</span>
+        <span class="tools"><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button><button class="sq" aria-label="New"><svg viewBox="0 0 24 24" class="ic"><path d="M12 5v14M5 12h14"/></svg></button></span>
+      </div>
+      <div class="thread">
+        <div class="bubble">How did revenue move last quarter?</div>
+        <div class="answer">
+          <p>Revenue rose <strong>22.0%</strong> to <strong>$57.0B</strong> in Q3 FY26, a record quarter.</p>
+          <ul><li>Data centre was $51.2B of it, up 25%.</li><li>Gross margin rose 1.0pp to 73.4%.</li><li>Net income grew a little slower, <span class="neg">−1.2pp</span> behind revenue.</li></ul>
+          <p class="cite-row"><span class="cite">10-Q · Q3 FY26 · p.4</span><span class="subtle tiny">via Mubit · checked</span></p>
+        </div>
+        <p class="lbl ask">Ask next</p>
+        <div class="next"><span>Compare with AMD</span><span>Show margins</span></div>
+      </div>
+      <div class="composer edge"><span class="subtle">Ask a follow-up…</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+    </aside>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#12100f"></i><b>ink</b><code>#12100f</code></div><div class="sw"><i style="background:#181715"></i><b>panel</b><code>#181715</code></div><div class="sw"><i style="background:#21201d"></i><b>raised</b><code>#21201d</code></div><div class="sw"><i style="background:#302d2b"></i><b>line</b><code>#302d2b</code></div><div class="sw"><i style="background:#8f8c88"></i><b>subtle</b><code>#8f8c88</code></div><div class="sw"><i style="background:#b4b0ac"></i><b>muted</b><code>#b4b0ac</code></div><div class="sw"><i style="background:#f0eeeb"></i><b>text</b><code>#f0eeeb</code></div><div class="sw"><i style="background:#86b6e5"></i><b>accent</b><code>#86b6e5</code></div><div class="sw"><i style="background:#4e77a5"></i><b>accent-2</b><code>#4e77a5</code></div><div class="sw"><i style="background:#97918a"></i><b>series-2</b><code>#97918a</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">15.47</span></td><td><span class="ok">8.31</span></td><td><span class="ok">5.35</span></td><td><span class="ok">8.39</span></td><td><span class="ok">10.12</span></td><td><span class="ok">6.07</span></td><td><span class="ok">5.16</span></td><td>12.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="brass">
+    <h3>B · Brass</h3><p class="blurb">Keeps a warm accent, but as aged brass on warm stone instead of bright amber on black.</p>
+    <div class="viewport"><div class="frame" style="--ink:#110f0d;--panel:#181613;--raised:#211e1b;--line:#2f2c28;--muted:#b5b0aa;--subtle:#908b86;--text:#efece7;--accent:#d9b97e;--accent-2:#a57e4f;--up:#6ad6b0;--down:#e87556;--bar-1-top:#d9b97e;--bar-1-bottom:color-mix(in oklab, #a57e4f 85%, #181613);--bar-2-top:#958e86;--bar-2-bottom:color-mix(in oklab, #958e86 70%, #181613);--edge:linear-gradient(180deg, color-mix(in oklab, #efece7 22%, #2f2c28) 0%, #2f2c28 55%, color-mix(in oklab, #2f2c28 60%, #110f0d) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #35291b 0%, color-mix(in oklab, #35291b 40%, #110f0d) 38%, #110f0d 72%);--hero-2:none;--hero-2-color:#b5b0aa;--dash-wash:none;--tile:#211e1b;--tile-text:#b5b0aa;--grain:0.05;">
+  <div class="desk">
+    <div class="dash">
+      <header>
+        <div class="title-row">
+          <span class="mono-tile">NVDA</span>
+          <div>
+            <h1>NVIDIA</h1>
+            <p class="muted period"><span class="text">Q3 FY25 – Q3 FY26</span><span class="subtle">·</span><span class="inline"><svg viewBox="0 0 24 24" class="ic up"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg> Checked against SEC XBRL</span></p>
+          </div>
+        </div>
+        <div class="strip"><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q4 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q1 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q2 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY26</span></span></div>
+      </header>
+      <p class="muted tiny-12">Change vs Q2 FY26</p>
+      <div class="kpis">
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Revenue</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></div>
+      <p class="kpi-value">$57.0B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="brass-s0" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0 L100,32 L0,32 Z" fill="url(#brass-s0)"/><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Net income</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></div>
+      <p class="kpi-value">$31.9B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="brass-s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0 L100,32 L0,32 Z" fill="url(#brass-s1)"/><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Gross margin</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></div>
+      <p class="kpi-value">73.4%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="brass-s2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2 L100,32 L0,32 Z" fill="url(#brass-s2)"/><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Operating margin</p><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.4pp</span></div>
+      <p class="kpi-value">63.2%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="brass-s3" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7 L100,32 L0,32 Z" fill="url(#brass-s3)"/><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div></div>
+      <div class="surface card-chart">
+        <div class="row"><p class="strong small13">Revenue and net income</p>
+          <div class="legend muted"><span><i style="background:var(--bar-1-top)"></i>Revenue</span><span><i style="background:var(--bar-2-top)"></i>Net income</span></div></div>
+        <svg viewBox="0 0 880 230" class="chart"><defs>
+    <linearGradient id="brass-c-r" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-1-top)"/><stop offset="100%" style="stop-color:var(--bar-1-bottom)"/></linearGradient>
+    <linearGradient id="brass-c-n" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-2-top)"/><stop offset="100%" style="stop-color:var(--bar-2-bottom)"/></linearGradient></defs><line x1="56" x2="880" y1="206" y2="206" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="210" text-anchor="end" class="axis">$0B</text><line x1="56" x2="880" y1="156" y2="156" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="160" text-anchor="end" class="axis">$15B</text><line x1="56" x2="880" y1="106" y2="106" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="110" text-anchor="end" class="axis">$30B</text><line x1="56" x2="880" y1="56" y2="56" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="60" text-anchor="end" class="axis">$45B</text><line x1="56" x2="880" y1="6" y2="6" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="10" text-anchor="end" class="axis">$60B</text><path d="M91.4,206 V95.99999999999999 Q91.4,88.99999999999999 98.4,88.99999999999999 H128.4 Q135.4,88.99999999999999 135.4,95.99999999999999 V206 Z" fill="url(#brass-c-r)"/><path d="M141.4,206 V148.66666666666669 Q141.4,141.66666666666669 148.4,141.66666666666669 H178.4 Q185.4,141.66666666666669 185.4,148.66666666666669 V206 Z" fill="url(#brass-c-n)"/><text x="138.4" y="226" text-anchor="middle" class="axis">Q3 FY25</text><path d="M256.20000000000005,206 V82.00000000000003 Q256.20000000000005,75.00000000000003 263.20000000000005,75.00000000000003 H293.20000000000005 Q300.20000000000005,75.00000000000003 300.20000000000005,82.00000000000003 V206 Z" fill="url(#brass-c-r)"/><path d="M306.20000000000005,206 V139.33333333333331 Q306.20000000000005,132.33333333333331 313.20000000000005,132.33333333333331 H343.20000000000005 Q350.20000000000005,132.33333333333331 350.20000000000005,139.33333333333331 V206 Z" fill="url(#brass-c-n)"/><text x="303.20000000000005" y="226" text-anchor="middle" class="axis">Q4 FY25</text><path d="M421,206 V66 Q421,59 428,59 H458 Q465,59 465,66 V206 Z" fill="url(#brass-c-r)"/><path d="M471,206 V150.33333333333331 Q471,143.33333333333331 478,143.33333333333331 H508 Q515,143.33333333333331 515,150.33333333333331 V206 Z" fill="url(#brass-c-n)"/><text x="468" y="226" text-anchor="middle" class="axis">Q1 FY26</text><path d="M585.8000000000001,206 V57.333333333333314 Q585.8000000000001,50.333333333333314 592.8000000000001,50.333333333333314 H622.8000000000001 Q629.8000000000001,50.333333333333314 629.8000000000001,57.333333333333314 V206 Z" fill="url(#brass-c-r)"/><path d="M635.8000000000001,206 V125 Q635.8000000000001,118 642.8000000000001,118 H672.8000000000001 Q679.8000000000001,118 679.8000000000001,125 V206 Z" fill="url(#brass-c-n)"/><text x="632.8000000000001" y="226" text-anchor="middle" class="axis">Q2 FY26</text><path d="M750.6,206 V23 Q750.6,16 757.6,16 H787.6 Q794.6,16 794.6,23 V206 Z" fill="url(#brass-c-r)"/><path d="M800.6,206 V106.66666666666667 Q800.6,99.66666666666667 807.6,99.66666666666667 H837.6 Q844.6,99.66666666666667 844.6,106.66666666666667 V206 Z" fill="url(#brass-c-n)"/><text x="797.6" y="226" text-anchor="middle" class="axis">Q3 FY26</text></svg>
+      </div>
+      <div class="surface table-card">
+        <table><thead><tr><th class="lbl">Metric</th><th class=""><div class="">Q3 FY25</div><div class="mono subtle tiny">2024-10-27</div></th><th class=""><div class="">Q4 FY25</div><div class="mono subtle tiny">2025-01-26</div></th><th class=""><div class="">Q1 FY26</div><div class="mono subtle tiny">2025-04-27</div></th><th class=""><div class="">Q2 FY26</div><div class="mono subtle tiny">2025-07-27</div></th><th class="latest"><div class="accent">Q3 FY26</div><div class="mono subtle tiny">2025-10-26</div></th><th class="lbl r">Q/Q</th></tr></thead><tbody><tr><td colspan="7" class="group">Income statement</td></tr><tr><td class="muted">Revenue</td><td class="num ">$35.1B</td><td class="num ">$39.3B</td><td class="num ">$44.1B</td><td class="num ">$46.7B</td><td class="num latest strong">$57.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></td></tr><tr><td class="muted">Gross profit</td><td class="num ">$26.2B</td><td class="num ">$28.7B</td><td class="num ">$26.7B</td><td class="num ">$33.9B</td><td class="num latest strong">$41.8B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+23.6%</span></td></tr><tr><td class="muted">Operating income</td><td class="num ">$21.9B</td><td class="num ">$24.0B</td><td class="num ">$21.6B</td><td class="num ">$28.4B</td><td class="num latest strong">$36.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+26.6%</span></td></tr><tr><td class="muted">Net income</td><td class="num ">$19.3B</td><td class="num ">$22.1B</td><td class="num ">$18.8B</td><td class="num ">$26.4B</td><td class="num latest strong">$31.9B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></td></tr><tr><td class="muted">Diluted shares</td><td class="num ">24.77B</td><td class="num ">24.71B</td><td class="num ">24.61B</td><td class="num ">24.53B</td><td class="num latest strong">24.46B</td><td class="num"><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.3%</span></td></tr><tr><td colspan="7" class="group">Margins</td></tr><tr><td class="muted">Gross margin</td><td class="num ">74.6%</td><td class="num ">73.0%</td><td class="num ">60.5%</td><td class="num ">72.4%</td><td class="num latest strong">73.4%</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></td></tr></tbody></table>
+      </div>
+    </div>
+    <aside class="chat edge">
+      <div class="toolbar">
+        <span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="brass-m1"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#brass-m1)"/></svg>MuTick</span>
+        <span class="tools"><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button><button class="sq" aria-label="New"><svg viewBox="0 0 24 24" class="ic"><path d="M12 5v14M5 12h14"/></svg></button></span>
+      </div>
+      <div class="thread">
+        <div class="bubble">How did revenue move last quarter?</div>
+        <div class="answer">
+          <p>Revenue rose <strong>22.0%</strong> to <strong>$57.0B</strong> in Q3 FY26, a record quarter.</p>
+          <ul><li>Data centre was $51.2B of it, up 25%.</li><li>Gross margin rose 1.0pp to 73.4%.</li><li>Net income grew a little slower, <span class="neg">−1.2pp</span> behind revenue.</li></ul>
+          <p class="cite-row"><span class="cite">10-Q · Q3 FY26 · p.4</span><span class="subtle tiny">via Mubit · checked</span></p>
+        </div>
+        <p class="lbl ask">Ask next</p>
+        <div class="next"><span>Compare with AMD</span><span>Show margins</span></div>
+      </div>
+      <div class="composer edge"><span class="subtle">Ask a follow-up…</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+    </aside>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#110f0d"></i><b>ink</b><code>#110f0d</code></div><div class="sw"><i style="background:#181613"></i><b>panel</b><code>#181613</code></div><div class="sw"><i style="background:#211e1b"></i><b>raised</b><code>#211e1b</code></div><div class="sw"><i style="background:#2f2c28"></i><b>line</b><code>#2f2c28</code></div><div class="sw"><i style="background:#908b86"></i><b>subtle</b><code>#908b86</code></div><div class="sw"><i style="background:#b5b0aa"></i><b>muted</b><code>#b5b0aa</code></div><div class="sw"><i style="background:#efece7"></i><b>text</b><code>#efece7</code></div><div class="sw"><i style="background:#d9b97e"></i><b>accent</b><code>#d9b97e</code></div><div class="sw"><i style="background:#a57e4f"></i><b>accent-2</b><code>#a57e4f</code></div><div class="sw"><i style="background:#958e86"></i><b>series-2</b><code>#958e86</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">15.32</span></td><td><span class="ok">8.39</span></td><td><span class="ok">5.35</span></td><td><span class="ok">9.62</span></td><td><span class="ok">10.20</span></td><td><span class="ok">6.11</span></td><td><span class="ok">5.21</span></td><td>12.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="mono">
+    <h3>C · Mono</h3><p class="blurb">Near-monochrome cool greys. Colour is kept for data only: up, down and the revenue series.</p>
+    <div class="viewport"><div class="frame" style="--ink:#0d0e10;--panel:#141516;--raised:#1c1e1f;--line:#2a2b2e;--muted:#aeb1b5;--subtle:#8a8c90;--text:#eff0f2;--accent:#bcced9;--accent-2:#7c8891;--up:#6ad6b0;--down:#e87556;--bar-1-top:#bcced9;--bar-1-bottom:color-mix(in oklab, #7c8891 85%, #141516);--bar-2-top:#777b7f;--bar-2-bottom:color-mix(in oklab, #777b7f 70%, #141516);--edge:linear-gradient(180deg, color-mix(in oklab, #eff0f2 22%, #2a2b2e) 0%, #2a2b2e 55%, color-mix(in oklab, #2a2b2e 60%, #0d0e10) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #23272c 0%, color-mix(in oklab, #23272c 40%, #0d0e10) 38%, #0d0e10 72%);--hero-2:none;--hero-2-color:#aeb1b5;--dash-wash:none;--tile:#1c1e1f;--tile-text:#aeb1b5;--grain:0.05;">
+  <div class="desk">
+    <div class="dash">
+      <header>
+        <div class="title-row">
+          <span class="mono-tile">NVDA</span>
+          <div>
+            <h1>NVIDIA</h1>
+            <p class="muted period"><span class="text">Q3 FY25 – Q3 FY26</span><span class="subtle">·</span><span class="inline"><svg viewBox="0 0 24 24" class="ic up"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg> Checked against SEC XBRL</span></p>
+          </div>
+        </div>
+        <div class="strip"><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q4 FY25</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q1 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q2 FY26</span></span><span class="chip"><svg viewBox="0 0 24 24" class="ic up"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><b>10-Q</b><span class="mono muted">Q3 FY26</span></span></div>
+      </header>
+      <p class="muted tiny-12">Change vs Q2 FY26</p>
+      <div class="kpis">
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Revenue</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></div>
+      <p class="kpi-value">$57.0B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="mono-s0" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0 L100,32 L0,32 Z" fill="url(#mono-s0)"/><path d="M0.0,29.0 L25.0,24.0 L50.0,18.3 L75.0,15.2 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Net income</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></div>
+      <p class="kpi-value">$31.9B</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="mono-s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0 L100,32 L0,32 Z" fill="url(#mono-s1)"/><path d="M0.0,28.0 L25.0,22.5 L50.0,29.0 L75.0,13.9 L100.0,3.0" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Gross margin</p><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></div>
+      <p class="kpi-value">73.4%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="mono-s2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2 L100,32 L0,32 Z" fill="url(#mono-s2)"/><path d="M0.0,3.0 L25.0,6.0 L50.0,29.0 L75.0,7.1 L100.0,5.2" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="surface kpi">
+      <div class="row"><p class="muted small">Operating margin</p><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.4pp</span></div>
+      <p class="kpi-value">63.2%</p>
+      <div class="row end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" class="spark"><defs><linearGradient id="mono-s3" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.28"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7 L100,32 L0,32 Z" fill="url(#mono-s3)"/><path d="M0.0,5.3 L25.0,7.5 L50.0,29.0 L75.0,3.0 L100.0,3.7" fill="none" style="stroke:var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg></div>
+    </div></div>
+      <div class="surface card-chart">
+        <div class="row"><p class="strong small13">Revenue and net income</p>
+          <div class="legend muted"><span><i style="background:var(--bar-1-top)"></i>Revenue</span><span><i style="background:var(--bar-2-top)"></i>Net income</span></div></div>
+        <svg viewBox="0 0 880 230" class="chart"><defs>
+    <linearGradient id="mono-c-r" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-1-top)"/><stop offset="100%" style="stop-color:var(--bar-1-bottom)"/></linearGradient>
+    <linearGradient id="mono-c-n" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" style="stop-color:var(--bar-2-top)"/><stop offset="100%" style="stop-color:var(--bar-2-bottom)"/></linearGradient></defs><line x1="56" x2="880" y1="206" y2="206" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="210" text-anchor="end" class="axis">$0B</text><line x1="56" x2="880" y1="156" y2="156" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="160" text-anchor="end" class="axis">$15B</text><line x1="56" x2="880" y1="106" y2="106" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="110" text-anchor="end" class="axis">$30B</text><line x1="56" x2="880" y1="56" y2="56" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="60" text-anchor="end" class="axis">$45B</text><line x1="56" x2="880" y1="6" y2="6" style="stroke:var(--line)" stroke-dasharray="3 6"/><text x="46" y="10" text-anchor="end" class="axis">$60B</text><path d="M91.4,206 V95.99999999999999 Q91.4,88.99999999999999 98.4,88.99999999999999 H128.4 Q135.4,88.99999999999999 135.4,95.99999999999999 V206 Z" fill="url(#mono-c-r)"/><path d="M141.4,206 V148.66666666666669 Q141.4,141.66666666666669 148.4,141.66666666666669 H178.4 Q185.4,141.66666666666669 185.4,148.66666666666669 V206 Z" fill="url(#mono-c-n)"/><text x="138.4" y="226" text-anchor="middle" class="axis">Q3 FY25</text><path d="M256.20000000000005,206 V82.00000000000003 Q256.20000000000005,75.00000000000003 263.20000000000005,75.00000000000003 H293.20000000000005 Q300.20000000000005,75.00000000000003 300.20000000000005,82.00000000000003 V206 Z" fill="url(#mono-c-r)"/><path d="M306.20000000000005,206 V139.33333333333331 Q306.20000000000005,132.33333333333331 313.20000000000005,132.33333333333331 H343.20000000000005 Q350.20000000000005,132.33333333333331 350.20000000000005,139.33333333333331 V206 Z" fill="url(#mono-c-n)"/><text x="303.20000000000005" y="226" text-anchor="middle" class="axis">Q4 FY25</text><path d="M421,206 V66 Q421,59 428,59 H458 Q465,59 465,66 V206 Z" fill="url(#mono-c-r)"/><path d="M471,206 V150.33333333333331 Q471,143.33333333333331 478,143.33333333333331 H508 Q515,143.33333333333331 515,150.33333333333331 V206 Z" fill="url(#mono-c-n)"/><text x="468" y="226" text-anchor="middle" class="axis">Q1 FY26</text><path d="M585.8000000000001,206 V57.333333333333314 Q585.8000000000001,50.333333333333314 592.8000000000001,50.333333333333314 H622.8000000000001 Q629.8000000000001,50.333333333333314 629.8000000000001,57.333333333333314 V206 Z" fill="url(#mono-c-r)"/><path d="M635.8000000000001,206 V125 Q635.8000000000001,118 642.8000000000001,118 H672.8000000000001 Q679.8000000000001,118 679.8000000000001,125 V206 Z" fill="url(#mono-c-n)"/><text x="632.8000000000001" y="226" text-anchor="middle" class="axis">Q2 FY26</text><path d="M750.6,206 V23 Q750.6,16 757.6,16 H787.6 Q794.6,16 794.6,23 V206 Z" fill="url(#mono-c-r)"/><path d="M800.6,206 V106.66666666666667 Q800.6,99.66666666666667 807.6,99.66666666666667 H837.6 Q844.6,99.66666666666667 844.6,106.66666666666667 V206 Z" fill="url(#mono-c-n)"/><text x="797.6" y="226" text-anchor="middle" class="axis">Q3 FY26</text></svg>
+      </div>
+      <div class="surface table-card">
+        <table><thead><tr><th class="lbl">Metric</th><th class=""><div class="">Q3 FY25</div><div class="mono subtle tiny">2024-10-27</div></th><th class=""><div class="">Q4 FY25</div><div class="mono subtle tiny">2025-01-26</div></th><th class=""><div class="">Q1 FY26</div><div class="mono subtle tiny">2025-04-27</div></th><th class=""><div class="">Q2 FY26</div><div class="mono subtle tiny">2025-07-27</div></th><th class="latest"><div class="accent">Q3 FY26</div><div class="mono subtle tiny">2025-10-26</div></th><th class="lbl r">Q/Q</th></tr></thead><tbody><tr><td colspan="7" class="group">Income statement</td></tr><tr><td class="muted">Revenue</td><td class="num ">$35.1B</td><td class="num ">$39.3B</td><td class="num ">$44.1B</td><td class="num ">$46.7B</td><td class="num latest strong">$57.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+22.0%</span></td></tr><tr><td class="muted">Gross profit</td><td class="num ">$26.2B</td><td class="num ">$28.7B</td><td class="num ">$26.7B</td><td class="num ">$33.9B</td><td class="num latest strong">$41.8B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+23.6%</span></td></tr><tr><td class="muted">Operating income</td><td class="num ">$21.9B</td><td class="num ">$24.0B</td><td class="num ">$21.6B</td><td class="num ">$28.4B</td><td class="num latest strong">$36.0B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+26.6%</span></td></tr><tr><td class="muted">Net income</td><td class="num ">$19.3B</td><td class="num ">$22.1B</td><td class="num ">$18.8B</td><td class="num ">$26.4B</td><td class="num latest strong">$31.9B</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+20.8%</span></td></tr><tr><td class="muted">Diluted shares</td><td class="num ">24.77B</td><td class="num ">24.71B</td><td class="num ">24.61B</td><td class="num ">24.53B</td><td class="num latest strong">24.46B</td><td class="num"><span class="delta is-down"><svg viewBox="0 0 24 24" class="ic"><path d="M7 7l10 10M17 8v9H8"/></svg>−0.3%</span></td></tr><tr><td colspan="7" class="group">Margins</td></tr><tr><td class="muted">Gross margin</td><td class="num ">74.6%</td><td class="num ">73.0%</td><td class="num ">60.5%</td><td class="num ">72.4%</td><td class="num latest strong">73.4%</td><td class="num"><span class="delta is-up"><svg viewBox="0 0 24 24" class="ic"><path d="M7 17 17 7M8 7h9v9"/></svg>+1.0pp</span></td></tr></tbody></table>
+      </div>
+    </div>
+    <aside class="chat edge">
+      <div class="toolbar">
+        <span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="mono-m1"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#mono-m1)"/></svg>MuTick</span>
+        <span class="tools"><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button><button class="sq" aria-label="New"><svg viewBox="0 0 24 24" class="ic"><path d="M12 5v14M5 12h14"/></svg></button></span>
+      </div>
+      <div class="thread">
+        <div class="bubble">How did revenue move last quarter?</div>
+        <div class="answer">
+          <p>Revenue rose <strong>22.0%</strong> to <strong>$57.0B</strong> in Q3 FY26, a record quarter.</p>
+          <ul><li>Data centre was $51.2B of it, up 25%.</li><li>Gross margin rose 1.0pp to 73.4%.</li><li>Net income grew a little slower, <span class="neg">−1.2pp</span> behind revenue.</li></ul>
+          <p class="cite-row"><span class="cite">10-Q · Q3 FY26 · p.4</span><span class="subtle tiny">via Mubit · checked</span></p>
+        </div>
+        <p class="lbl ask">Ask next</p>
+        <div class="next"><span>Compare with AMD</span><span>Show margins</span></div>
+      </div>
+      <div class="composer edge"><span class="subtle">Ask a follow-up…</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+    </aside>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#0d0e10"></i><b>ink</b><code>#0d0e10</code></div><div class="sw"><i style="background:#141516"></i><b>panel</b><code>#141516</code></div><div class="sw"><i style="background:#1c1e1f"></i><b>raised</b><code>#1c1e1f</code></div><div class="sw"><i style="background:#2a2b2e"></i><b>line</b><code>#2a2b2e</code></div><div class="sw"><i style="background:#8a8c90"></i><b>subtle</b><code>#8a8c90</code></div><div class="sw"><i style="background:#aeb1b5"></i><b>muted</b><code>#aeb1b5</code></div><div class="sw"><i style="background:#eff0f2"></i><b>text</b><code>#eff0f2</code></div><div class="sw"><i style="background:#bcced9"></i><b>accent</b><code>#bcced9</code></div><div class="sw"><i style="background:#7c8891"></i><b>accent-2</b><code>#7c8891</code></div><div class="sw"><i style="background:#777b7f"></i><b>series-2</b><code>#777b7f</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">16.03</span></td><td><span class="ok">8.49</span></td><td><span class="ok">5.43</span></td><td><span class="ok">11.29</span></td><td><span class="ok">10.32</span></td><td><span class="ok">6.19</span></td><td><span class="ok">5.28</span></td><td>12.8</td></tr></table>
+  </div>
+  </section></div>
+  <div class="grid" id="start" hidden>
+  <section class="option" data-id="current">
+    <h3>Current</h3><p class="blurb">What ships today: blue-black, amber accent, amber→orange gradient.</p>
+    <div class="viewport"><div class="frame" style="--ink:#0a0b0e;--panel:#111318;--raised:#171a21;--line:#22262e;--muted:#8a91a0;--subtle:#5d6472;--text:#eceef3;--accent:#f2a541;--accent-2:#ff7a59;--up:#34c38f;--down:#ef6161;--bar-1-top:#f2a541;--bar-1-bottom:color-mix(in oklab, #ff7a59 60%, transparent);--bar-2-top:#34c38f;--bar-2-bottom:color-mix(in oklab, #34c38f 45%, transparent);--edge:linear-gradient(#22262e, #22262e);--hero-bg:radial-gradient(410px 260px at 50% 4%, color-mix(in oklab, #f2a541 22%, transparent), transparent 70%), linear-gradient(color-mix(in oklab, #22262e 40%, #0a0b0e) 1px, transparent 1px) 0 0/48px 48px, linear-gradient(90deg, color-mix(in oklab, #22262e 40%, #0a0b0e) 1px, transparent 1px) 0 0/48px 48px, #0a0b0e;--hero-2:linear-gradient(90deg, #f2a541, #ff7a59);--hero-2-color:transparent;--dash-wash:radial-gradient(ellipse at top left, color-mix(in oklab, #f2a541 9%, transparent), transparent 60%);--tile:linear-gradient(135deg, #76b900, #3d7a00);--tile-text:#fff;--grain:0;">
+  <div class="start">
+    <div class="grain"></div>
+    <header class="top"><span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="current-m2"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#current-m2)"/></svg>MuTick</span><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button></header>
+    <div class="hero">
+      <h1>Read every earnings filing<br><span class="hero-2">like an analyst would.</span></h1>
+      <p class="muted lead">Ask about any US company. The desk finds the filings, checks the numbers against the SEC's data, and lays it all out beside the chat.</p>
+      <div class="composer big edge"><span class="subtle">Which company do you want to look at?</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+      <div class="examples"><span>NVIDIA, last 4 quarters</span><span>NVIDIA vs Microsoft vs Apple</span><span>Microsoft FY2026</span></div>
+    </div>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#0a0b0e"></i><b>ink</b><code>#0a0b0e</code></div><div class="sw"><i style="background:#111318"></i><b>panel</b><code>#111318</code></div><div class="sw"><i style="background:#171a21"></i><b>raised</b><code>#171a21</code></div><div class="sw"><i style="background:#22262e"></i><b>line</b><code>#22262e</code></div><div class="sw"><i style="background:#5d6472"></i><b>subtle</b><code>#5d6472</code></div><div class="sw"><i style="background:#8a91a0"></i><b>muted</b><code>#8a91a0</code></div><div class="sw"><i style="background:#eceef3"></i><b>text</b><code>#eceef3</code></div><div class="sw"><i style="background:#f2a541"></i><b>accent</b><code>#f2a541</code></div><div class="sw"><i style="background:#ff7a59"></i><b>accent-2</b><code>#ff7a59</code></div><div class="sw"><i style="background:#34c38f"></i><b>series-2</b><code>#34c38f</code></div><div class="sw"><i style="background:#34c38f"></i><b>up</b><code>#34c38f</code></div><div class="sw"><i style="background:#ef6161"></i><b>down</b><code>#ef6161</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">16.01</span></td><td><span class="ok">5.87</span></td><td><span class="bad">3.12</span></td><td><span class="ok">9.06</span></td><td><span class="ok">8.27</span></td><td><span class="ok">5.80</span></td><td><span class="ok">5.06</span></td><td>6.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="ink">
+    <h3>A · Ink</h3><p class="blurb">Warm graphite greys and one ink-blue accent: the colour of a pen tick on a printout.</p>
+    <div class="viewport"><div class="frame" style="--ink:#12100f;--panel:#181715;--raised:#21201d;--line:#302d2b;--muted:#b4b0ac;--subtle:#8f8c88;--text:#f0eeeb;--accent:#86b6e5;--accent-2:#4e77a5;--up:#6ad6b0;--down:#e87556;--bar-1-top:#86b6e5;--bar-1-bottom:color-mix(in oklab, #4e77a5 85%, #181715);--bar-2-top:#97918a;--bar-2-bottom:color-mix(in oklab, #97918a 70%, #181715);--edge:linear-gradient(180deg, color-mix(in oklab, #f0eeeb 22%, #302d2b) 0%, #302d2b 55%, color-mix(in oklab, #302d2b 60%, #12100f) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #202f3f 0%, color-mix(in oklab, #202f3f 40%, #12100f) 38%, #12100f 72%);--hero-2:none;--hero-2-color:#b4b0ac;--dash-wash:none;--tile:#21201d;--tile-text:#b4b0ac;--grain:0.05;">
+  <div class="start">
+    <div class="grain"></div>
+    <header class="top"><span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="ink-m2"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#ink-m2)"/></svg>MuTick</span><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button></header>
+    <div class="hero">
+      <h1>Read every earnings filing<br><span class="hero-2">like an analyst would.</span></h1>
+      <p class="muted lead">Ask about any US company. The desk finds the filings, checks the numbers against the SEC's data, and lays it all out beside the chat.</p>
+      <div class="composer big edge"><span class="subtle">Which company do you want to look at?</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+      <div class="examples"><span>NVIDIA, last 4 quarters</span><span>NVIDIA vs Microsoft vs Apple</span><span>Microsoft FY2026</span></div>
+    </div>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#12100f"></i><b>ink</b><code>#12100f</code></div><div class="sw"><i style="background:#181715"></i><b>panel</b><code>#181715</code></div><div class="sw"><i style="background:#21201d"></i><b>raised</b><code>#21201d</code></div><div class="sw"><i style="background:#302d2b"></i><b>line</b><code>#302d2b</code></div><div class="sw"><i style="background:#8f8c88"></i><b>subtle</b><code>#8f8c88</code></div><div class="sw"><i style="background:#b4b0ac"></i><b>muted</b><code>#b4b0ac</code></div><div class="sw"><i style="background:#f0eeeb"></i><b>text</b><code>#f0eeeb</code></div><div class="sw"><i style="background:#86b6e5"></i><b>accent</b><code>#86b6e5</code></div><div class="sw"><i style="background:#4e77a5"></i><b>accent-2</b><code>#4e77a5</code></div><div class="sw"><i style="background:#97918a"></i><b>series-2</b><code>#97918a</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">15.47</span></td><td><span class="ok">8.31</span></td><td><span class="ok">5.35</span></td><td><span class="ok">8.39</span></td><td><span class="ok">10.12</span></td><td><span class="ok">6.07</span></td><td><span class="ok">5.16</span></td><td>12.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="brass">
+    <h3>B · Brass</h3><p class="blurb">Keeps a warm accent, but as aged brass on warm stone instead of bright amber on black.</p>
+    <div class="viewport"><div class="frame" style="--ink:#110f0d;--panel:#181613;--raised:#211e1b;--line:#2f2c28;--muted:#b5b0aa;--subtle:#908b86;--text:#efece7;--accent:#d9b97e;--accent-2:#a57e4f;--up:#6ad6b0;--down:#e87556;--bar-1-top:#d9b97e;--bar-1-bottom:color-mix(in oklab, #a57e4f 85%, #181613);--bar-2-top:#958e86;--bar-2-bottom:color-mix(in oklab, #958e86 70%, #181613);--edge:linear-gradient(180deg, color-mix(in oklab, #efece7 22%, #2f2c28) 0%, #2f2c28 55%, color-mix(in oklab, #2f2c28 60%, #110f0d) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #35291b 0%, color-mix(in oklab, #35291b 40%, #110f0d) 38%, #110f0d 72%);--hero-2:none;--hero-2-color:#b5b0aa;--dash-wash:none;--tile:#211e1b;--tile-text:#b5b0aa;--grain:0.05;">
+  <div class="start">
+    <div class="grain"></div>
+    <header class="top"><span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="brass-m2"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#brass-m2)"/></svg>MuTick</span><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button></header>
+    <div class="hero">
+      <h1>Read every earnings filing<br><span class="hero-2">like an analyst would.</span></h1>
+      <p class="muted lead">Ask about any US company. The desk finds the filings, checks the numbers against the SEC's data, and lays it all out beside the chat.</p>
+      <div class="composer big edge"><span class="subtle">Which company do you want to look at?</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+      <div class="examples"><span>NVIDIA, last 4 quarters</span><span>NVIDIA vs Microsoft vs Apple</span><span>Microsoft FY2026</span></div>
+    </div>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#110f0d"></i><b>ink</b><code>#110f0d</code></div><div class="sw"><i style="background:#181613"></i><b>panel</b><code>#181613</code></div><div class="sw"><i style="background:#211e1b"></i><b>raised</b><code>#211e1b</code></div><div class="sw"><i style="background:#2f2c28"></i><b>line</b><code>#2f2c28</code></div><div class="sw"><i style="background:#908b86"></i><b>subtle</b><code>#908b86</code></div><div class="sw"><i style="background:#b5b0aa"></i><b>muted</b><code>#b5b0aa</code></div><div class="sw"><i style="background:#efece7"></i><b>text</b><code>#efece7</code></div><div class="sw"><i style="background:#d9b97e"></i><b>accent</b><code>#d9b97e</code></div><div class="sw"><i style="background:#a57e4f"></i><b>accent-2</b><code>#a57e4f</code></div><div class="sw"><i style="background:#958e86"></i><b>series-2</b><code>#958e86</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">15.32</span></td><td><span class="ok">8.39</span></td><td><span class="ok">5.35</span></td><td><span class="ok">9.62</span></td><td><span class="ok">10.20</span></td><td><span class="ok">6.11</span></td><td><span class="ok">5.21</span></td><td>12.8</td></tr></table>
+  </div>
+  </section>
+  <section class="option" data-id="mono">
+    <h3>C · Mono</h3><p class="blurb">Near-monochrome cool greys. Colour is kept for data only: up, down and the revenue series.</p>
+    <div class="viewport"><div class="frame" style="--ink:#0d0e10;--panel:#141516;--raised:#1c1e1f;--line:#2a2b2e;--muted:#aeb1b5;--subtle:#8a8c90;--text:#eff0f2;--accent:#bcced9;--accent-2:#7c8891;--up:#6ad6b0;--down:#e87556;--bar-1-top:#bcced9;--bar-1-bottom:color-mix(in oklab, #7c8891 85%, #141516);--bar-2-top:#777b7f;--bar-2-bottom:color-mix(in oklab, #777b7f 70%, #141516);--edge:linear-gradient(180deg, color-mix(in oklab, #eff0f2 22%, #2a2b2e) 0%, #2a2b2e 55%, color-mix(in oklab, #2a2b2e 60%, #0d0e10) 100%);--hero-bg:radial-gradient(140% 75% at 50% -12%, #23272c 0%, color-mix(in oklab, #23272c 40%, #0d0e10) 38%, #0d0e10 72%);--hero-2:none;--hero-2-color:#aeb1b5;--dash-wash:none;--tile:#1c1e1f;--tile-text:#aeb1b5;--grain:0.05;">
+  <div class="start">
+    <div class="grain"></div>
+    <header class="top"><span class="brand"><svg viewBox="0 0 16 16" class="mark"><mask id="mono-m2"><rect width="16" height="16" fill="white"/><path d="M4.6 8.3l2.3 2.3 4.5-4.9" fill="none" stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></mask><circle cx="8" cy="8" r="7.5" fill="currentColor" mask="url(#mono-m2)"/></svg>MuTick</span><button class="sq" aria-label="Mubit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 18V7l4 6 4-6 4 6 4-6v11"/></svg></button></header>
+    <div class="hero">
+      <h1>Read every earnings filing<br><span class="hero-2">like an analyst would.</span></h1>
+      <p class="muted lead">Ask about any US company. The desk finds the filings, checks the numbers against the SEC's data, and lays it all out beside the chat.</p>
+      <div class="composer big edge"><span class="subtle">Which company do you want to look at?</span><span class="send"><svg viewBox="0 0 24 24" class="ic"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+      <div class="examples"><span>NVIDIA, last 4 quarters</span><span>NVIDIA vs Microsoft vs Apple</span><span>Microsoft FY2026</span></div>
+    </div>
+  </div></div></div>
+    <div class="info">
+    <div class="swatches"><div class="sw"><i style="background:#0d0e10"></i><b>ink</b><code>#0d0e10</code></div><div class="sw"><i style="background:#141516"></i><b>panel</b><code>#141516</code></div><div class="sw"><i style="background:#1c1e1f"></i><b>raised</b><code>#1c1e1f</code></div><div class="sw"><i style="background:#2a2b2e"></i><b>line</b><code>#2a2b2e</code></div><div class="sw"><i style="background:#8a8c90"></i><b>subtle</b><code>#8a8c90</code></div><div class="sw"><i style="background:#aeb1b5"></i><b>muted</b><code>#aeb1b5</code></div><div class="sw"><i style="background:#eff0f2"></i><b>text</b><code>#eff0f2</code></div><div class="sw"><i style="background:#bcced9"></i><b>accent</b><code>#bcced9</code></div><div class="sw"><i style="background:#7c8891"></i><b>accent-2</b><code>#7c8891</code></div><div class="sw"><i style="background:#777b7f"></i><b>series-2</b><code>#777b7f</code></div><div class="sw"><i style="background:#6ad6b0"></i><b>up</b><code>#6ad6b0</code></div><div class="sw"><i style="background:#e87556"></i><b>down</b><code>#e87556</code></div></div>
+    <table class="checks"><tr><th>text</th><th>muted</th><th>subtle</th><th>accent</th><th>up</th><th>down</th><th>down chip</th><th>deutan ΔE</th></tr>
+    <tr><td><span class="ok">16.03</span></td><td><span class="ok">8.49</span></td><td><span class="ok">5.43</span></td><td><span class="ok">11.29</span></td><td><span class="ok">10.32</span></td><td><span class="ok">6.19</span></td><td><span class="ok">5.28</span></td><td>12.8</td></tr></table>
+  </div>
+  </section></div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+let view = q.get('v') || 'desk', pick = q.get('p') || 'all';
+if (q.get('bare')) document.body.classList.add('bare');
+function fit() {
+  document.querySelectorAll('.viewport').forEach((vp) => {
+    const f = vp.firstElementChild; f.style.transform = 'scale(' + vp.clientWidth / 1440 + ')';
+  });
+}
+function render() {
+  for (const v of ['desk', 'start']) document.getElementById(v).hidden = v !== view;
+  document.querySelectorAll('.option').forEach((o) => (o.hidden = pick !== 'all' && o.dataset.id !== pick));
+  document.querySelectorAll('#view button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === view));
+  document.querySelectorAll('#pick button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.p === pick));
+  document.querySelectorAll('.grid').forEach((g) => (g.style.gridTemplateColumns = pick === 'all' ? '' : '1fr'));
+  fit();
+}
+document.getElementById('view').onclick = (e) => { if (e.target.dataset.v) { view = e.target.dataset.v; render(); } };
+document.getElementById('pick').onclick = (e) => { if (e.target.dataset.p) { pick = e.target.dataset.p; render(); } };
+addEventListener('resize', fit);
+render();
+</script>
+</body></html>

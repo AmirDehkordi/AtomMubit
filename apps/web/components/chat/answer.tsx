@@ -1,10 +1,11 @@
 'use client';
 
-import { FileText, Quote } from 'lucide-react';
+import { FileText, Loader2, Quote } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api, type DeskFiling } from '@/lib/api';
+import { cn } from '@/lib/cn';
 import { useDesk } from '@/lib/desk-store';
 
 const CITATION = /\[\[(f|b):([^\]]+)\]\]/g;
@@ -63,13 +64,21 @@ function sourcesOf(text: string): { kind: 'f' | 'b'; id: string }[] {
  * complete, a list of sources underneath, like a research assistant.
  */
 export function Answer({ text, filings, showSources }: { text: string; filings: DeskFiling[]; showSources: boolean }) {
-  const sources = sourcesOf(text);
-  const number = (kind: string, id: string) => sources.findIndex((s) => s.kind === kind && s.id === id) + 1;
-  // Repeated markers in a row ("[[f:a]] [[f:b]] [[f:a]]") collapse to one each.
+  // A filing on the desk keeps the number it has in the dashboard's Sources row, so [2] means the
+  // same filing everywhere. Anything else (passages, other filings) is numbered after those.
+  const cited = sourcesOf(text);
+  const others = cited.filter((s) => !(s.kind === 'f' && filings.some((f) => f.accession === s.id)));
+  const number = (kind: string, id: string) => {
+    const onDesk = kind === 'f' ? filings.findIndex((f) => f.accession === id) : -1;
+    return onDesk >= 0 ? onDesk + 1 : filings.length + others.findIndex((s) => s.kind === kind && s.id === id) + 1;
+  };
+  const sources = [...cited].sort((a, b) => number(a.kind, a.id) - number(b.kind, b.id));
+  // Repeated markers in a row ("[[f:a]] [[f:b]] [[f:a]]") collapse to one each. Only spaces
+  // between them are absorbed, never a newline, so a cited bullet doesn't swallow the next one.
   const withLinks = text
-    .replace(/(\[\[(?:f|b):[^\]]+\]\]\s*)+/g, (run) => {
+    .replace(/(\[\[(?:f|b):[^\]]+\]\][ \t]*)+/g, (run) => {
       const ids = [...new Set([...run.matchAll(CITATION)].map((m) => `${m[1]}:${m[2]}`))];
-      return ids.map((k) => `[${k}](cite:${k})`).join('') + (run.endsWith(' ') ? ' ' : '');
+      return ids.map((k) => `[${k}](cite:${k})`).join('') + (/[ \t]$/.test(run) ? ' ' : '');
     });
   return (
     <div>
@@ -96,7 +105,7 @@ export function Answer({ text, filings, showSources }: { text: string; filings: 
           {withLinks}
         </ReactMarkdown>
       </div>
-      {showSources && sources.length > 0 && <Sources sources={sources} filings={filings} />}
+      {showSources && sources.length > 0 && <Sources sources={sources} filings={filings} number={number} />}
     </div>
   );
 }
@@ -151,20 +160,62 @@ function Marker({ n, kind, id, filings }: { n: number; kind: 'f' | 'b'; id: stri
   );
 }
 
-function Sources({ sources, filings }: { sources: { kind: 'f' | 'b'; id: string }[]; filings: DeskFiling[] }) {
+function Sources({
+  sources,
+  filings,
+  number,
+}: {
+  sources: { kind: 'f' | 'b'; id: string }[];
+  filings: DeskFiling[];
+  number: (kind: string, id: string) => number;
+}) {
   return (
     <div className="mt-3 flex flex-wrap gap-1.5">
-      {sources.map((s, i) => (
-        <button
+      {sources.map((s) => (
+        <SourceChip
           key={`${s.kind}:${s.id}`}
+          n={number(s.kind, s.id)}
+          icon={s.kind === 'b' ? Quote : FileText}
+          label={label(s.kind, s.id, filings)}
           onClick={() => openSource(s.kind, s.id, filings)}
-          className="border-line bg-panel text-muted hover:text-text hover:border-[color-mix(in_oklab,var(--color-text)_20%,transparent)] inline-flex items-center gap-2 rounded-lg border py-1 pr-2.5 pl-1 text-[12px] transition-colors"
-        >
-          <span className="bg-raised grid size-5 place-items-center rounded-md text-[10px] font-semibold">{i + 1}</span>
-          {s.kind === 'b' ? <Quote className="size-3" /> : <FileText className="size-3" />}
-          {label(s.kind, s.id, filings)}
-        </button>
+        />
       ))}
     </div>
+  );
+}
+
+/** One numbered source, used under answers and in the dashboard's Sources row so both read as citations. */
+export function SourceChip({
+  n,
+  icon: Icon,
+  label,
+  onClick,
+  title,
+  iconClassName,
+  busy = false,
+  children,
+}: {
+  n: number;
+  icon: typeof FileText;
+  label: string;
+  onClick: () => void;
+  title?: string;
+  iconClassName?: string;
+  /** Still being read: the icon turns into a spinner. */
+  busy?: boolean;
+  /** Extra controls shown after the label, e.g. a link to the original. */
+  children?: React.ReactNode;
+}) {
+  return (
+    <span className="group bg-panel text-muted hover:text-text hover:bg-raised inline-flex items-center rounded-lg text-[12px] transition-colors">
+      <button onClick={onClick} title={title} className="inline-flex items-center gap-2 py-1 pr-2.5 pl-1">
+        <span className="bg-raised grid size-5 place-items-center rounded-md text-[10px] font-semibold tabular-nums transition-colors group-hover:bg-[color-mix(in_oklab,var(--color-text)_12%,transparent)]">
+          {n}
+        </span>
+        {busy ? <Loader2 className="text-accent size-3 animate-spin" /> : <Icon className={cn('size-3', iconClassName)} />}
+        {label}
+      </button>
+      {children}
+    </span>
   );
 }

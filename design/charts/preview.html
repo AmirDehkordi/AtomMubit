@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MuTick chart refinements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* Palette "Ink", copied from apps/web/app/globals.css. Dark only, like the app. */
+  :root {
+    --ink: #12100f; --panel: #181715; --raised: #21201d; --line: #302d2b;
+    --muted: #b4b0ac; --subtle: #8f8c88; --text: #f0eeeb;
+    --accent: #86b6e5; --accent-2: #4e77a5; --up: #6ad6b0; --down: #e87556;
+    --series-2: #97918a;
+    /* Proposed: a darker grey for the second series in charts only (ΔE 22.9 vs accent, 3.7:1 on panel). */
+    --series-2-chart: #77716b;
+    /* Proposed: the zero line, one step stronger than gridlines. */
+    --baseline: #4a4642;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ink); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-feature-settings: 'cv11', 'ss01'; }
+  body { padding: 40px 16px 64px; }
+  .page { max-width: 1360px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  h2 { font-size: 17px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 760px; line-height: 1.55; margin: 10px 0 0; }
+  section { margin-top: 48px; }
+  .section-sub { color: var(--subtle); font-size: 13px; margin: 0 0 18px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 10px; }
+  .tag.after { color: var(--accent); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .pair > div { min-width: 0; }
+  @media (max-width: 1100px) { .pair { grid-template-columns: 1fr; } }
+  .surface {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--raised) 70%, transparent), var(--panel));
+    border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.3), 0 12px 32px -18px rgba(0,0,0,.6);
+  }
+  .notes { margin: 14px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .notes li { padding-left: 34px; position: relative; margin-top: 6px; }
+  .notes b { color: var(--text); font-weight: 600; }
+  .notes .id { position: absolute; left: 0; top: 1px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; color: var(--subtle); }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* KPI cards */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { padding: 20px; }
+  .kpi-top { display: flex; align-items: center; justify-content: space-between; }
+  .kpi-label { color: var(--muted); font-size: 12px; font-weight: 500; margin: 0; }
+  .kpi-value { margin: 12px 0 0; font-size: 26px; line-height: 1; font-weight: 600; letter-spacing: -0.03em; }
+  .kpi-foot { margin-top: 16px; display: flex; justify-content: flex-end; align-items: flex-end; gap: 10px; }
+  .kpi-foot .range { color: var(--subtle); font-size: 10.5px; margin-right: auto; }
+  .chip { display: inline-flex; align-items: center; gap: 2px; border-radius: 999px; padding: 2px 6px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip.up { background: color-mix(in oklab, var(--up) 12%, transparent); color: var(--up); }
+  .chip.down { background: color-mix(in oklab, var(--down) 12%, transparent); color: var(--down); }
+  .chip.flat { background: color-mix(in oklab, var(--subtle) 14%, transparent); color: var(--muted); }
+  .chip svg { width: 12px; height: 12px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Charts */
+  .chart-card { padding: 20px; position: relative; }
+  .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .chart-title { font-size: 13px; font-weight: 600; margin: 0; }
+  .legend { display: flex; gap: 16px; color: var(--muted); font-size: 11px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw-dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; }
+  .sw-sq { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .sw-tick { width: 2px; height: 10px; display: inline-block; background: var(--muted); }
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+  svg.chart text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  .q:focus { outline: none; }
+  .q:focus-visible .hit { stroke: var(--accent); stroke-width: 1.5; }
+
+  .tip { position: absolute; pointer-events: none; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: color-mix(in oklab, var(--raised) 92%, transparent); box-shadow: 0 20px 40px -12px rgba(0,0,0,.7); font-size: 13px; min-width: 150px; }
+  .tip .h { color: var(--muted); font-size: 11px; font-weight: 500; margin: 0 0 4px; }
+  .tip .r { display: flex; align-items: center; gap: 8px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 2px 0; }
+  .tip .r .n { color: var(--muted); font-weight: 400; }
+  .tip .r .c { margin-left: auto; font-size: 11px; font-weight: 500; }
+  .tip .k { width: 10px; height: 2px; border-radius: 2px; display: inline-block; }
+  .tip .k.sq { width: 8px; height: 8px; border-radius: 99px; }
+  .tip .f { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 5px; color: var(--subtle); font-size: 11px; }
+
+  /* Compare */
+  .cmp { padding: 28px; }
+  .cmp .eyebrow { color: var(--muted); font-size: 12px; font-weight: 500; margin: 0; }
+  .cmp h3 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin: 4px 0 0; }
+  .cmp .sub { color: var(--subtle); font-size: 13px; margin: 4px 0 0; line-height: 1.5; }
+  .rows { margin-top: 26px; display: grid; gap: 20px; }
+  .row { display: flex; align-items: center; gap: 16px; }
+  .mono-tile { width: 36px; height: 36px; border-radius: 10px; background: var(--raised); border: 1px solid var(--line); display: grid; place-items: center; font-size: 9.5px; font-weight: 600; color: var(--muted); flex: none; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 13px; }
+  .row-top .v { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .badge { border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 0 4px; font-size: 10px; line-height: 16px; font-weight: 400; }
+  .track-before { height: 10px; background: var(--ink); border-radius: 99px; overflow: hidden; }
+  .track-before > div { height: 100%; background: var(--accent); border-radius: 99px; }
+  .row-foot { color: var(--subtle); font-size: 11px; margin-top: 6px; }
+  .track-after { position: relative; height: 14px; }
+  .track-after .rail { position: absolute; left: 0; right: 0; top: 5px; height: 4px; border-radius: 2px; background: color-mix(in oklab, var(--raised) 80%, var(--ink)); }
+  .track-after .bar { position: absolute; left: 0; top: 3px; height: 8px; border-radius: 0 4px 4px 0; }
+  .track-after .ya { position: absolute; top: 0; width: 2px; height: 14px; background: var(--muted); border-radius: 1px; box-shadow: 0 0 0 2px var(--panel); }
+
+  .footer { margin-top: 56px; color: var(--subtle); font-size: 12px; line-height: 1.6; max-width: 900px; }
+  .footer code { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Chart refinements for MuTick</h1>
+  <p class="lede">Before and after for the KPI cards, the revenue chart and the compare view, in palette Ink. The figures are the live NVIDIA desk (Q3 FY2026 to Q2 FY2027). The layout and chart types stay the same, so Amir keeps a familiar dashboard. Only the marks, labels and colours change. Numbers like <span class="mono">F3</span> refer to <span class="mono">findings.md</span>.</p>
+
+  <!-- KPI cards -->
+  <section id="kpis">
+    <h2>KPI cards</h2>
+    <p class="section-sub">Same card, same order, same sparkline position.</p>
+    <span class="tag">Before · as shipped</span>
+    <div class="kpis" id="kpi-before"></div>
+    <div style="height:22px"></div>
+    <span class="tag after">After</span>
+    <div class="kpis" id="kpi-after"></div>
+    <ul class="notes">
+      <li><span class="id">F2</span><b>Honest sparkline scale.</b> Today each sparkline stretches its own min and max to fill the box, so gross margin's 1.6pp move from 73.4% to 75.0% looks like a cliff. After: money starts at zero, and margins sit in a fixed 10pp window around their average.</li>
+      <li><span class="id">F3</span><b>No change looks like no change.</b> "+0.0pp" shown in green with an up arrow says "better". After: a grey chip with a dash.</li>
+      <li><span class="id">F9</span><b>Quieter line, clear end point.</b> Flat 2px line with no gradient wash. The end dot is larger and has a ring in the card colour. No min or max dots: with four points they would add noise, not information.</li>
+      <li><span class="id">F12</span><b>Screen readers get the trend.</b> The sparkline stays <code>aria-hidden</code>, and the card gains hidden text such as "up 17.9% vs Q1 FY2027, rising since Q3 FY2026 from $57.01B".</li>
+    </ul>
+  </section>
+
+  <!-- Bar chart -->
+  <section id="bars">
+    <h2>Revenue and net income</h2>
+    <p class="section-sub">Same grouped bars, same legend position, same card. The tooltip is pinned on Q4 so you can compare it with the live app. Hover or tab through the quarters in the "after" chart.</p>
+    <div class="pair">
+      <div>
+        <span class="tag">Before · as shipped</span>
+        <div class="surface chart-card" id="bar-before"></div>
+      </div>
+      <div>
+        <span class="tag after">After</span>
+        <div class="surface chart-card" id="bar-after"></div>
+      </div>
+    </div>
+    <ul class="notes">
+      <li><span class="id">F1</span><b>Net income in a darker grey.</b> Revenue blue and net-income grey are almost the same lightness: OKLab ΔE 14.0, below the 15 floor even for full colour vision. A chart-only grey <span class="mono">#77716b</span> brings it to ΔE 22.9, deutan 22.0, and 3.7:1 on the panel.</li>
+      <li><span class="id">F4</span><b>Clean axis.</b> Ticks read $0, $25B, $50B, $75B, $100B, not "$100.00B". Gridlines are solid hairlines, not dashed. The zero line is one step stronger.</li>
+      <li><span class="id">F5</span><b>Label the latest quarter.</b> Values sit on the newest pair only. Its axis label is bold, and the derived Q4 carries the same "D" as the table.</li>
+      <li><span class="id">F6</span><b>Flat bars, square at the base.</b> No gradient, a 4px rounded top and a square base. Bars are 36px, not 56px, with a 4px gap. The legend uses squares to match the bars.</li>
+      <li><span class="id">F7</span><b>A tooltip that answers the next question.</b> Each row shows its Q/Q change, and a footer gives net margin. Keys are short strokes and values lead.</li>
+      <li><span class="id">F8</span><b>The chart has a name.</b> Recharts renders <code>role="application"</code> with no label. Add <code>title</code> and <code>desc</code> with a one-line summary. Arrow-key navigation already works.</li>
+    </ul>
+  </section>
+
+  <!-- Compare -->
+  <section id="compare">
+    <h2>Compare view</h2>
+    <p class="section-sub">Same rows, monogram, value, Q/Q chip and "year earlier" line. NVDA and MSFT figures are the live desk.</p>
+    <div class="pair">
+      <div>
+        <span class="tag">Before · as shipped</span>
+        <div class="surface cmp" id="cmp-before"></div>
+      </div>
+      <div>
+        <span class="tag after">After</span>
+        <div class="surface cmp" id="cmp-after"></div>
+      </div>
+    </div>
+    <ul class="notes">
+      <li><span class="id">F10</span><b>Show the year-ago value on the bar.</b> A thin tick on the same scale marks the year-earlier figure. The gap between the tick and the bar end is the growth, visible without reading the chip.</li>
+      <li><span class="id">F11</span><b>Highlight the desk's company.</b> NVDA, the desk's subject, is blue and peers are grey. Rows are sorted by value. Bars are thinner, start square at zero, and end with a 4px radius.</li>
+      <li><span class="id">F13</span><b>Say when each quarter ended.</b> NVDA's Q2 FY2027 and MSFT's Q4 FY2026 both ended in mid-2026, but the fiscal labels hide that. After: "ended 26 Jul 2026" sits under each name.</li>
+    </ul>
+  </section>
+
+  <p class="footer">
+    Colour checks were run with the dataviz skill's <code>validate_palette.js</code> on panel <code>#181715</code>.
+    Revenue <code>#86b6e5</code> vs today's net-income grey <code>#97918a</code>: normal-vision ΔE 14.0 (FAIL, floor 15), deutan 13.2.
+    Revenue vs the proposed <code>#77716b</code>: ΔE 22.9 normal, 22.0 deutan, and the grey is 3.7:1 on the panel.
+    Up <code>#6ad6b0</code> vs down <code>#e87556</code>: ΔE 26.7 normal and 12.8 deutan. The two greys and the light accent fall outside the generic categorical band. That is expected, because this is an emphasis pair (one hue plus grey), not a categorical palette.
+    Year-earlier tick <code>#b4b0ac</code> is 8.3:1 on the panel.
+  </p>
+</div>
+
+<script>
+const Q = ['Q3 FY2026', 'Q4 FY2026', 'Q1 FY2027', 'Q2 FY2027'];
+const QS = ['Q3 FY26', 'Q4 FY26', 'Q1 FY27', 'Q2 FY27'];
+const DERIVED = [false, true, false, false];
+const REV = [57.01, 68.13, 81.61, 96.22];
+const NI = [31.91, 42.96, 58.32, 59.69];
+const KPIS = [
+  { label: 'Revenue', unit: 'B', values: REV, delta: 0.179, pts: false },
+  { label: 'Net income', unit: 'B', values: NI, delta: 0.023, pts: false },
+  { label: 'Gross margin', unit: '%', values: [73.4, 75.0, 74.9, 75.0], delta: 0.0003, pts: true },
+  { label: 'Operating margin', unit: '%', values: [63.2, 65.0, 65.6, 66.2], delta: 0.006, pts: true },
+];
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs = {}, parent) => {
+  const svgTags = ['svg', 'g', 'rect', 'path', 'line', 'text', 'circle', 'title', 'desc'];
+  const n = svgTags.includes(tag) ? document.createElementNS(NS, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === 'text' ? (n.textContent = v) : n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+};
+const fmt = (v, unit) => unit === 'B' ? `$${v.toFixed(2)}B` : `${v.toFixed(1)}%`;
+const pct = (a, b) => (b / a - 1);
+const signed = (f, pts) => `${f >= 0 ? '+' : ''}${(f * 100).toFixed(1)}${pts ? 'pp' : '%'}`;
+const arrowUp = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>';
+const arrowDown = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7v10H7"/></svg>';
+const dash = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 12h12"/></svg>';
+
+function chip(value, pts, after) {
+  const shown = Math.round(value * 1000) / 10; // what the chip prints
+  const flat = after && shown === 0;
+  const up = value >= 0;
+  const s = el('span', { class: `chip ${flat ? 'flat' : up ? 'up' : 'down'}` });
+  s.innerHTML = flat ? dash : up ? arrowUp : arrowDown; // static icons only
+  s.appendChild(document.createTextNode(flat ? `0.0${pts ? 'pp' : '%'}` : signed(value, pts)));
+  return s;
+}
+
+/* ---------- KPI cards ---------- */
+function sparkBefore(values) {
+  const w = 100, h = 32, min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
+  const x = i => i / (values.length - 1) * w, y = v => h - 3 - (v - min) / span * (h - 6);
+  const line = values.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const id = 'g' + Math.random().toString(36).slice(2);
+  const svg = el('svg', { viewBox: `0 0 ${w} ${h}`, preserveAspectRatio: 'none', style: 'width:80px;height:32px', 'aria-hidden': 'true' });
+  svg.innerHTML = `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+    <path d="${line} L${w},${h} L0,${h} Z" fill="url(#${id})"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="1.75" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+    <circle cx="${x(values.length - 1)}" cy="${y(values.at(-1))}" r="2.5" fill="var(--accent)"/>`;
+  return svg;
+}
+function sparkAfter(values, unit) {
+  // Real pixel coordinates (no preserveAspectRatio stretch) so the dot stays round.
+  const w = 96, h = 32, pad = 5;
+  let lo, hi;
+  if (unit === 'B') { lo = 0; hi = Math.max(...values); }
+  else { const mid = values.reduce((a, b) => a + b) / values.length; lo = mid - 5; hi = mid + 5; }
+  const x = i => pad + i / (values.length - 1) * (w - pad * 2), y = v => h - 2 - (v - lo) / (hi - lo) * (h - pad - 2);
+  const line = values.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const svg = el('svg', { viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' });
+  svg.innerHTML = (unit === 'B' ? `<line x1="0" x2="${w}" y1="${h - 1.5}" y2="${h - 1.5}" stroke="var(--line)" stroke-width="1"/>` : '') +
+    `<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+     <circle cx="${x(values.length - 1)}" cy="${y(values.at(-1))}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/>`;
+  return svg;
+}
+function kpiCard(k, after) {
+  const c = el('div', { class: 'surface kpi' });
+  const top = el('div', { class: 'kpi-top' }, c);
+  el('p', { class: 'kpi-label', text: k.label }, top);
+  top.appendChild(chip(k.delta, k.pts, after));
+  el('p', { class: 'kpi-value', text: fmt(k.values.at(-1), k.unit) }, c);
+  const foot = el('div', { class: 'kpi-foot' }, c);
+  if (after) {
+    el('span', { class: 'range tnum', text: k.unit === 'B' ? `from ${fmt(k.values[0], 'B')}` : `${k.values[0].toFixed(1)}% in ${QS[0]}` }, foot);
+    foot.appendChild(sparkAfter(k.values, k.unit));
+    const dir = k.values.at(-1) > k.values[0] ? 'rising' : 'falling';
+    el('span', { class: 'sr-only', text: `${k.label} ${fmt(k.values.at(-1), k.unit)}, ${signed(k.delta, k.pts)} vs Q1 FY2027, ${dir} since ${Q[0]} from ${fmt(k.values[0], k.unit)}.` }, c);
+  } else foot.appendChild(sparkBefore(k.values));
+  return c;
+}
+KPIS.forEach(k => { document.getElementById('kpi-before').appendChild(kpiCard(k, false)); document.getElementById('kpi-after').appendChild(kpiCard(k, true)); });
+
+/* ---------- Bar chart ---------- */
+const W = 640, H = 300, M = { l: 62, r: 12, t: 26, b: 40 };
+const PW = W - M.l - M.r, PH = H - M.t - M.b, MAX = 100;
+const yS = v => M.t + PH - v / MAX * PH;
+const band = PW / Q.length;
+function barPath(x, y, w, h, rt, rb) {
+  rt = Math.min(rt, w / 2, h); rb = Math.min(rb, w / 2, h - rt);
+  return `M${x},${y + h - rb} L${x},${y + rt} Q${x},${y} ${x + rt},${y} L${x + w - rt},${y} Q${x + w},${y} ${x + w},${y + rt} L${x + w},${y + h - rb} Q${x + w},${y + h} ${x + w - rb},${y + h} L${x + rb},${y + h} Q${x},${y + h} ${x},${y + h - rb} Z`;
+}
+function legend(parent, after) {
+  const lg = el('div', { class: 'legend' }, parent);
+  for (const [name, col] of [['Revenue', 'var(--accent)'], ['Net income', after ? 'var(--series-2-chart)' : 'var(--series-2)']]) {
+    const s = el('span', {}, lg);
+    el('span', { class: after ? 'sw-sq' : 'sw-dot', style: `background:${col}` }, s);
+    s.appendChild(document.createTextNode(name));
+  }
+}
+function tooltip(card, i, after, x, y) {
+  card.querySelector('.tip')?.remove();
+  const t = el('div', { class: 'tip' }, card);
+  el('p', { class: 'h', text: after && DERIVED[i] ? `${Q[i]} · derived` : Q[i] }, t);
+  const rows = [['Revenue', REV, 'var(--accent)'], ['Net income', NI, after ? 'var(--series-2-chart)' : 'var(--series-2)']];
+  for (const [name, arr, col] of rows) {
+    const r = el('p', { class: 'r' }, t);
+    if (after) {
+      el('span', { class: 'k', style: `background:${col}` }, r);
+      r.appendChild(document.createTextNode(`$${arr[i].toFixed(2)}B`));
+      el('span', { class: 'n', text: name }, r);
+      if (i > 0) { const ch = pct(arr[i - 1], arr[i]); el('span', { class: 'c', style: `color:var(--${ch >= 0 ? 'up' : 'down'})`, text: signed(ch) }, r); }
+    } else {
+      el('span', { class: 'k sq', style: `background:${col}` }, r);
+      el('span', { class: 'n', text: name }, r);
+      r.appendChild(document.createTextNode(`$${arr[i].toFixed(2)}B`));
+    }
+  }
+  if (after) el('p', { class: 'f tnum', text: `Net margin ${(NI[i] / REV[i] * 100).toFixed(1)}%${i > 0 ? ' · Q/Q vs ' + QS[i - 1] : ''}` }, t);
+  const scale = card.querySelector('svg').getBoundingClientRect().width / W;
+  t.style.left = `${20 + x * scale}px`; t.style.top = `${60 + y * scale}px`;
+}
+function barChart(id, after) {
+  const card = document.getElementById(id);
+  const head = el('div', { class: 'chart-head' }, card);
+  el('p', { class: 'chart-title', text: 'Revenue and net income' }, head);
+  legend(head, after);
+  const svg = el('svg', { class: 'chart', viewBox: `0 0 ${W} ${H}` }, card);
+  if (after) {
+    svg.setAttribute('role', 'img'); svg.setAttribute('aria-labelledby', `${id}-t ${id}-d`);
+    el('title', { id: `${id}-t`, text: 'Revenue and net income, last four quarters' }, svg);
+    el('desc', { id: `${id}-d`, text: 'Revenue rose every quarter, from $57.01B in Q3 FY2026 to $96.22B in Q2 FY2027. Net income rose from $31.91B to $59.69B, almost flat in the latest quarter. The table below has every value.' }, svg);
+  } else svg.setAttribute('role', 'application');
+  // grid + ticks
+  for (const v of [0, 25, 50, 75, 100]) {
+    const y = yS(v);
+    const isBase = v === 0;
+    el('line', { x1: M.l, x2: W - M.r, y1: y, y2: y, stroke: after && isBase ? 'var(--baseline)' : 'var(--line)', 'stroke-width': 1, ...(after ? {} : { 'stroke-dasharray': '3 6' }) }, svg);
+    el('text', { x: M.l - 10, y: y + 4, 'text-anchor': 'end', fill: 'var(--subtle)', 'font-size': 11, style: 'font-variant-numeric:tabular-nums', text: after ? (v === 0 ? '$0' : `$${v}B`) : (v === 0 ? '$0' : `$${v.toFixed(2)}B`) }, svg);
+  }
+  let defs = '';
+  if (!after) defs = `<defs><linearGradient id="b-r" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="var(--accent-2)" stop-opacity=".9"/></linearGradient><linearGradient id="b-n" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="var(--series-2)"/><stop offset="100%" stop-color="var(--series-2)" stop-opacity=".7"/></linearGradient></defs>`;
+  svg.insertAdjacentHTML('afterbegin', defs);
+  const bw = after ? 36 : 52, gap = after ? 4 : 6;
+  Q.forEach((q, i) => {
+    const cx = M.l + band * i + band / 2;
+    const g = el('g', { class: 'q' }, svg);
+    if (after) { g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', `${q}${DERIVED[i] ? ' (derived)' : ''}: revenue $${REV[i].toFixed(2)}B, net income $${NI[i].toFixed(2)}B`); }
+    // hover band (the whole slot is the hit target)
+    const hit = el('rect', { class: 'hit', x: M.l + band * i + 4, y: M.t, width: band - 8, height: PH, rx: 6, fill: 'transparent' }, g);
+    [[REV, after ? 'var(--accent)' : 'url(#b-r)'], [NI, after ? 'var(--series-2-chart)' : 'url(#b-n)']].forEach(([arr, fill], j) => {
+      const x = cx - bw - gap / 2 + j * (bw + gap), y = yS(arr[i]), h = yS(0) - y;
+      el('path', { d: barPath(x, y, bw, h, after ? 4 : 8, after ? 0 : 3), fill }, g);
+      if (after && i === Q.length - 1) el('text', { x: x + bw / 2, y: y - 7, 'text-anchor': 'middle', fill: 'var(--text)', 'font-size': 11, 'font-weight': 600, style: 'font-variant-numeric:tabular-nums', text: `$${arr[i].toFixed(1)}B` }, g);
+    });
+    const latest = i === Q.length - 1;
+    el('text', { x: cx, y: H - M.b + 22, 'text-anchor': 'middle', 'font-size': 11, fill: after && latest ? 'var(--text)' : 'var(--subtle)', 'font-weight': after && latest ? 600 : 400, text: q }, g);
+    if (after && DERIVED[i]) {
+      const bx = cx + 35;
+      el('rect', { x: bx, y: H - M.b + 11, width: 12, height: 14, rx: 3, fill: 'none', stroke: 'var(--line)' }, g);
+      el('text', { x: bx + 6, y: H - M.b + 22, 'text-anchor': 'middle', 'font-size': 9.5, fill: 'var(--muted)', text: 'D' }, g);
+    }
+    const show = () => { hit.setAttribute('fill', 'rgba(255,255,255,0.03)'); tooltip(card, i, after, Math.min(cx + 28, W - 190), yS(REV[i]) + 10); };
+    const hide = () => hit.setAttribute('fill', 'transparent');
+    if (after) { g.addEventListener('pointerenter', show); g.addEventListener('focus', show); g.addEventListener('pointerleave', hide); g.addEventListener('blur', hide); }
+  });
+  // Pin the Q4 tooltip in both, like the live screenshot.
+  requestAnimationFrame(() => {
+    card.querySelectorAll('.hit')[1].setAttribute('fill', 'rgba(255,255,255,0.03)');
+    const cx = M.l + band * 1 + band / 2;
+    tooltip(card, 1, after, cx + 28, yS(REV[1]) + 10);
+  });
+}
+barChart('bar-before', false);
+barChart('bar-after', true);
+
+/* ---------- Compare ---------- */
+const CMP = [
+  { t: 'NVDA', q: 'Q2 FY2027', ended: '26 Jul 2026', v: 96.22, ya: 46.74, yoy: 1.059, subject: true },
+  { t: 'MSFT', q: 'Q4 FY2026', ended: '30 Jun 2026', v: 90.01, ya: 76.44, yoy: 0.177, derived: true },
+];
+function compare(id, after) {
+  const c = document.getElementById(id);
+  el('p', { class: 'eyebrow', text: 'Comparison' }, c);
+  el('h3', { text: 'Revenue' }, c);
+  el('p', { class: 'sub', text: 'Each company on its latest reported quarter, against the same quarter a year earlier. Highest: NVDA.' }, c);
+  if (after) {
+    const lg = el('div', { class: 'legend', style: 'margin-top:14px' }, c);
+    const a = el('span', {}, lg); el('span', { class: 'sw-sq', style: 'background:var(--accent)' }, a); a.appendChild(document.createTextNode('NVDA (this desk)'));
+    const b = el('span', {}, lg); el('span', { class: 'sw-sq', style: 'background:var(--series-2-chart)' }, b); b.appendChild(document.createTextNode('Peers'));
+    const d = el('span', {}, lg); el('span', { class: 'sw-tick' }, d); d.appendChild(document.createTextNode('Year earlier'));
+  }
+  const rows = el('div', { class: 'rows' }, c);
+  const max = Math.max(...CMP.map(r => r.v));
+  [...CMP].sort((a, b) => b.v - a.v).forEach(r => {
+    const row = el('div', { class: 'row' }, rows);
+    el('div', { class: 'mono-tile', text: r.t }, row);
+    const main = el('div', { class: 'row-main' }, row);
+    const top = el('div', { class: 'row-top' }, main);
+    const name = el('span', {}, top);
+    el('span', { style: 'font-weight:600', text: r.t }, name);
+    name.appendChild(document.createTextNode(' '));
+    el('span', { class: 'mono', style: 'color:var(--subtle);font-size:11px', text: after ? `${r.q} · ended ${r.ended}` : r.q }, name);
+    const v = el('span', { class: 'v' }, top);
+    v.appendChild(document.createTextNode(`$${r.v.toFixed(2)}B`));
+    if (r.derived) el('span', { class: 'badge', text: 'D' }, v);
+    v.appendChild(chip(r.yoy, false, after));
+    if (after) {
+      const tr = el('div', { class: 'track-after', role: 'img', 'aria-label': `${r.t} $${r.v.toFixed(2)}B, year earlier $${r.ya.toFixed(2)}B` }, main);
+      el('div', { class: 'rail' }, tr);
+      el('div', { class: 'bar', style: `width:${r.v / max * 100}%;background:${r.subject ? 'var(--accent)' : 'var(--series-2-chart)'}` }, tr);
+      el('div', { class: 'ya', style: `left:calc(${r.ya / max * 100}% - 1px)` }, tr);
+    } else {
+      const tr = el('div', { class: 'track-before' }, main);
+      el('div', { style: `width:${r.v / max * 100}%` }, tr);
+    }
+    el('p', { class: 'row-foot tnum', text: `Year earlier $${r.ya.toFixed(2)}B` }, main);
+  });
+}
+compare('cmp-before', false);
+compare('cmp-after', true);
+</script>
+</body>
+</html>

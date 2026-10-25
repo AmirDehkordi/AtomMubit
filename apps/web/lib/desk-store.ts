@@ -24,6 +24,8 @@ export interface ChatMessage {
   stopped?: boolean;
   /** When the turn started, for the "thinking" timer. */
   startedAt?: number;
+  /** The Mubit calls the answer took, for its receipt. Only known for answers given in this session. */
+  mubitCalls?: { requestId: string | null; ms: number }[];
   /** The id the server gave the message (the local id stays, so nothing remounts). */
   serverId?: string;
   /** Loaded from history: shown as is, without animation. */
@@ -149,7 +151,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       sending: true,
       pendingQuestion: null,
       messages: [
-        ...s.messages.map((m) => ({ ...m, choice: null })),
+        ...s.messages,
         { id: `user-${Date.now()}`, role: 'user', text, steps: [], choice: null, pending: false, error: null },
         { id: replyId, role: 'assistant', text: '', steps: [], choice: null, pending: true, error: null, startedAt: Date.now() },
       ],
@@ -187,7 +189,7 @@ export const useDesk = create<DeskState>((set, get) => ({
           patch((m) => ({ ...m, error: e.message }));
           break;
         case 'done':
-          patch((m) => ({ ...m, serverId: e.messageId, pending: false }));
+          patch((m) => ({ ...m, serverId: e.messageId, pending: false, mubitCalls: e.mubitCalls }));
           get().filingsChanged();
           break;
       }
