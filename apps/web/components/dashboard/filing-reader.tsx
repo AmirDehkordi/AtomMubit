@@ -61,12 +61,20 @@ export function FilingReader({
                 )}
               >
                 <span className="block truncate">
-                  <span className="text-muted">{s.item}</span> {s.title}
+                  {unnamed(s.item) ? (
+                    `Page ${s.ordinal + 1}`
+                  ) : (
+                    <>
+                      <span className="text-muted">{s.item}</span> {s.title}
+                    </>
+                  )}
                 </span>
-                <span className="text-muted">
-                  {s.blocks} block{s.blocks === 1 ? '' : 's'}
-                  {s.review > 0 && <span className="text-down"> · {s.review} to review</span>}
-                </span>
+                {(s.blocks > 0 || s.review > 0) && (
+                  <span className="text-muted">
+                    {s.blocks} figure{s.blocks === 1 ? '' : 's'}
+                    {s.review > 0 && <span className="text-down"> · {s.review} to review</span>}
+                  </span>
+                )}
               </button>
             </li>
           ))}
@@ -121,8 +129,11 @@ function SectionView({
     if (seenOutlineAt.current === outlineUpdatedAt) return;
     seenOutlineAt.current = outlineUpdatedAt;
     if (!data || outlineSections.some((section) => section.id === sectionId)) return;
-    const replacement = outlineSections.find((section) => section.item === data.section.item && section.kind === data.section.kind)
-      ?? outlineSections[0];
+    // A re-read gives sections new ids; the same position in the filing is the same section.
+    const replacement =
+      outlineSections.find((section) => ordinalOf(section.id) === ordinalOf(sectionId) && section.kind === data.section.kind) ??
+      outlineSections.find((section) => section.item === data.section.item && section.kind === data.section.kind) ??
+      outlineSections[0];
     if (replacement) onSelectSection(replacement.id);
   }, [data, onSelectSection, outlineSections, outlineUpdatedAt, sectionId]);
 
@@ -139,7 +150,16 @@ function SectionView({
     <>
       <div ref={textRef} className="min-w-0 flex-1 overflow-y-auto p-5">
         <h3 className="mb-3 font-semibold">
-          <span className="text-muted">{data.section.item}</span> {data.section.title}
+          {unnamed(data.section.item) ? (
+            <>
+              Page {(ordinalOf(sectionId) ?? 0) + 1}
+              {firstLine(data.section.text) && <span className="text-muted font-normal"> · {firstLine(data.section.text)}</span>}
+            </>
+          ) : (
+            <>
+              <span className="text-muted">{data.section.item}</span> {data.section.title}
+            </>
+          )}
         </h3>
         <div className="text-[14px] leading-relaxed whitespace-pre-wrap">
           {segments(data.section.text, data.blocks).map((seg, i) =>
@@ -157,7 +177,7 @@ function SectionView({
                 {seg.text}
               </mark>
             ) : (
-              <span key={i}>{seg.text}</span>
+              <span key={i}>{withoutEmptyRows(seg.text)}</span>
             ),
           )}
         </div>
@@ -264,4 +284,26 @@ function segments(text: string, blocks: ReaderBlock[]): { text: string; block?: 
   }
   if (at < text.length) out.push({ text: text.slice(at) });
   return out;
+}
+
+/** Filings without headings are split by position; their sections are all called "Document". */
+function unnamed(item: string): boolean {
+  return !item || item === 'Document';
+}
+
+/** Section ids end in their position in the filing: run:doc:ordinal. */
+function ordinalOf(id: string): number | null {
+  const m = /:(\d+)$/.exec(id);
+  return m ? Number(m[1]) : null;
+}
+
+/** The first line of real text, for a section that has no title of its own. */
+function firstLine(text: string): string {
+  const line = text.split('\n').map((l) => l.trim()).find((l) => l && !/^[|\s-]+$/.test(l)) ?? '';
+  return line.length > 70 ? `${line.slice(0, 69)}…` : line;
+}
+
+/** Layout tables in SEC filings leave rows of bare pipes ("| | |"); they carry no text. */
+function withoutEmptyRows(text: string): string {
+  return text.replace(/^[ \t]*\|(?:[\s|-]*\|)?[ \t]*$/gm, '').replace(/\n{3,}/g, '\n\n');
 }
