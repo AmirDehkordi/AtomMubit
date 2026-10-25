@@ -1,7 +1,8 @@
 'use client';
 
-import { AlertTriangle, BarChart3, ExternalLink, FileText, GitCompare, LayoutGrid, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
+import { AlertTriangle, BarChart3, ChevronDown, ExternalLink, FileText, GitCompare, LayoutGrid, Loader2, Pin, ShieldCheck, TrendingUp, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { DESK_METRIC_KEYS, metricInfo, type DeskMetricKey, type ViewSpec } from '@desk/shared';
 import type { DeskFiling } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -12,7 +13,6 @@ import { CompareView } from './compare-view';
 import { FilingReader } from './filing-reader';
 import { MetricDetail } from './metric-detail';
 import { QuarterOverview } from './quarter-overview';
-import { SourceChip } from '../chat/answer';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -24,7 +24,6 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
   const oneCompany = filings.length > 0 && filings.every((f) => f.ticker === filings[0]!.ticker);
   const heading = oneCompany ? companyName(filings[0]!.ticker, filings[0]!.company) : ticker && title.startsWith(`${ticker} · `) ? title.slice(ticker.length + 3) : title;
   const period = oneCompany ? [filings[0]!.quarter, filings[filings.length - 1]!.quarter].filter((q, i, a) => a.indexOf(q) === i).join(' – ') : null;
-  const failed = filings.filter((f) => f.status === 'failed').length;
 
   return (
     <div className="@container relative flex h-full flex-col">
@@ -42,29 +41,18 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
               {heading}
             </motion.h1>
             {filings.length > 0 && (
-              <p className="text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+              <div className="text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                 {period && (
                   <>
                     <span className="text-text">{period}</span>
                     <span className="text-subtle">·</span>
                   </>
                 )}
-                <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="text-up size-3.5" /> Checked against SEC XBRL
-                </span>
-                {failed > 0 && (
-                  <>
-                    <span className="text-subtle">·</span>
-                    <span className="text-down inline-flex items-center gap-1.5">
-                      <AlertTriangle className="size-3" /> {failed} couldn&apos;t be read
-                    </span>
-                  </>
-                )}
-              </p>
+                <SourcesMenu filings={filings} />
+              </div>
             )}
           </div>
         </div>
-        {filings.length > 0 && <FilingStrip filings={filings} />}
         <TabBar tabs={tabs} active={active?.id ?? null} filings={filings} />
       </header>
       <div className="relative min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-8 @3xl:px-8">
@@ -86,38 +74,112 @@ export function Dashboard({ filings, title, projectId }: { filings: DeskFiling[]
   );
 }
 
-/** The desk's filings as numbered sources, the same chips and numbers the chat cites with. */
-function FilingStrip({ filings }: { filings: DeskFiling[] }) {
+/**
+ * The desk's filings behind one "4 sources" button under the title, with the XBRL check they were
+ * read against. The button shows when any are still being read or couldn't be read.
+ */
+function SourcesMenu({ filings }: { filings: DeskFiling[] }) {
   const show = useDesk((s) => s.showView);
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLSpanElement>(null);
   const several = new Set(filings.map((f) => f.ticker)).size > 1;
+  const reading = filings.filter((f) => f.status !== 'ready' && f.status !== 'failed').length;
+  const failed = filings.filter((f) => f.status === 'failed').length;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => !root.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-1.5">
-      <span className="text-subtle mr-1 text-xs">Sources</span>
-      {filings.map((f, i) => (
-        <SourceChip
-          key={f.accession}
-          n={i + 1}
-          icon={f.status === 'failed' ? AlertTriangle : FileText}
-          iconClassName={f.status === 'failed' ? 'text-down' : undefined}
-          label={`${several ? `${f.ticker} ` : ''}${f.form} · ${f.quarter}`}
-          title={f.status === 'ready' ? 'Open in the reader' : f.status === 'failed' ? "Couldn't be read" : 'Still reading this filing'}
-          busy={f.status !== 'ready' && f.status !== 'failed'}
-          onClick={() => show({ view: 'filing_reader', accession: f.accession, sectionId: null, highlight: [] })}
-        >
-          <a
-            href={f.url}
-            target="_blank"
-            rel="noreferrer"
-            title="Original on SEC"
-            aria-label="Original on SEC"
-            className="-ml-1.5 pr-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+    <span ref={root} className="relative inline-flex">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="desk-sources"
+        className={cn('hover:text-text inline-flex items-center gap-1.5 rounded-md px-1 -mx-1 transition-colors', open && 'text-text')}
+      >
+        <FileText className="size-3.5" />
+        {filings.length} source{filings.length === 1 ? '' : 's'}
+        {reading > 0 && (
+          <span className="text-accent inline-flex items-center gap-1">
+            · <Loader2 className="size-3 animate-spin" /> reading {reading}
+          </span>
+        )}
+        {failed > 0 && <span className="text-down">· {failed} couldn&apos;t be read</span>}
+        <ChevronDown className={cn('size-3.5 transition-transform', open && 'rotate-180')} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="desk-sources"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease }}
+            className="edge absolute top-full left-0 z-30 mt-2 w-[min(26rem,80vw)] rounded-xl p-1.5 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]"
           >
-            <ExternalLink className="text-subtle hover:text-text size-3" />
-          </a>
-        </SourceChip>
-      ))}
-    </div>
+            <p className="text-muted flex items-start gap-2 px-2 pt-1.5 pb-2 text-xs leading-relaxed">
+              <ShieldCheck className="text-up mt-0.5 size-3.5 shrink-0" />
+              Every number is checked against SEC XBRL.
+            </p>
+            <ul>
+              {filings.map((f) => (
+                <li key={f.accession} className="group hover:bg-raised flex items-center gap-2.5 rounded-lg pr-1.5 transition-colors">
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      show({ view: 'filing_reader', accession: f.accession, sectionId: null, highlight: [] });
+                    }}
+                    title={f.status === 'failed' ? "Couldn't be read" : 'Open in the reader'}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 py-2 pl-2.5 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="text-text block text-[13px]">
+                        {several && `${f.ticker} `}
+                        {f.form} · {f.quarter}
+                      </span>
+                      <span className="text-subtle block text-[11px]">
+                        ended {day(f.periodEnd)} · filed {day(f.filedAt)}
+                      </span>
+                    </span>
+                    {f.status === 'failed' ? (
+                      <AlertTriangle className="text-down size-3.5 shrink-0" aria-label="Couldn't be read" />
+                    ) : f.status !== 'ready' ? (
+                      <Loader2 className="text-accent size-3.5 shrink-0 animate-spin" aria-label="Still reading" />
+                    ) : null}
+                  </button>
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Original on SEC"
+                    aria-label={`${f.form} ${f.quarter} on SEC`}
+                    className="text-subtle hover:text-text inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px]"
+                  >
+                    SEC <ExternalLink className="size-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </span>
   );
+}
+
+/** "2025-10-26" → "26 Oct 2025". */
+function day(iso: string): string {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 function TabBar({ tabs, active, filings }: { tabs: DeskTab[]; active: string | null; filings: DeskFiling[] }) {

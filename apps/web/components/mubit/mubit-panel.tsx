@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { ADAPTER_STATES, MUBIT_CONSOLE_URL, api, type AdapterState, type MubitStatus, type RecordedTurn } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { companyName } from '@/lib/company';
+import { ExtractionPanel } from '../extraction-panel';
 import { MubitMark } from './mubit-mark';
 
 const STATE_LABELS: Record<AdapterState, string> = {
@@ -28,7 +29,7 @@ const STATE_LABELS: Record<AdapterState, string> = {
 export const toolbarButton =
   'border-line text-text hover:bg-raised grid size-8 shrink-0 place-items-center rounded-lg border transition-colors hover:border-[color-mix(in_oklab,var(--color-text)_20%,transparent)]';
 
-export function MubitButton({ className }: { className?: string }) {
+export function MubitButton({ className, projectId }: { className?: string; projectId?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -40,7 +41,7 @@ export function MubitButton({ className }: { className?: string }) {
       >
         <MubitMark className="size-4" />
       </button>
-      <AnimatePresence>{open && <MubitPanel onClose={() => setOpen(false)} />}</AnimatePresence>
+      <AnimatePresence>{open && <MubitPanel onClose={() => setOpen(false)} projectId={projectId} />}</AnimatePresence>
     </>
   );
 }
@@ -63,7 +64,7 @@ export function MubitLearningLink() {
 }
 
 /** How the desk feeds Mubit: calls per task, today's review budget, and what the console shows. */
-function MubitPanel({ onClose }: { onClose: () => void }) {
+function MubitPanel({ onClose, projectId }: { onClose: () => void; projectId?: string }) {
   const { data, error } = useQuery({ queryKey: ['mubit'], queryFn: api.mubitStatus, refetchInterval: 10_000 });
   const rules = useQuery({ queryKey: ['rules'], queryFn: api.rules, refetchInterval: 10_000 });
   const recorded = useQuery({ queryKey: ['mubit-recorded'], queryFn: api.mubitRecorded, refetchInterval: 10_000 });
@@ -109,6 +110,11 @@ function MubitPanel({ onClose }: { onClose: () => void }) {
           <Section title="Recorded for training">
             <Recorded turns={recorded.data} error={recorded.error} />
           </Section>
+          {projectId && (
+            <Section title="Extraction runs" defaultOpen={false}>
+              <ExtractionPanel projectId={projectId} />
+            </Section>
+          )}
           {data && (
             <Section title="How far it has got">
               <div className="space-y-3">

@@ -10,7 +10,6 @@ import type { StreamEvent } from '@desk/shared';
 import { BrandMark } from '@/components/brand';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { Dashboard } from '@/components/dashboard/dashboard';
-import { ExtractionPanel } from '@/components/extraction-panel';
 import { MubitButton, toolbarButton } from '@/components/mubit/mubit-panel';
 import { API_URL, api } from '@/lib/api';
 import { useDesk } from '@/lib/desk-store';
@@ -88,12 +87,11 @@ export default function DeskPage() {
           <span className="text-muted mr-auto flex items-center gap-2 text-sm font-medium">
             <BrandMark className="size-6" /> MuTick
           </span>
-          <MubitButton />
+          <MubitButton projectId={projectId} />
           <Link href="/" title="New desk" aria-label="New desk" className={toolbarButton}>
             <Plus className="size-4" />
           </Link>
         </header>
-        <ExtractionPanel projectId={projectId} />
         <div className="min-h-0 flex-1">
           <ChatPanel filings={filings} wide={!hasTabs} />
         </div>
