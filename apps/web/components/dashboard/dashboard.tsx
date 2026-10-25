@@ -128,7 +128,7 @@ function SourcesMenu({ filings }: { filings: DeskFiling[] }) {
           >
             <p className="text-muted flex items-start gap-2 px-2 pt-1.5 pb-2 text-xs leading-relaxed">
               <ShieldCheck className="text-up mt-0.5 size-3.5 shrink-0" />
-              Every number is checked against SEC XBRL.
+              Figures from SEC XBRL. Text quoted from these filings.
             </p>
             <ul>
               {filings.map((f) => (

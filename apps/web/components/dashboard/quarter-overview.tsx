@@ -21,6 +21,9 @@ const GROUPS: { title: string; keys: string[] }[] = [
   { title: 'Margins', keys: ['gross_margin', 'operating_margin', 'net_margin'] },
 ];
 const ease = [0.22, 1, 0.36, 1] as const;
+// Table labels where the analyst's usual name differs from the shared metric label.
+const LABELS: Record<string, string> = { capex: 'Capex (cash, PP&E)' };
+const NOTES: Record<string, string> = { capex: 'Purchases of property and equipment. Excludes finance leases.' };
 
 export function QuarterOverview({ ticker, periods }: { ticker: string; periods: string[] }) {
   const { data, error, isLoading } = useQuery({
@@ -36,7 +39,6 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
 
   return (
     <div className="space-y-4">
-      <p className="text-muted text-xs">Change vs {prior}</p>
       <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-4">
         {KPIS.map((key, i) => {
           const r = row(key);
@@ -45,6 +47,7 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
           const now = r.cells[last]!;
           const change = delta(now, r.cells[last - 1], margin);
           const start = r.cells.find((c) => c.value !== null);
+          const before = r.cells[last - 1];
           return (
             <motion.div
               key={key}
@@ -63,9 +66,10 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
                   {now.value === null ? '—' : <AnimatedNumber value={now.value} format={(v) => formatValue(v, r.unit)} />}
                 </p>
                 <div className="mt-4 flex items-end justify-between gap-2">
-                  {start?.value != null && (
-                    <span className="text-subtle truncate text-[11px] tabular-nums" title={`In ${data.quarters[0]?.quarter ?? 'the first quarter'}`}>
-                      from {formatValue(start.value, r.unit)}
+                  {/* The value the chip compares against, so the two read together. */}
+                  {before?.value != null && (
+                    <span className="text-subtle truncate text-[11px] tabular-nums" title={`In ${prior}`}>
+                      vs {formatValue(before.value, r.unit)} in {prior}
                     </span>
                   )}
                   <Sparkline values={r.cells.map((c) => c.value)} kind={margin ? 'margin' : 'amount'} className="ml-auto h-8 w-[88px] shrink-0" />
@@ -106,7 +110,9 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
                     if (!r) return null;
                     return (
                       <tr key={k} className="hover:bg-raised/50 transition-colors">
-                        <td className="text-muted px-5 py-2.5">{r.label}</td>
+                        <td className="text-muted px-5 py-2.5" title={NOTES[r.key]}>
+                          {LABELS[r.key] ?? r.label}
+                        </td>
                         {r.cells.map((c, i) => (
                           <td key={i} className={cn('px-4 py-2.5 text-right', i === last && 'bg-accent/[0.06] font-semibold')}>
                             <CellValue cell={c} unit={r.unit} />
@@ -128,7 +134,8 @@ export function QuarterOverview({ ticker, periods }: { ticker: string; periods: 
           </table>
         </div>
         <p className="text-subtle border-line border-t px-5 py-2.5 text-[11px]">
-          From the SEC&apos;s XBRL data · D derived (Q4 = full year − nine months) · C computed · ~ approximate · R restated later
+          From the SEC&apos;s XBRL data · D derived from year-to-date figures (Q4 = full year − 9 months; quarterly cash flow = YTD −
+          prior YTD) · C computed · ~ approximate · R restated later
         </p>
       </div>
     </div>
