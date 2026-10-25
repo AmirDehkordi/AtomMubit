@@ -1,12 +1,14 @@
 # Earnings Desk — Benchmark Report
 
-**Status: NO LIVE RUN — results template.**
+**Status: Live native-Mubit development results available; paired direct-provider versus Mubit benchmark remains unrun.**
 
-Prepared: 24 October 2026. The offline smoke harness has been exercised against one synthetic simple-fact fixture; it uses fake outputs, null latency, and unknown costs. No live model calls, timing measurements, reviewed accuracy scores, or billed costs have been collected. Empty results are not zero. No performance winner or cost saving is established.
+Updated: 25 October 2026. Read the [bulk benchmark and improvement review](bulk-benchmark-review.md) for the audited 6,000-request development baseline, error analysis and next experiments. The runs achieved 18,125/18,255 requested fields matching gold (99.29%) and 5,823/6,000 fully correct cases passing source checks (97.05%). Successful-call p50/p95 were 2,136/2,566 ms. Billed cost and adapter training/routing remain unknown. These are short synthetic/SEC-XBRL-rendered development inputs, not independently reviewed original-filings accuracy.
+
+The comparison tables below remain a **protocol/results template for a future paired run**. They do not describe the native-Mubit bulk runs as OpenRouter traffic. The separate offline smoke harness uses fake outputs, null latency, and unknown costs. Empty results are not zero. No route winner or cost saving is established.
 
 Protocol: [System test and benchmark plan](test-and-benchmark-plan.md).
 
-Architecture: [Integrated NestJS implementation plan](extraction-service-plan.md). The current offline runner is call-level only; it does not exercise the NestJS extractor, full Langflow workflow, filing-level validation/repair, or durable job/event delivery. Existing application telemetry and workspace training notes have not been collected or analyzed as benchmark results here.
+Architecture: [Integrated NestJS implementation plan](extraction-service-plan.md). The paired-route smoke runner is call-level only; it does not exercise the NestJS extractor, full Langflow workflow, filing-level validation/repair, or durable job/event delivery. The separate bulk runner exercises the extraction engine on single-section inputs with repairs disabled; it does not establish end-to-end filing or delivery performance. Its results are analyzed in the linked review.
 
 ## Measurement scope
 
@@ -26,7 +28,7 @@ Report successful and failed work at each boundary. Do not combine section-call 
 | Is direct inference or Mubit faster? | Not measured |
 | Which route extracts more accurate data? | Not measured |
 | Which route costs less for correct results? | Not measured |
-| Does feedback improve future extractions? | Not evaluated |
+| Does feedback improve future extractions? | Local currency-rule/verifier regression evidence exists; held-out learning effect remains unevaluated |
 | Can a Mubit-trained adapter be benchmarked through the API? | Invocation, serving identity, and billing require verification |
 
 ## Run identity and comparability
@@ -108,7 +110,7 @@ The `verified`, `fixed`, and `review` statuses are operational outputs, not gold
 
 | Filing / section / block / source evidence | Reference answer | A output | B output | Error category / adjudication |
 | --- | --- | --- | --- | --- |
-| No measured examples yet | — | — | — | — |
+| No paired-route examples yet; native-Mubit failures are documented in the linked review | — | — | — | — |
 
 ## Cost results
 
@@ -165,4 +167,4 @@ Complete separately from the routing comparison:
 
 Record corpus size, company mix, duplicate/overlapping disclosures, holdout contamination checks, unresolved ground truth, model drift, cache/rate-limit differences, unavailable serving/billing information, and incomplete runs.
 
-**Current decision:** No comparative conclusion. Collect reviewed reference cases, verify both inference routes and billing, set the run budget, and execute the paired protocol. The implemented smoke fixture is synthetic and intentionally narrow; it cannot establish extraction-engine, filing-level, production-readiness, or trained-model results. The pilot is exploratory and cannot establish a trained-model advantage by itself.
+**Current decision:** No comparative conclusion. Use the audited bulk results to prioritize exact evidence copying, currency/unit consistency and timeout handling. Collect reviewed original-document references, verify both inference routes and billing, set a new run budget, and execute the paired protocol. The smoke fixture and bulk development corpus cannot establish production readiness or a trained-model advantage. See the [improvement sequence and benchmark gaps](bulk-benchmark-review.md) before scheduling further traffic.

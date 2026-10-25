@@ -7,7 +7,7 @@ export function scoreCase(example, result) {
       const explicit = candidates.some(entry => entry.sectionId !== null && entry.fact.value === null && entry.fact.range === null && entry.fact.missingReason);
       return {key:gold.key, modelCorrect:explicit && numeric.length===0, verifiedCorrect:explicit && numeric.length===0, expected:gold, actual:candidates.map(entry=>entry.fact), reason:explicit && numeric.length===0?null:'Missing value was invented, omitted, or only filled by application fallback'};
     }
-    const matches = fact => close(fact.value,gold.value) && fact.currency===gold.currency && fact.unit===gold.unit && fact.scale===gold.scale && fact.basis===gold.basis && fact.period?.end===gold.periodEnd && fact.period?.months===gold.months;
+    const matches = fact => close(fact.value,gold.value) && fact.currency===gold.currency && fact.unit===gold.unit && fact.scale===gold.scale && fact.basis===gold.basis && fact.period?.end===gold.periodEnd && fact.period?.months===gold.months && (!Object.hasOwn(gold,'periodStart') || fact.period?.start===gold.periodStart);
     const modelCorrect = numeric.length>0 && numeric.every(entry=>matches(entry.fact));
     const verifiedCorrect = modelCorrect && numeric.every(entry=>entry.supported);
     return {key:gold.key,modelCorrect,verifiedCorrect,expected:gold,actual:candidates.map(entry=>entry.fact),reason:!modelCorrect?'Value, currency, unit, scale, basis, or period mismatch':!verifiedCorrect?'Correct fields failed source-evidence validation':null};

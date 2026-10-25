@@ -32,12 +32,14 @@ export interface EngineDependencies {
   referenceFact?: (fact: ExtractionFactV2) => Promise<ReferenceFact | null>;
   onSection?: (result: { section: PreparedSection; blocks: EngineBlock[]; facts: EngineFact[]; attempts: EngineAttempt[] }) => Promise<void>;
   concurrency?: number;
+  /** Budgeted evaluations can disable the default single repair attempt. */
+  maxAttempts?: 1 | 2;
 }
 function freezeDeep<T>(value: T): T {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) { Object.freeze(value); for (const child of Object.values(value)) freezeDeep(child); }
   return value;
 }
-const REPAIR_RULE = 'Repair only source-supported facts: use a character-for-character quote containing the printed value, its printed scale and true reporting date/duration (3/6/9/12 months). Keep GAAP and non-GAAP separate; EPS uses units. Use explicit missingReason when unsupported. Never infer a reporting date from a release date, estimate values, or subtract cumulative EPS.';
+const REPAIR_RULE = 'Repair only source-supported facts: use a character-for-character quote containing the printed value, its printed scale and true reporting date/duration (3/6/9/12 months). Keep GAAP and non-GAAP separate; EPS uses units. Monetary units must match the fact currency, including per-share units. Use explicit missingReason when unsupported. Never infer a reporting date from a release date, estimate values, or subtract cumulative EPS.';
 function asFact(block: ExtractedBlock): ExtractionFactV2 {
   return { key: block.key ?? block.label, label: block.label, basis: 'GAAP', currency: block.unit?.startsWith('USD') ? 'USD' : null,
     period: block.period && [3, 6, 9, 12].includes(block.period.months) ? { ...block.period, months: block.period.months as 3 | 6 | 9 | 12, start: null, fiscalYear: null, fiscalPeriod: null } : null,
@@ -75,7 +77,7 @@ export class ExtractionEngine {
   private async extractSection(input: EngineInput, section: PreparedSection, fields: string[]) {
     const attempts: EngineAttempt[] = [];
     let finalBlocks: EngineBlock[] = []; let finalFacts: EngineFact[] = [];
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < (this.dependencies.maxAttempts === 1 ? 1 : 2); attempt++) {
       const id = `${section.id}:attempt:${attempt}`;
       const call: SectionCallInput = { schemaVersion: '2', runId: input.runId, documentId: input.documentId, attempt,
         company: input.company ?? null, filing: input.filing ?? null,

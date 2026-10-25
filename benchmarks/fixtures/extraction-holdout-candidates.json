@@ -1,0 +1,766 @@
+{
+  "description": "Eight unsubmitted SEC XBRL excerpts from two companies excluded from this development batch. Candidate test material only: needs independent review and original filing excerpts before a product benchmark. Rendering template overlaps development.",
+  "split": "holdout",
+  "cases": [
+    {
+      "id": "sec-amzn-2026-06-30",
+      "title": "AMZN three months ended 2026-06-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). AMZN, AMAZON COM INC. Consolidated GAAP results. Three months from April 1, 2026 to June 30, 2026. Amounts in USD units, except diluted EPS in USD per share. Revenue: 200606000000. Net income: 62647000000. Diluted EPS: 5.75. Source filing: 10-Q, accession 0001018724-26-000026, filed 2026-07-31.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 200606000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 62647000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 5.75,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "sourceSha256": "7549fb68446eee40e1f50a166fa06b2d2ee6349e07c8553a4828757e032d3cd4",
+        "accession": "0001018724-26-000026",
+        "filed": "2026-07-31",
+        "observations": {
+          "revenue": {
+            "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 200606000000,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2026Q2"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 62647000000,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2026Q2"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 5.75,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2026Q2"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-amzn-2026-03-31",
+      "title": "AMZN three months ended 2026-03-31",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). AMZN, AMAZON COM INC. Consolidated GAAP results. Three months from January 1, 2026 to March 31, 2026. Amounts in USD units, except diluted EPS in USD per share. Revenue: 181519000000. Net income: 30255000000. Diluted EPS: 2.78. Source filing: 10-Q, accession 0001018724-26-000014, filed 2026-04-30.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 181519000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 30255000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 2.78,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "sourceSha256": "7549fb68446eee40e1f50a166fa06b2d2ee6349e07c8553a4828757e032d3cd4",
+        "accession": "0001018724-26-000014",
+        "filed": "2026-04-30",
+        "observations": {
+          "revenue": {
+            "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 181519000000,
+            "accn": "0001018724-26-000014",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 30255000000,
+            "accn": "0001018724-26-000014",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 2.78,
+            "accn": "0001018724-26-000014",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-amzn-2025-09-30",
+      "title": "AMZN three months ended 2025-09-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). AMZN, AMAZON COM INC. Consolidated GAAP results. Three months from July 1, 2025 to September 30, 2025. Amounts in USD units, except diluted EPS in USD per share. Revenue: 180169000000. Net income: 21187000000. Diluted EPS: 1.95. Source filing: 10-Q, accession 0001018724-25-000123, filed 2025-10-31.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 180169000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 21187000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.95,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "sourceSha256": "7549fb68446eee40e1f50a166fa06b2d2ee6349e07c8553a4828757e032d3cd4",
+        "accession": "0001018724-25-000123",
+        "filed": "2025-10-31",
+        "observations": {
+          "revenue": {
+            "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 180169000000,
+            "accn": "0001018724-25-000123",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-31",
+            "frame": "CY2025Q3"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 21187000000,
+            "accn": "0001018724-25-000123",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-31",
+            "frame": "CY2025Q3"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 1.95,
+            "accn": "0001018724-25-000123",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-31",
+            "frame": "CY2025Q3"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-amzn-2025-06-30",
+      "title": "AMZN three months ended 2025-06-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). AMZN, AMAZON COM INC. Consolidated GAAP results. Three months from April 1, 2025 to June 30, 2025. Amounts in USD units, except diluted EPS in USD per share. Revenue: 167702000000. Net income: 18164000000. Diluted EPS: 1.68. Source filing: 10-Q, accession 0001018724-26-000026, filed 2026-07-31.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 167702000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 18164000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.68,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "sourceSha256": "7549fb68446eee40e1f50a166fa06b2d2ee6349e07c8553a4828757e032d3cd4",
+        "accession": "0001018724-26-000026",
+        "filed": "2026-07-31",
+        "observations": {
+          "revenue": {
+            "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 167702000000,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2025Q2"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 18164000000,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2025Q2"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 1.68,
+            "accn": "0001018724-26-000026",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-31",
+            "frame": "CY2025Q2"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-googl-2026-06-30",
+      "title": "GOOGL three months ended 2026-06-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). GOOGL, Alphabet Inc.. Consolidated GAAP results. Three months from April 1, 2026 to June 30, 2026. Amounts in USD units, except diluted EPS in USD per share. Revenue: 119796000000. Net income: 112193000000. Diluted EPS: 9.11. Source filing: 10-Q, accession 0001652044-26-000071, filed 2026-07-23.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 119796000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 112193000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 9.11,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json",
+        "sourceSha256": "a017f26ee88cb4a639d1c1ddb06d53b4afe22f0ac89cabec7cd67c88919fe1c5",
+        "accession": "0001652044-26-000071",
+        "filed": "2026-07-23",
+        "observations": {
+          "revenue": {
+            "concept": "Revenues",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 119796000000,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2026Q2"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 112193000000,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2026Q2"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "val": 9.11,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2026Q2"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-googl-2026-03-31",
+      "title": "GOOGL three months ended 2026-03-31",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). GOOGL, Alphabet Inc.. Consolidated GAAP results. Three months from January 1, 2026 to March 31, 2026. Amounts in USD units, except diluted EPS in USD per share. Revenue: 109896000000. Net income: 62578000000. Diluted EPS: 5.11. Source filing: 10-Q, accession 0001652044-26-000048, filed 2026-04-30.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 109896000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 62578000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 5.11,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-01-01",
+          "periodEnd": "2026-03-31",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json",
+        "sourceSha256": "a017f26ee88cb4a639d1c1ddb06d53b4afe22f0ac89cabec7cd67c88919fe1c5",
+        "accession": "0001652044-26-000048",
+        "filed": "2026-04-30",
+        "observations": {
+          "revenue": {
+            "concept": "Revenues",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 109896000000,
+            "accn": "0001652044-26-000048",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 62578000000,
+            "accn": "0001652044-26-000048",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2026-01-01",
+            "end": "2026-03-31",
+            "val": 5.11,
+            "accn": "0001652044-26-000048",
+            "fy": 2026,
+            "fp": "Q1",
+            "form": "10-Q",
+            "filed": "2026-04-30",
+            "frame": "CY2026Q1"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-googl-2025-09-30",
+      "title": "GOOGL three months ended 2025-09-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). GOOGL, Alphabet Inc.. Consolidated GAAP results. Three months from July 1, 2025 to September 30, 2025. Amounts in USD units, except diluted EPS in USD per share. Revenue: 102346000000. Net income: 34979000000. Diluted EPS: 2.87. Source filing: 10-Q, accession 0001652044-25-000091, filed 2025-10-30.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 102346000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 34979000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 2.87,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2025-07-01",
+          "periodEnd": "2025-09-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json",
+        "sourceSha256": "a017f26ee88cb4a639d1c1ddb06d53b4afe22f0ac89cabec7cd67c88919fe1c5",
+        "accession": "0001652044-25-000091",
+        "filed": "2025-10-30",
+        "observations": {
+          "revenue": {
+            "concept": "Revenues",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 102346000000,
+            "accn": "0001652044-25-000091",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-30",
+            "frame": "CY2025Q3"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 34979000000,
+            "accn": "0001652044-25-000091",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-30",
+            "frame": "CY2025Q3"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2025-07-01",
+            "end": "2025-09-30",
+            "val": 2.87,
+            "accn": "0001652044-25-000091",
+            "fy": 2025,
+            "fp": "Q3",
+            "form": "10-Q",
+            "filed": "2025-10-30",
+            "frame": "CY2025Q3"
+          }
+        }
+      }
+    },
+    {
+      "id": "sec-googl-2025-06-30",
+      "title": "GOOGL three months ended 2025-06-30",
+      "category": "sec-xbrl-rendered",
+      "format": "text",
+      "content": "PUBLIC SEC XBRL DATA, reformatted excerpt (not verbatim filing prose). GOOGL, Alphabet Inc.. Consolidated GAAP results. Three months from April 1, 2025 to June 30, 2025. Amounts in USD units, except diluted EPS in USD per share. Revenue: 96428000000. Net income: 28196000000. Diluted EPS: 2.31. Source filing: 10-Q, accession 0001652044-26-000071, filed 2026-07-23.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 96428000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 28196000000,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 2.31,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2025-04-01",
+          "periodEnd": "2025-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ],
+      "provenance": {
+        "kind": "sec-companyfacts-rendered",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json",
+        "sourceSha256": "a017f26ee88cb4a639d1c1ddb06d53b4afe22f0ac89cabec7cd67c88919fe1c5",
+        "accession": "0001652044-26-000071",
+        "filed": "2026-07-23",
+        "observations": {
+          "revenue": {
+            "concept": "Revenues",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 96428000000,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2025Q2"
+          },
+          "net_income": {
+            "concept": "NetIncomeLoss",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 28196000000,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2025Q2"
+          },
+          "eps_diluted": {
+            "concept": "EarningsPerShareDiluted",
+            "start": "2025-04-01",
+            "end": "2025-06-30",
+            "val": 2.31,
+            "accn": "0001652044-26-000071",
+            "fy": 2026,
+            "fp": "Q2",
+            "form": "10-Q",
+            "filed": "2026-07-23",
+            "frame": "CY2025Q2"
+          }
+        }
+      }
+    }
+  ]
+}

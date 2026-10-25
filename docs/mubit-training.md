@@ -1,5 +1,30 @@
 # Mubit training: how it really behaves, and our plan
 
+## Latest extraction observation — 24 October 2026
+
+The user reports that **Extract financial facts 2** has 3,248 calls usable for
+training, zero kept, zero rejected, 3,295 waiting for review, 200 queued today,
+3,048 over today's limit and 11 running. First training has not started and
+there are no routes. History shows 200 new calls admitted about 50 minutes
+before the observation, then zero new calls five minutes before it. This is
+evidence of a pending review backlog, not evidence that all calls were rejected
+or that the integration failed. The differing totals should not be reconciled
+without server-side details; they may reflect different scopes or refresh times.
+
+The additional 100-example development batch was stopped after 39 completed
+examples and 46 confirmed calls. One next-case call may have been in flight;
+its outcome is unknown. Sources, results and the remaining-case manifest are
+preserved under `benchmarks/results/mubit-expanded-2026-10-24/`. No automatic
+resume is scheduled. Inspect reviewer completion/errors before sending more
+traffic solely to increase kept examples. If running jobs stop progressing,
+ask Mubit to inspect task `ln_5f0064bc8f24708841155f80` and its reviewer jobs.
+
+See [expanded development results](mubit-expanded-development-report.md).
+The observations and plans below are an earlier snapshot, not current counts
+or confirmation that any previously mentioned scheduled process is still running.
+
+## Earlier observations
+
 Confirmed on Quell's own Mubit console (24 Oct 2026), which runs the same Mubit service.
 
 ## How Mubit turns calls into an adapter

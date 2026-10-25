@@ -24,3 +24,8 @@ test('preserves unknown cost and distinguishes incomplete usage from zero',()=>{
  const s=summarize([{score}],[{ok:true,latencyMs:100,inputTokens:10,outputTokens:5},{ok:false,latencyMs:5,inputTokens:null,outputTokens:null}],25);
  assert.equal(s.usageComplete,false);assert.equal(s.billedCostUsd,null);assert.equal(s.successfulCalls,1);assert.equal(s.modelCalls,2);assert.equal(s.p95CallLatencyMs,100);assert.equal(s.plannedCases,25);
 });
+test('scores explicit start dates when supplied by the expanded fixture',()=>{
+ const dated={...example,gold:[{...gold,periodStart:'2026-04-01'}]};
+ assert.equal(scoreCase(dated,{facts:[entry]}).modelCorrect,false);
+ assert.equal(scoreCase(dated,{facts:[{...entry,fact:{...fact,period:{...fact.period,start:'2026-04-01'}}}]}).modelCorrect,true);
+});

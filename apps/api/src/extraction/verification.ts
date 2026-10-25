@@ -102,6 +102,10 @@ export function verifyFact(fact: ExtractionFactV2, section: PreparedSection, ref
   const quotePass = shape && (missing || fact.unit !== null && fact.scale !== null) && (!fact.range || fact.range.low <= fact.range.high) && (missing || !!span && numericSupport && printedScale && basisSupported && (!epsScale || fact.scale === 'units'));
   checks.push({ verifier: 'quote', outcome: missing && shape ? 'not-applicable' : quotePass ? 'pass' : 'fail',
     detail: missing ? 'Missing observation is explicit, not an extracted value' : 'Checks exact quote, printed numbers/scale, range ordering and core GAAP basis; EPS must use units' });
+  const unitCurrency = /^([A-Z]{3})(?:\/share)?$/.exec(fact.unit ?? '')?.[1];
+  if (!missing && unitCurrency && unitCurrency !== fact.currency) {
+    checks.push({verifier: 'quote', outcome: 'fail', detail: 'Monetary unit currency contradicts the fact currency; no implicit currency conversion'});
+  }
   checks.push(periodCheck(fact, section.text));
   if (!reference || missing) checks.push({ verifier: 'xbrl', outcome: 'unknown', detail: 'No comparable reference fact available' });
   else if (!fact.period || reference.periodEnd !== fact.period.end || reference.months !== fact.period.months || reference.currency !== fact.currency || reference.basis !== fact.basis || reference.unit !== fact.unit || reference.method === 'derived' && epsScale) {

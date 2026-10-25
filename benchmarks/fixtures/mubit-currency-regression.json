@@ -1,0 +1,2006 @@
+{
+  "description": "40 new recorded synthetic development cases after currency-unit validation fix, ten per CAD/EUR/GBP/USD. Includes HTML/text, negatives, zero, missing EPS, GAAP distractors. Labels generated from source inputs, not independently reviewed; not a held-out benchmark.",
+  "split": "development",
+  "cases": [
+    {
+      "id": "currency-new-001",
+      "title": "CAD new scenario 1",
+      "category": "fresh-CAD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 201. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in thousands; diluted EPS is in CAD per share, not scaled. Revenue was 732.19. Net income was 45.31. Diluted EPS was 0.45.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 732.19,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 45.31,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.45,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-002",
+      "title": "CAD new scenario 2",
+      "category": "fresh-CAD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 202. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in millions; diluted EPS is in CAD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>743.42</td></tr><tr><td>Net income</td><td>46.18</td></tr><tr><td>Diluted EPS</td><td>0.48</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 743.42,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 46.18,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.48,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-003",
+      "title": "CAD new scenario 3",
+      "category": "fresh-CAD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 203. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in thousands; diluted EPS is in CAD per share, not scaled. Revenue was 754.65. Net income was (47.05). Diluted EPS was (0.51).",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 754.65,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": -47.05,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": -0.51,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-004",
+      "title": "CAD new scenario 4",
+      "category": "fresh-CAD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 204. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in millions; diluted EPS is in CAD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>765.88</td></tr><tr><td>Net income</td><td>47.92</td></tr><tr><td>Diluted EPS</td><td>0.54</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 765.88,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 47.92,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.54,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-005",
+      "title": "CAD new scenario 5",
+      "category": "fresh-CAD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 205. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in thousands; diluted EPS is in CAD per share, not scaled. Revenue was 777.11. Net income was 48.79. Diluted EPS was 0.57. Operating cash inflow was 25.00. Cash flow is separate from net income.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 777.11,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 48.79,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.57,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-006",
+      "title": "CAD new scenario 6",
+      "category": "fresh-CAD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 206. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in millions; diluted EPS is in CAD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>788.34</td></tr><tr><td>Net income</td><td>0.00</td></tr><tr><td>Diluted EPS</td><td>0.00</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 788.34,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 0,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-007",
+      "title": "CAD new scenario 7",
+      "category": "fresh-CAD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 207. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in thousands; diluted EPS is in CAD per share, not scaled. Revenue was 799.57. Net income was 50.53. Diluted EPS was 0.63.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 799.57,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 50.53,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.63,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-008",
+      "title": "CAD new scenario 8",
+      "category": "fresh-CAD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 208. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in millions; diluted EPS is in CAD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>810.80</td></tr><tr><td>Net income</td><td>51.40</td></tr><tr><td>Diluted EPS</td><td>0.66</td></tr></table> Non-GAAP adjusted diluted EPS was 9.99 and excludes one-time costs.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 810.8,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 51.4,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.66,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-009",
+      "title": "CAD new scenario 9",
+      "category": "fresh-CAD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 209. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in thousands; diluted EPS is in CAD per share, not scaled. Revenue was 822.03. Net income was 52.27. Diluted EPS was not disclosed.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 822.03,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 52.27,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": null,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "id": "currency-new-010",
+      "title": "CAD new scenario 10",
+      "category": "fresh-CAD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 210. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: CAD. Financial totals are in millions; diluted EPS is in CAD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>833.26</td></tr><tr><td>Net income</td><td>53.14</td></tr><tr><td>Diluted EPS</td><td>0.72</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 833.26,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 53.14,
+          "currency": "CAD",
+          "unit": "CAD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.72,
+          "currency": "CAD",
+          "unit": "CAD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-011",
+      "title": "EUR new scenario 1",
+      "category": "fresh-EUR",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 211. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in thousands; diluted EPS is in EUR per share, not scaled. Revenue was 844.49. Net income was 54.01. Diluted EPS was 0.75.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 844.49,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 54.01,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.75,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-012",
+      "title": "EUR new scenario 2",
+      "category": "fresh-EUR",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 212. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in millions; diluted EPS is in EUR per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>855.72</td></tr><tr><td>Net income</td><td>54.88</td></tr><tr><td>Diluted EPS</td><td>0.78</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 855.72,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 54.88,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.78,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-013",
+      "title": "EUR new scenario 3",
+      "category": "fresh-EUR",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 213. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in thousands; diluted EPS is in EUR per share, not scaled. Revenue was 866.95. Net income was (55.75). Diluted EPS was (0.81).",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 866.95,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": -55.75,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": -0.81,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-014",
+      "title": "EUR new scenario 4",
+      "category": "fresh-EUR",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 214. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in millions; diluted EPS is in EUR per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>878.18</td></tr><tr><td>Net income</td><td>56.62</td></tr><tr><td>Diluted EPS</td><td>0.84</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 878.18,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 56.62,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.84,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-015",
+      "title": "EUR new scenario 5",
+      "category": "fresh-EUR",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 215. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in thousands; diluted EPS is in EUR per share, not scaled. Revenue was 889.41. Net income was 57.49. Diluted EPS was 0.87. Operating cash inflow was 25.00. Cash flow is separate from net income.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 889.41,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 57.49,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.87,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-016",
+      "title": "EUR new scenario 6",
+      "category": "fresh-EUR",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 216. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in millions; diluted EPS is in EUR per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>900.64</td></tr><tr><td>Net income</td><td>0.00</td></tr><tr><td>Diluted EPS</td><td>0.00</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 900.64,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 0,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-017",
+      "title": "EUR new scenario 7",
+      "category": "fresh-EUR",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 217. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in thousands; diluted EPS is in EUR per share, not scaled. Revenue was 911.87. Net income was 59.23. Diluted EPS was 0.93.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 911.87,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 59.23,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.93,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-018",
+      "title": "EUR new scenario 8",
+      "category": "fresh-EUR",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 218. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in millions; diluted EPS is in EUR per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>923.10</td></tr><tr><td>Net income</td><td>60.10</td></tr><tr><td>Diluted EPS</td><td>0.96</td></tr></table> Non-GAAP adjusted diluted EPS was 9.99 and excludes one-time costs.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 923.1,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 60.1,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0.96,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-019",
+      "title": "EUR new scenario 9",
+      "category": "fresh-EUR",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 219. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in thousands; diluted EPS is in EUR per share, not scaled. Revenue was 934.33. Net income was 60.97. Diluted EPS was not disclosed.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 934.33,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 60.97,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": null,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "id": "currency-new-020",
+      "title": "EUR new scenario 10",
+      "category": "fresh-EUR",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 220. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: EUR. Financial totals are in millions; diluted EPS is in EUR per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>945.56</td></tr><tr><td>Net income</td><td>61.84</td></tr><tr><td>Diluted EPS</td><td>1.02</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 945.56,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 61.84,
+          "currency": "EUR",
+          "unit": "EUR",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.02,
+          "currency": "EUR",
+          "unit": "EUR/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-021",
+      "title": "GBP new scenario 1",
+      "category": "fresh-GBP",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 221. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in thousands; diluted EPS is in GBP per share, not scaled. Revenue was 956.79. Net income was 62.71. Diluted EPS was 1.05.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 956.79,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 62.71,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.05,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-022",
+      "title": "GBP new scenario 2",
+      "category": "fresh-GBP",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 222. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in millions; diluted EPS is in GBP per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>968.02</td></tr><tr><td>Net income</td><td>63.58</td></tr><tr><td>Diluted EPS</td><td>1.08</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 968.02,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 63.58,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.08,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-023",
+      "title": "GBP new scenario 3",
+      "category": "fresh-GBP",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 223. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in thousands; diluted EPS is in GBP per share, not scaled. Revenue was 979.25. Net income was (64.45). Diluted EPS was (1.11).",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 979.25,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": -64.45,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": -1.11,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-024",
+      "title": "GBP new scenario 4",
+      "category": "fresh-GBP",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 224. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in millions; diluted EPS is in GBP per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>990.48</td></tr><tr><td>Net income</td><td>65.32</td></tr><tr><td>Diluted EPS</td><td>1.14</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 990.48,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 65.32,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.14,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-025",
+      "title": "GBP new scenario 5",
+      "category": "fresh-GBP",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 225. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in thousands; diluted EPS is in GBP per share, not scaled. Revenue was 1001.71. Net income was 66.19. Diluted EPS was 1.17. Operating cash inflow was 25.00. Cash flow is separate from net income.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1001.71,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 66.19,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.17,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-026",
+      "title": "GBP new scenario 6",
+      "category": "fresh-GBP",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 226. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in millions; diluted EPS is in GBP per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1012.94</td></tr><tr><td>Net income</td><td>0.00</td></tr><tr><td>Diluted EPS</td><td>0.00</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1012.94,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 0,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-027",
+      "title": "GBP new scenario 7",
+      "category": "fresh-GBP",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 227. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in thousands; diluted EPS is in GBP per share, not scaled. Revenue was 1024.17. Net income was 67.93. Diluted EPS was 1.23.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1024.17,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 67.93,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.23,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-028",
+      "title": "GBP new scenario 8",
+      "category": "fresh-GBP",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 228. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in millions; diluted EPS is in GBP per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1035.40</td></tr><tr><td>Net income</td><td>68.80</td></tr><tr><td>Diluted EPS</td><td>1.26</td></tr></table> Non-GAAP adjusted diluted EPS was 9.99 and excludes one-time costs.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1035.4,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 68.8,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.26,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-029",
+      "title": "GBP new scenario 9",
+      "category": "fresh-GBP",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 229. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in thousands; diluted EPS is in GBP per share, not scaled. Revenue was 1046.63. Net income was 69.67. Diluted EPS was not disclosed.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1046.63,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 69.67,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": null,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "id": "currency-new-030",
+      "title": "GBP new scenario 10",
+      "category": "fresh-GBP",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 230. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: GBP. Financial totals are in millions; diluted EPS is in GBP per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1057.86</td></tr><tr><td>Net income</td><td>70.54</td></tr><tr><td>Diluted EPS</td><td>1.32</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1057.86,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 70.54,
+          "currency": "GBP",
+          "unit": "GBP",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.32,
+          "currency": "GBP",
+          "unit": "GBP/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-031",
+      "title": "USD new scenario 1",
+      "category": "fresh-USD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 231. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in thousands; diluted EPS is in USD per share, not scaled. Revenue was 1069.09. Net income was 71.41. Diluted EPS was 1.35.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1069.09,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 71.41,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.35,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-032",
+      "title": "USD new scenario 2",
+      "category": "fresh-USD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 232. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in millions; diluted EPS is in USD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1080.32</td></tr><tr><td>Net income</td><td>72.28</td></tr><tr><td>Diluted EPS</td><td>1.38</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1080.32,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 72.28,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.38,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-033",
+      "title": "USD new scenario 3",
+      "category": "fresh-USD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 233. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in thousands; diluted EPS is in USD per share, not scaled. Revenue was 1091.55. Net income was (73.15). Diluted EPS was (1.41).",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1091.55,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": -73.15,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": -1.41,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-034",
+      "title": "USD new scenario 4",
+      "category": "fresh-USD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 234. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in millions; diluted EPS is in USD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1102.78</td></tr><tr><td>Net income</td><td>74.02</td></tr><tr><td>Diluted EPS</td><td>1.44</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1102.78,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 74.02,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.44,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-035",
+      "title": "USD new scenario 5",
+      "category": "fresh-USD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 235. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in thousands; diluted EPS is in USD per share, not scaled. Revenue was 1114.01. Net income was 74.89. Diluted EPS was 1.47. Operating cash inflow was 25.00. Cash flow is separate from net income.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1114.01,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 74.89,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.47,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-036",
+      "title": "USD new scenario 6",
+      "category": "fresh-USD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 236. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in millions; diluted EPS is in USD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1125.24</td></tr><tr><td>Net income</td><td>0.00</td></tr><tr><td>Diluted EPS</td><td>0.00</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1125.24,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 0,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 0,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-037",
+      "title": "USD new scenario 7",
+      "category": "fresh-USD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 237. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in thousands; diluted EPS is in USD per share, not scaled. Revenue was 1136.47. Net income was 76.63. Diluted EPS was 1.53.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1136.47,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 76.63,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.53,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-038",
+      "title": "USD new scenario 8",
+      "category": "fresh-USD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 238. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in millions; diluted EPS is in USD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1147.70</td></tr><tr><td>Net income</td><td>77.50</td></tr><tr><td>Diluted EPS</td><td>1.56</td></tr></table> Non-GAAP adjusted diluted EPS was 9.99 and excludes one-time costs.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1147.7,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 77.5,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.56,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "id": "currency-new-039",
+      "title": "USD new scenario 9",
+      "category": "fresh-USD",
+      "format": "text",
+      "content": "SYNTHETIC development excerpt: Fictional North Coast 239. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in thousands; diluted EPS is in USD per share, not scaled. Revenue was 1158.93. Net income was 78.37. Diluted EPS was not disclosed.",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1158.93,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 78.37,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "thousands",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": null,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "id": "currency-new-040",
+      "title": "USD new scenario 10",
+      "category": "fresh-USD",
+      "format": "html",
+      "content": "<p>SYNTHETIC development excerpt: Fictional North Coast 240. Consolidated GAAP statement. Three months from April 1, 2026 through June 30, 2026. Currency: USD. Financial totals are in millions; diluted EPS is in USD per share, not scaled.</p><table><tr><th>Reported measure</th><th>Current quarter</th></tr><tr><td>Revenue</td><td>1170.16</td></tr><tr><td>Net income</td><td>79.24</td></tr><tr><td>Diluted EPS</td><td>1.62</td></tr></table>",
+      "fields": [
+        "revenue",
+        "net_income",
+        "eps_diluted"
+      ],
+      "gold": [
+        {
+          "key": "revenue",
+          "value": 1170.16,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "net_income",
+          "value": 79.24,
+          "currency": "USD",
+          "unit": "USD",
+          "scale": "millions",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        },
+        {
+          "key": "eps_diluted",
+          "value": 1.62,
+          "currency": "USD",
+          "unit": "USD/share",
+          "scale": "units",
+          "periodStart": "2026-04-01",
+          "periodEnd": "2026-06-30",
+          "months": 3,
+          "basis": "GAAP",
+          "missing": false
+        }
+      ]
+    }
+  ]
+}
