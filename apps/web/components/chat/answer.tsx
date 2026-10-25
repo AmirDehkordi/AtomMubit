@@ -73,9 +73,10 @@ export function Answer({ text, filings, showSources }: { text: string; filings: 
     return onDesk >= 0 ? onDesk + 1 : filings.length + others.findIndex((s) => s.kind === kind && s.id === id) + 1;
   };
   const sources = [...cited].sort((a, b) => number(a.kind, a.id) - number(b.kind, b.id));
-  // Repeated markers in a row ("[[f:a]] [[f:b]] [[f:a]]") collapse to one each.
+  // Repeated markers in a row ("[[f:a]] [[f:b]] [[f:a]]") collapse to one each. Only spaces
+  // between them are absorbed, never a newline, so a cited bullet doesn't swallow the next one.
   const withLinks = text
-    .replace(/(\[\[(?:f|b):[^\]]+\]\]\s*)+/g, (run) => {
+    .replace(/(\[\[(?:f|b):[^\]]+\]\][ \t]*)+/g, (run) => {
       const ids = [...new Set([...run.matchAll(CITATION)].map((m) => `${m[1]}:${m[2]}`))];
       return ids.map((k) => `[${k}](cite:${k})`).join('') + (run.endsWith(' ') ? ' ' : '');
     });

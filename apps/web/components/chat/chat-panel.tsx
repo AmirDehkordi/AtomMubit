@@ -37,6 +37,11 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
   const earlier = lastUser > 0 ? messages.slice(0, lastUser) : lastUser === 0 ? [] : messages;
   const turn = lastUser >= 0 ? messages.slice(lastUser) : [];
   const live = turn.length > 0 && !turn[0]!.restored;
+  // A button press on a card ("Add all") isn't shown as a bubble: the card above shows the answer.
+  const pressed = (index: number) => {
+    const m = messages[index];
+    return m?.role === 'user' && !!messages[index - 1]?.choice?.options.includes(m.text);
+  };
 
   useEffect(() => {
     const el = scroller.current;
@@ -94,6 +99,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
                 key={m.id}
                 message={m}
                 reply={messages.slice(i + 1).find((x) => x.role === 'user')?.text}
+                pressed={pressed(i)}
                 filings={filings}
                 isLast={false}
                 animate={!m.restored}
@@ -113,6 +119,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
                 <Message
                   key={m.id}
                   message={m}
+                  pressed={pressed(lastUser + i)}
                   filings={filings}
                   isLast={i === turn.length - 1}
                   animate={!m.restored}
@@ -168,6 +175,7 @@ export function ChatPanel({ filings, wide }: { filings: DeskFiling[]; wide: bool
 function Message({
   message,
   reply,
+  pressed = false,
   filings,
   isLast,
   animate,
@@ -178,6 +186,8 @@ function Message({
   message: ChatMessage;
   /** What you answered, once a choice has been answered. */
   reply?: string;
+  /** A user message that was a button press on the card before it. */
+  pressed?: boolean;
   filings: DeskFiling[];
   isLast: boolean;
   animate: boolean;
@@ -189,9 +199,10 @@ function Message({
   const typing = text.length < message.text.length;
 
   if (message.role === 'user') {
+    if (pressed) return null;
     return (
       <motion.div {...(animate ? fade : {})} className="flex justify-end">
-        <div className="bg-raised max-w-[85%] rounded-[20px] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap">
+        <div className="bg-raised max-w-[85%] rounded-[20px] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
           {message.text}
         </div>
       </motion.div>

@@ -48,7 +48,7 @@ describe('reader revision and project isolation', () => {
   });
   it('shows the latest finished run, with its review flags, when there is no accepted run', async () => {
     await db.update(schema.extractionRuns).set({accepted: false}).where(eq(schema.extractionRuns.projectId, 'a'));
-    await db.update(schema.extractionRuns).set({createdAt: new Date('2026-10-24T22:00:00Z')}).where(eq(schema.extractionRuns.id, 'rejected-a'));
+    await db.update(schema.extractionRuns).set({createdAt: new Date(Date.now() + 60_000)}).where(eq(schema.extractionRuns.id, 'rejected-a'));
     expect((await reader.sections('filing', 'a')).sections.map(s => s.id).sort()).toEqual(['legacy-section', 'rejected-a:doc:0']);
   });
   it('never shows a run that has not finished', async () => {

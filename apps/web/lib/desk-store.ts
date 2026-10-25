@@ -151,7 +151,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       sending: true,
       pendingQuestion: null,
       messages: [
-        ...s.messages.map((m) => ({ ...m, choice: null })),
+        ...s.messages,
         { id: `user-${Date.now()}`, role: 'user', text, steps: [], choice: null, pending: false, error: null },
         { id: replyId, role: 'assistant', text: '', steps: [], choice: null, pending: true, error: null, startedAt: Date.now() },
       ],

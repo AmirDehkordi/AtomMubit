@@ -43,7 +43,16 @@ export class EdgarClient {
     const file = this.cachePath(url);
     const cached = await this.readCache(file, maxAgeMs);
     if (cached !== null) return cached;
-    const body = await this.fetchWithRetry(url);
+    let body: string;
+    try {
+      body = await this.fetchWithRetry(url);
+    } catch (err) {
+      // The SEC is unreachable or refusing (403, 429, timeout): an older copy beats failing.
+      const stale = await this.readCache(file, FOREVER);
+      if (stale === null) throw err;
+      this.logger.warn(`Serving a cached copy of ${url}: ${err instanceof Error ? err.message : String(err)}`);
+      return stale;
+    }
     await mkdir(this.cacheDir, { recursive: true });
     const temporary = `${file}.${randomUUID()}.tmp`;
     await writeFile(temporary, body);
